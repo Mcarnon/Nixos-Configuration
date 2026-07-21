@@ -1,2 +1,2 @@
 # Nixos-Configuration
-My own system file of NixOS
+McCarnon的试水项目，不定期维护中。
