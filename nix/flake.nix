@@ -1,9 +1,9 @@
 {
-  description = "NixOS + Home Manager configuration";
+  description = "NixOS multi-host configuration";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    
+
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -13,41 +13,28 @@
   outputs = { nixpkgs, home-manager, ... }@inputs:
     let
       system = "x86_64-linux";
-      pkgs = nixpkgs.legacyPackages.${system};
-      
-      # 用户列表
-      users = {
-        mccarnon = {
-          fullName = "Your Name";
-          email = "your@email.com";
-        };
+      username = builtins.getEnv "USERNAME";
+      hosts = {
+        desktop = "Desktop";
+        laptop = "Laptop";
       };
-    in {
-      # NixOS 系统配置
-      nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
+    in
+    if username == ""
+    then throw "请设置 USERNAME 环境变量，例如: USERNAME=mccarnon sudo nixos-rebuild switch --flake .#desktop"
+    else {
+      nixosConfigurations = nixpkgs.lib.mapAttrs (hostName: description: nixpkgs.lib.nixosSystem {
         inherit system;
+        specialArgs = { inherit username; };
         modules = [
-          ./hosts/default.nix
+          ./hosts/common.nix
+          ./hosts/${hostName}/default.nix
+          home-manager.nixosModules.home-manager
           {
-            # 传递用户信息给系统配置
-            _module.args = { inherit users; };
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.${username} = import ./home/common.nix;
           }
         ];
-      };
-
-      # Home Manager 用户配置
-      homeConfigurations = builtins.mapAttrs (name: userData: 
-        home-manager.lib.homeManagerConfiguration {
-          inherit pkgs;
-          modules = [ 
-            ./home-manager/home.nix
-            {
-              home.username = name;
-              home.homeDirectory = "/home/${name}";
-              _module.args = { inherit userData; };
-            }
-          ];
-        }
-      ) users;
+      }) hosts;
     };
 }
