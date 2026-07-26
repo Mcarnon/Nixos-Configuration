@@ -7,7 +7,17 @@
 
   networking.hostName = "laptop";
 
-  # 笔记本特有：电源管理
+  # Intel Iris Xe 集显
+  hardware.graphics = {
+    enable = true;
+    enable32Bit = true;
+  };
+  hardware.graphics.extraPackages = with pkgs; [
+    intel-media-driver
+    intel-compute-runtime
+  ];
+
+  # 电源管理
   services.tlp = {
     enable = true;
     settings = {
@@ -16,6 +26,6 @@
     };
   };
 
-  # 笔记本特有：触控板
+  # 触控板
   services.xserver.libinput.enable = true;
 }
