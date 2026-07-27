@@ -5,7 +5,7 @@
     ./hardware-configuration.nix
   ];
 
-  networking.hostName = "laptop";
+  networking.hostName = "loliconOS";
 
   # Intel Iris Xe 集显
   hardware.graphics = {

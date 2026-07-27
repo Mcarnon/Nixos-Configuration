@@ -14,7 +14,7 @@
   i18n.defaultLocale = "zh_CN.UTF-8";
 
   # === 用户 ===
-  users.users.${username} = {
+  users.users.mccarnon = {
     isNormalUser = true;
     extraGroups = [ "networkmanager" "wheel" ];
     shell = pkgs.bash;
@@ -41,20 +41,16 @@
   services.snapper = {
     configs.root = {
       SUBVOLUME = "/";
-      TIMELINE_CREATE = true;
+      TIMELINE_CREATE = false;
       TIMELINE_CLEANUP = true;
       TIMELINE_MIN_AGE = "1800";
-      TIMELINE_LIMIT_HOURLY = "5";
-      TIMELINE_LIMIT_DAILY = "7";
-      TIMELINE_LIMIT_WEEKLY = "0";
-      TIMELINE_LIMIT_MONTHLY = "0";
-      TIMELINE_LIMIT_YEARLY = "0";
     };
   };
+
 
   # === Nix 设置 ===
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   # === 系统版本 ===
-  system.stateVersion = "24.05";
+  system.stateVersion = "26.05";
 }

@@ -13,16 +13,28 @@
   outputs = { nixpkgs, home-manager, ... }@inputs:
     let
       system = "x86_64-linux";
-      username = builtins.getEnv "USERNAME";
+      lib = nixpkgs.lib;
+
+      # 获取当前用户名
+      # 直接执行时取 USERNAME；sudo 下取 SUDO_USER
+      username =
+        let
+          sudoUser = builtins.getEnv "SUDO_USER";
+          envUser  = builtins.getEnv "USERNAME";
+        in
+        if sudoUser != "" then sudoUser
+        else if envUser != "" then envUser
+        else "mccarnon";
+
       hosts = {
-        desktop = "Desktop";
-        laptop = "Laptop";
+        desktop = "desktop";
+        laptop  = "laptop";
       };
     in
-    if username == ""
-    then throw "请设置 USERNAME 环境变量，例如: USERNAME=mccarnon sudo nixos-rebuild switch --flake .#desktop"
-    else {
-      nixosConfigurations = nixpkgs.lib.mapAttrs (hostName: description: nixpkgs.lib.nixosSystem {
+    {
+      formatter.${system} = nixpkgs.legacyPackages.${system}.nixpkgs-fmt;
+
+      nixosConfigurations = lib.mapAttrs (hostName: _: nixpkgs.lib.nixosSystem {
         inherit system;
         specialArgs = { inherit username; };
         modules = [

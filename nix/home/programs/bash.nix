@@ -5,7 +5,7 @@
     enable = true;
     shellAliases = {
       ll = "ls -la";
-      update = "sudo nixos-rebuild switch --flake /etc/nixos";
+      update = "USERNAME=mccarnon sudo nixos-rebuild switch --flake /etc/nixos#laptop";
     };
   };
 }
