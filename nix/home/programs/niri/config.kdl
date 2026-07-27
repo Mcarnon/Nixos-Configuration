@@ -1,0 +1,177 @@
+// Niri configuration
+// Docs: https://github.com/niri-wm/niri/wiki
+
+// ── Startup ──────────────────────────────────────────────────────────────────
+spawn-at-startup "noctalia"
+spawn-at-startup "xwayland-satellite"
+spawn-at-startup "nm-applet"
+spawn-at-startup "wl-paste" "--watch" "cliphist" "store"
+
+// ── Input ────────────────────────────────────────────────────────────────────
+input {
+    keyboard {
+        xkb {
+            // layout "us"
+        }
+    }
+
+    touchpad {
+        tap
+        natural-scroll
+    }
+
+    mouse {
+        // natural-scroll
+    }
+}
+
+// ── Layout ───────────────────────────────────────────────────────────────────
+layout {
+    gaps 16
+
+    preset-column-widths {
+        proportion 0.33333
+        proportion 0.5
+        proportion 0.66667
+    }
+
+    default-column-width { proportion 0.5; }
+
+    focus-ring {
+        width 2
+        active-color "#89b4fa"
+        inactive-color "#313244"
+    }
+
+    background-color "transparent"
+}
+
+// ── Cursor ───────────────────────────────────────────────────────────────────
+cursor {
+    xcursor-theme "Adwaita"
+    xcursor-size 24
+}
+
+// ── Window Rules ─────────────────────────────────────────────────────────────
+
+// Rounded corners
+window-rule {
+    geometry-corner-radius 12
+    clip-to-geometry true
+}
+
+// Floating Noctalia settings window
+window-rule {
+    match app-id="dev.noctalia.Noctalia"
+    open-floating true
+    default-column-width { fixed 1080; }
+    default-window-height { fixed 920; }
+}
+
+// ── Layer Rules ──────────────────────────────────────────────────────────────
+
+// Noctalia wallpaper: blurred overview
+layer-rule {
+    match namespace="^noctalia-backdrop"
+    place-within-backdrop true
+}
+
+// ── Bindings ─────────────────────────────────────────────────────────────────
+binds {
+    // ── Noctalia IPC ─────────────────────────────────────────────────────
+    Mod+Space { spawn-sh "noctalia msg panel-toggle launcher"; }
+    Mod+S { spawn-sh "noctalia msg panel-toggle control-center"; }
+    Mod+Comma { spawn-sh "noctalia msg settings-toggle"; }
+    Alt+Tab { spawn-sh "noctalia msg window-switcher"; }
+
+    // ── Terminal ─────────────────────────────────────────────────────────
+    Mod+T { spawn "alacritty"; }
+
+    // ── Close window ─────────────────────────────────────────────────────
+    Mod+Q { close-window; }
+
+    // ── Navigation ───────────────────────────────────────────────────────
+    Mod+Left  { focus-column-left; }
+    Mod+Down  { focus-window-down; }
+    Mod+Up    { focus-window-up; }
+    Mod+Right { focus-column-right; }
+
+    Mod+H { focus-column-left; }
+    Mod+J { focus-window-down; }
+    Mod+K { focus-window-up; }
+    Mod+L { focus-column-right; }
+
+    // ── Move windows ─────────────────────────────────────────────────────
+    Mod+Shift+Left  { move-column-left; }
+    Mod+Shift+Down  { move-window-down; }
+    Mod+Shift+Up    { move-window-up; }
+    Mod+Shift+Right { move-column-right; }
+
+    Mod+Shift+H { move-column-left; }
+    Mod+Shift+J { move-window-down; }
+    Mod+Shift+K { move-window-up; }
+    Mod+Shift+L { move-column-right; }
+
+    // ── Workspaces ───────────────────────────────────────────────────────
+    Mod+1 { focus-workspace 1; }
+    Mod+2 { focus-workspace 2; }
+    Mod+3 { focus-workspace 3; }
+    Mod+4 { focus-workspace 4; }
+    Mod+5 { focus-workspace 5; }
+    Mod+6 { focus-workspace 6; }
+    Mod+7 { focus-workspace 7; }
+    Mod+8 { focus-workspace 8; }
+    Mod+9 { focus-workspace 9; }
+
+    Mod+BracketLeft  { focus-workspace-down; }
+    Mod+BracketRight { focus-workspace-up; }
+
+    // ── Move to workspace ────────────────────────────────────────────────
+    Mod+Shift+1 { move-column-to-workspace 1; }
+    Mod+Shift+2 { move-column-to-workspace 2; }
+    Mod+Shift+3 { move-column-to-workspace 3; }
+    Mod+Shift+4 { move-column-to-workspace 4; }
+    Mod+Shift+5 { move-column-to-workspace 5; }
+    Mod+Shift+6 { move-column-to-workspace 6; }
+    Mod+Shift+7 { move-column-to-workspace 7; }
+    Mod+Shift+8 { move-column-to-workspace 8; }
+    Mod+Shift+9 { move-column-to-workspace 9; }
+
+    // ── Layout ───────────────────────────────────────────────────────────
+    Mod+F { maximize-column; }
+    Mod+Shift+F { fullscreen-window; }
+    Mod+C { center-column; }
+
+    // ── Overview ─────────────────────────────────────────────────────────
+    Mod+O { toggle-overview; }
+
+    // ── Quit niri ────────────────────────────────────────────────────────
+    Mod+Shift+E { quit; }
+
+    // ── Reload config ────────────────────────────────────────────────────
+    Mod+Shift+R { reload-config; }
+
+    // ── Screenshot ───────────────────────────────────────────────────────
+    Print { screenshot; }
+    Ctrl+Print { screenshot-screen; }
+    Alt+Print { screenshot-window; }
+
+    // ── Audio ────────────────────────────────────────────────────────────
+    XF86AudioRaiseVolume { spawn-sh "noctalia msg volume-up"; }
+    XF86AudioLowerVolume { spawn-sh "noctalia msg volume-down"; }
+    XF86AudioMute        { spawn-sh "noctalia msg volume-mute"; }
+
+    // ── Brightness ───────────────────────────────────────────────────────
+    XF86MonBrightnessUp   { spawn-sh "noctalia msg brightness-up"; }
+    XF86MonBrightnessDown { spawn-sh "noctalia msg brightness-down"; }
+}
+
+// ── Laptop ───────────────────────────────────────────────────────────────────
+switch-events {
+    lid-close { spawn "noctalia" "msg" "session" "lock-and-suspend"; }
+}
+
+// ── Debug ────────────────────────────────────────────────────────────────────
+debug {
+    honor-xdg-activation-with-invalid-serial
+}

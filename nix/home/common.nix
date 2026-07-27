@@ -7,11 +7,12 @@
     ./programs/bash.nix
     ./programs/neovim.nix
     ./programs/alacritty.nix
+    ./programs/niri
   ];
 
   home = {
     inherit username;
-    homeDirectory = "/home/mccarnon";
+    homeDirectory = "/home/${username}";
     stateVersion = "26.05";
   };
 

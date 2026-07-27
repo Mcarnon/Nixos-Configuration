@@ -8,6 +8,11 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    noctalia = {
+      url = "github:noctalia-dev/noctalia";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = { nixpkgs, home-manager, ... }@inputs:
@@ -15,8 +20,6 @@
       system = "x86_64-linux";
       lib = nixpkgs.lib;
 
-      # 获取当前用户名
-      # 直接执行时取 USERNAME；sudo 下取 SUDO_USER
       username =
         let
           sudoUser = builtins.getEnv "SUDO_USER";
@@ -36,7 +39,7 @@
 
       nixosConfigurations = lib.mapAttrs (hostName: _: nixpkgs.lib.nixosSystem {
         inherit system;
-        specialArgs = { inherit username; };
+        specialArgs = { inherit username inputs; };
         modules = [
           ./hosts/common.nix
           ./hosts/${hostName}/default.nix
