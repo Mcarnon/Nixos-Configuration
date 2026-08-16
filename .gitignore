@@ -1,0 +1,13 @@
+# Nix build outputs
+result
+result-*
+
+# Secrets (used by agenix / sops if you add them later)
+secrets/
+*.age
+*.pem
+
+# Editor / tooling
+.direnv/
+*.swp
+*~
