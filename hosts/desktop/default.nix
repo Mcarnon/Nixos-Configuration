@@ -1,29 +1,18 @@
-# Desktop host configuration.
+# Desktop.
 { config, lib, pkgs, inputs, ... }:
 {
   imports = [
     ./hardware-configuration.nix
+    ../../modules/desktop.nix
   ];
 
-  my = {
-    role = "desktop";
-    hostName = "desktop";
-    timeZone = "Asia/Shanghai";
-  };
+  networking.hostName = "desktop";
 
-  # Boot loader (UEFI).
   boot.loader = {
     systemd-boot.enable = true;
     efi.canTouchEfiVariables = true;
   };
 
-  # TODO: enable your desktop environment here, e.g.:
-  # services.xserver.enable = true;
-  # services.xserver.displayManager.sddm.enable = true;
-  # services.xserver.desktopManager.plasma6.enable = true;
-
-  # System-wide packages (CLI tools, desktop apps, ...).
-  environment.systemPackages = with pkgs; [
-    # ...
-  ];
+  # TODO: replace hardware-configuration.nix with the desktop's real hardware,
+  # and add GPU-specific config here (NVIDIA/AMD) if needed.
 }

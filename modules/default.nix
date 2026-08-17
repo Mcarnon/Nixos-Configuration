@@ -1,20 +1,48 @@
 # Shared base configuration imported by every host.
-{ config, lib, pkgs, inputs, ... }:
+{ config, lib, pkgs, ... }:
+let
+  username = "mccarnon";
+in
 {
-  imports = [
-    ./options.nix
-    ./locale.nix
-    ./nix.nix
-    ./network.nix
-    ./security.nix
-    ./users.nix
-    ./home-manager.nix
-  ];
+  system.stateVersion = "26.05";
 
-  # Set this to the NixOS release of your *first* install and leave it alone.
-  # It only controls backwards-compatible defaults for stateful services.
-  system.stateVersion = "24.11";
+  # Locale & timezone.
+  i18n.defaultLocale = "en_US.UTF-8";
+  time.timeZone = "Asia/Shanghai";
 
-  # Include non-free firmware for common Wi-Fi / GPU devices.
+  # Nix.
+  nix.settings = {
+    experimental-features = [ "nix-command" "flakes" ];
+    auto-optimise-store = true;
+  };
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+    options = "--delete-older-than 7d";
+  };
+
+  # Network.
+  networking.networkmanager.enable = true;
+
+  # Firmware for Wi-Fi / GPU / Bluetooth.
   hardware.enableAllFirmware = true;
+
+  # Primary user account.
+  users.users.${username} = {
+    isNormalUser = true;
+    extraGroups = [ "wheel" "networkmanager" ];
+    # First boot: log in with "changeme" then run `passwd` (or use SSH keys).
+    initialPassword = "1234";
+  };
+
+  # Home-manager for the primary user.
+  home-manager = {
+    useGlobalPkgs = true;
+    useUserPackages = true;
+    users.${username} = {
+      imports = [ ../home ];
+      home.username = username;
+      home.stateVersion = config.system.stateVersion;
+    };
+  };
 }

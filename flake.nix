@@ -11,19 +11,22 @@
   };
 
   inputs = {
-    # Main package repository (rolling release), fetched from the TUNA mirror.
-    # Swap back to "github:NixOS/nixpkgs/nixos-unstable" if you prefer upstream.
-    nixpkgs.url = "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/nixpkgs-unstable/nixexprs.tar.xz";
+    # Main package repository, pinned to the NixOS 26.05 stable release via the
+    # TUNA mirror. Swap back to nixpkgs-unstable if you prefer a rolling release.
+    nixpkgs.url = "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/nixos-26.05/nixexprs.tar.xz";
 
-    # Declarative user environment. The repo itself is small, so it stays on
-    # GitHub (its nixpkgs follows the mirrored input above).
+    # Declarative user environment, matched to the NixOS 26.05 release branch.
     home-manager = {
-      url = "github:nix-community/home-manager";
+      url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Add more inputs here as needed, e.g. a stable channel via the mirror:
-    #   nixpkgs-stable.url = "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/nixos-24.11/nixexprs.tar.xz";
+    # Noctalia Wayland desktop shell (bar / launcher / notifications / ...).
+    # Its nixpkgs follows the mirrored input above so we reuse the TUNA cache.
+    noctalia = {
+      url = "github:noctalia-dev/noctalia";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =

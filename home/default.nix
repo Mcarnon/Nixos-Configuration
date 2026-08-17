@@ -159,8 +159,8 @@
         // Scrollable-tiling: consume / expel windows.
         Mod+BracketLeft  { consume-or-expel-window-left; }
         Mod+BracketRight { consume-or-expel-window-right; }
-        Mod+Comma  { consume-window-into-column; }
-        Mod+Period { expel-window-from-column; }
+        Mod+Backslash { consume-window-into-column; }
+        Mod+Period    { expel-window-from-column; }
     }
   '';
 }
