@@ -1,56 +1,30 @@
 {
-  description = "McCarnon's personal NixOS configuration";
+  description = "McCarnon's NixOS configuration";
 
-  # Settings applied to any `nix` command that uses this flake.
-  nixConfig = {
-    # TUNA (China) mirror of cache.nixos.org. It mirrors the official store, so
-    # the existing cache.nixos.org public keys already trust it (no extra keys).
-    extra-substituters = [
-      "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store"
-    ];
-  };
+  # 国内镜像加速（清华 TUNA 二进制缓存）。
+  nixConfig.extra-substituters = [
+    "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store"
+  ];
 
   inputs = {
-    # Main package repository, pinned to the NixOS 26.05 stable release via the
-    # TUNA mirror. Swap back to nixpkgs-unstable if you prefer a rolling release.
-    nixpkgs.url = "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/nixos-26.05/nixexprs.tar.xz";
-
-    # Declarative user environment, matched to the NixOS 26.05 release branch.
-    home-manager = {
-      url = "github:nix-community/home-manager/release-26.05";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    # Noctalia Wayland desktop shell (bar / launcher / notifications / ...).
-    # Its nixpkgs follows the mirrored input above so we reuse the TUNA cache.
-    noctalia = {
-      url = "github:noctalia-dev/noctalia";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    # 国内镜像源（滚动版）。想用稳定版把 `nixpkgs-unstable` 换成 `nixos-26.05`。
+    nixpkgs.url = "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/nixpkgs-unstable/nixexprs.tar.xz";
   };
 
-  outputs =
-    { self, nixpkgs, home-manager, ... }@inputs:
+  outputs = { nixpkgs, ... }:
     let
-      inherit (nixpkgs) lib;
-
       systems = [
         "x86_64-linux"
         "aarch64-linux"
       ];
-      forAllSystems = lib.genAttrs systems;
+      forAllSystems = nixpkgs.lib.genAttrs systems;
 
-      # Build a NixOS configuration for a host directory under `hosts/`.
-      mkHost = name:
-        lib.nixosSystem {
-          # `inputs` is exposed to every module so they can reach other flakes.
-          specialArgs = { inherit inputs; };
-          modules = [
-            ./modules # shared base configuration
-            ./hosts/${name}
-            home-manager.nixosModules.home-manager
-          ];
-        };
+      mkHost = name: nixpkgs.lib.nixosSystem {
+        modules = [
+          ./modules # 共享基础配置
+          ./hosts/${name}
+        ];
+      };
     in
     {
       nixosConfigurations = {
@@ -59,20 +33,15 @@
         vm = mkHost "vm";
       };
 
-      # `nix fmt` in this repository.
-      formatter = forAllSystems (
-        system: nixpkgs.legacyPackages.${system}.alejandra
-      );
+      formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.alejandra);
 
-      # Convenient shell for working on this repository.
-      devShells = forAllSystems (
-        system:
-        nixpkgs.legacyPackages.${system}.mkShell {
+      devShells = forAllSystems (system: {
+        default = nixpkgs.legacyPackages.${system}.mkShell {
           packages = with nixpkgs.legacyPackages.${system}; [
             alejandra
             git
           ];
-        }
-      );
+        };
+      });
     };
 }

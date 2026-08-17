@@ -1,21 +1,11 @@
-# Laptop (Intel Tiger Lake ultrabook).
-{ config, lib, pkgs, inputs, ... }:
+# Laptop.
+{ ... }:
 {
   imports = [
     ./hardware-configuration.nix
-    ../../modules/desktop.nix
   ];
 
   networking.hostName = "laptop";
 
-  boot.loader = {
-    systemd-boot.enable = true;
-    efi.canTouchEfiVariables = true;
-  };
-
-  # Laptop-specific hardware.
-  hardware.bluetooth.enable = true;
-  hardware.firmware = [ pkgs.sof-firmware ]; # Intel SOF audio (Tiger Lake)
-  zramSwap.enable = true;
-  services.thermald.enable = true;
+  # 引导、硬件、桌面等之后逐步添加。
 }

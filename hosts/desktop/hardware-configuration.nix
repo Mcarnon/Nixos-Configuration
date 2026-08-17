@@ -1,24 +1,14 @@
-# ==============================================================================
-#  HARDWARE CONFIGURATION — REPLACE THIS FILE
-# ==============================================================================
-#  This is only a placeholder so the configuration still evaluates.
+# 占位 —— 在真实机器上运行并覆盖本文件：
 #
-#  On the real machine run:
+#   sudo nixos-generate-config --show-hardware-config
 #
-#      sudo nixos-generate-config --show-hardware-config
-#
-#  and paste its output into this file. It contains the correct kernel modules,
-#  filesystem layout, swap devices and CPU microcode for your hardware.
-# ==============================================================================
-{ config, lib, pkgs, ... }:
+# 生成的内容包含：启动内核模块、文件系统、交换分区、CPU 微码等。
+{ config, lib, ... }:
 {
   boot.initrd.availableKernelModules = [ ];
-  boot.initrd.kernelModules = [ ];
-  boot.kernelModules = [ ];
-  boot.extraModulePackages = [ ];
 
   fileSystems."/" = {
-    device = "/dev/disk/by-label/nixos";
+    device = "/dev/disk/by-label/nixos"; # TODO: 替换为实际设备
     fsType = "ext4";
   };
 

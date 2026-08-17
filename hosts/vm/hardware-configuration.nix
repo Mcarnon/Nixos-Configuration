@@ -1,26 +1,14 @@
-# Hardware configuration for a generic QEMU/KVM guest.
+# 占位 —— 在真实机器上运行并覆盖本文件：
 #
-# If you use VirtualBox / VMware, regenerate this file on the VM with:
 #   sudo nixos-generate-config --show-hardware-config
-{ config, lib, pkgs, ... }:
+#
+# 生成的内容包含：启动内核模块、文件系统、交换分区、CPU 微码等。
+{ config, lib, ... }:
 {
-  boot.initrd.availableKernelModules = [
-    "ata_piix"
-    "uhci_hcd"
-    "xen_blkfront"
-    "vmw_vmci"
-    "virtio_pci"
-    "virtio_blk"
-    "virtio_scsi"
-    "ahci"
-    "sd_mod"
-  ];
-  boot.initrd.kernelModules = [ ];
-  boot.kernelModules = [ ];
-  boot.extraModulePackages = [ ];
+  boot.initrd.availableKernelModules = [ ];
 
   fileSystems."/" = {
-    device = "/dev/disk/by-label/nixos";
+    device = "/dev/disk/by-label/nixos"; # TODO: 替换为实际设备
     fsType = "ext4";
   };
 
