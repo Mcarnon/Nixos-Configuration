@@ -41,7 +41,6 @@
 
 ## 磁盘设计（tmpfs + btrfs 子卷）
 
-参考 Sakurafall 的做法，直接在 `hardware-configuration.nix` 里声明 `fileSystems`（不使用 disko）：
 
 - 根文件系统 `/` 挂载为 **tmpfs**，重启即清空（“erase your darlings”）。
 - 需要持久化的数据用独立的 btrfs 子卷挂载：
