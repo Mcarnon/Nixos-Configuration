@@ -1,5 +1,10 @@
-# 所有机器共享的基础配置（之后逐步添加）。
-{ ... }:
+# 模块汇总: 所有功能模块在此导入
 {
-  # 例如：用户、时区、网络、Nix 设置等。
+  imports = [
+    ./niri.nix
+    ./audio.nix
+    ./intel.nix
+    ./laptop.nix
+    ./ssh.nix
+  ];
 }

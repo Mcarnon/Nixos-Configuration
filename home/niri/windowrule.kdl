@@ -1,0 +1,26 @@
+// Noctalia 窗口规则与层规则
+
+// 所有窗口圆角
+window-rule {
+    geometry-corner-radius 20
+    clip-to-geometry true
+}
+
+// Noctalia 设置窗口悬浮并固定大小
+window-rule {
+    match app-id="dev.noctalia.Noctalia"
+    open-floating true
+    default-column-width { fixed 1080; }
+    default-window-height { fixed 920; }
+}
+
+// 允许 Noctalia 的通知动作与窗口激活
+debug {
+    honor-xdg-activation-with-invalid-serial
+}
+
+// Noctalia 壁纸层放到 niri overview 背景
+layer-rule {
+    match namespace="^noctalia-backdrop"
+    place-within-backdrop true
+}

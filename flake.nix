@@ -1,47 +1,43 @@
 {
-  description = "McCarnon's NixOS configuration";
+  description = "NixOS + Home Manager: niri + Noctalia on a Huawei Intel laptop";
 
-  # 国内镜像加速（清华 TUNA 二进制缓存）。
-  nixConfig.extra-substituters = [
-    "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store"
-  ];
-
-  inputs = {
-    # 国内镜像源（滚动版）。想用稳定版把 `nixpkgs-unstable` 换成 `nixos-26.05`。
-    nixpkgs.url = "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/nixpkgs-unstable/nixexprs.tar.xz";
+  # Noctalia 的二进制缓存 (省略此段则本地编译, 会很慢)。
+  # 注意: 要命中缓存, 下面的 noctalia input 不能对 nixpkgs 设置 `follows`。
+  nixConfig = {
+    extra-substituters = [ "https://noctalia.cachix.org" ];
+    extra-trusted-public-keys = [
+      "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4="
+    ];
   };
 
-  outputs = { nixpkgs, ... }:
-    let
-      systems = [
-        "x86_64-linux"
-        "aarch64-linux"
-      ];
-      forAllSystems = nixpkgs.lib.genAttrs systems;
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-      mkHost = name: nixpkgs.lib.nixosSystem {
-        modules = [
-          ./modules # 共享基础配置
-          ./hosts/${name}
-        ];
-      };
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # 锁定 `cachix` 分支: 始终指向最新一个已被 CI 预构建的提交。
+    noctalia.url = "github:noctalia-dev/noctalia/cachix";
+  };
+
+  outputs =
+    { self, nixpkgs, home-manager, noctalia, ... }@inputs:
+    let
+      system = "x86_64-linux";
     in
     {
-      nixosConfigurations = {
-        desktop = mkHost "desktop";
-        laptop = mkHost "laptop";
-        vm = mkHost "vm";
+      nixosConfigurations.huawei = nixpkgs.lib.nixosSystem {
+        inherit system;
+        # 把 inputs 传给所有模块, 让 home-manager 能拿到 noctalia 的模块
+        specialArgs = { inherit inputs; };
+        modules = [
+          ./configuration.nix
+          home-manager.nixosModules.home-manager
+        ];
       };
 
-      formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.alejandra);
-
-      devShells = forAllSystems (system: {
-        default = nixpkgs.legacyPackages.${system}.mkShell {
-          packages = with nixpkgs.legacyPackages.${system}; [
-            alejandra
-            git
-          ];
-        };
-      });
+      formatter.${system} = nixpkgs.legacyPackages.${system}.nixfmt-rfc-style;
     };
 }

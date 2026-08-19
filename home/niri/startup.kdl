@@ -1,0 +1,2 @@
+// 自动启动 Noctalia 桌面外壳
+spawn-at-startup "noctalia"
