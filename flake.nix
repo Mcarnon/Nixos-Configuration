@@ -1,10 +1,15 @@
 {
   description = "NixOS + Home Manager: niri + Noctalia on an Intel laptop";
 
-  # Noctalia binary cache (without this it will compile locally, slowly).
-  # Note: to hit the cache, the noctalia input below must NOT set `follows` on nixpkgs.
+  # Binary caches: Noctalia + CN mirrors (priority=5 means prefer mirrors
+  # over the default cache.nixos.org priority 40).
   nixConfig = {
-    extra-substituters = [ "https://noctalia.cachix.org" ];
+    extra-substituters = [
+      "https://noctalia.cachix.org"
+      "https://mirrors.ustc.edu.cn/nix-channels/store?priority=5"
+      "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store?priority=5"
+      "https://mirror.sjtu.edu.cn/nix-channels/store?priority=5"
+    ];
     extra-trusted-public-keys = [
       "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4="
     ];
