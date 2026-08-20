@@ -1,4 +1,4 @@
-# 用户环境 (Home Manager)
+# User environment (Home Manager)
 { config, pkgs, inputs, lib, ... }:
 {
   imports = [
@@ -6,21 +6,21 @@
     ./noctalia.nix
   ];
 
-  home.stateVersion = "25.05"; # TODO: 与主机 stateVersion 保持一致
+  home.stateVersion = "25.05"; # TODO: keep in sync with the host stateVersion
 
   home.packages = with pkgs; [
-    # 终端
+    # terminal
     foot
-    # 文件管理器 (niri 的 portal 文件选择器也依赖它)
+    # file manager (niri's portal file picker also depends on it)
     nautilus
-    # 截图
+    # screenshots
     grim
     slurp
-    # 剪贴板
+    # clipboard
     wl-clipboard
-    # 音量控制 (备用, Noctalia 自带 OSD)
+    # volume control (fallback; Noctalia has its own OSD)
     pamixer
-    # 常用工具
+    # common utilities
     xdg-utils
     tree
   ];

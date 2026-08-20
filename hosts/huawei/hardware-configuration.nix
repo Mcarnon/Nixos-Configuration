@@ -1,12 +1,12 @@
-# 硬件 + 磁盘挂载 (tmpfs 根 + btrfs 子卷)
+# Hardware + disk mounts (tmpfs root + btrfs subvolumes)
 #
-#   - 根文件系统 "/" 挂载为 tmpfs, 每次重启清空。
-#   - /nix /var /etc /home 分别在 btrfs 子卷上持久化。
+#   - The root filesystem "/" is mounted as tmpfs and wiped on every reboot.
+#   - /nix /var /etc /home persist on dedicated btrfs subvolumes.
 #
-# 首次安装前需要:
-#   1. 分区并格式化为 ESP(vfat) + btrfs。
-#   2. 在 btrfs 分区上创建子卷 @nix @var @etc @home (见 scripts/setup-btrfs.sh)。
-#   3. 用 `blkid` 找到 UUID, 替换下面的 <BTRFS-UUID> / <ESP-UUID>。
+# Before first install:
+#   1. Partition and format as ESP (vfat) + btrfs (use disko, see disko-fs.nix).
+#   2. Create subvolumes @nix @var @etc @home on the btrfs partition.
+#   3. Find the UUIDs with `blkid` and replace <BTRFS-UUID> / <ESP-UUID> below.
 { config, pkgs, lib, ... }:
 {
   boot.initrd.availableKernelModules = [
@@ -15,23 +15,23 @@
     "thunderbolt"
     "usb_storage"
     "sd_mod"
-    "rtsx_pci" # 部分华为机型读卡器
+    "rtsx_pci" # card reader on some Huawei models
   ];
   boot.kernelModules = [ "kvm-intel" ];
 
   hardware.enableAllFirmware = true;
   hardware.enableRedistributableFirmware = true;
 
-  # ---- tmpfs 根 + btrfs 子卷挂载 ----
+  # ---- tmpfs root + btrfs subvolume mounts ----
 
-  # 根分区 -> tmpfs (内存), 重启后清空
+  # Root -> tmpfs (RAM), cleared on reboot
   fileSystems."/" = {
     device = "none";
     fsType = "tmpfs";
     options = [ "defaults" "size=8G" "mode=755" ];
   };
 
-  # 下面四个 btrfs 子卷共用同一个分区 UUID (btrfs 分区)
+  # All four btrfs subvolumes share the same partition UUID (the btrfs partition)
   fileSystems."/nix" = {
     device = "/dev/disk/by-uuid/<BTRFS-UUID>";
     fsType = "btrfs";
@@ -56,13 +56,13 @@
     options = [ "subvol=@home" "compress=zstd" "noatime" ];
   };
 
-  # ESP (EFI 系统分区)
+  # ESP (EFI system partition)
   fileSystems."/boot" = {
     device = "/dev/disk/by-uuid/<ESP-UUID>";
     fsType = "vfat";
     options = [ "fmask=0022" "dmask=0022" ];
   };
 
-  # 可选 swap 分区 (按需取消注释)
+  # Optional swap partition (uncomment if needed)
   # swapDevices = [ { device = "/dev/disk/by-uuid/<SWAP-UUID>"; } ];
 }

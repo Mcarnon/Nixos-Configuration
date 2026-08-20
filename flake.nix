@@ -1,8 +1,8 @@
 {
   description = "NixOS + Home Manager: niri + Noctalia on a Huawei Intel laptop";
 
-  # Noctalia 的二进制缓存 (省略此段则本地编译, 会很慢)。
-  # 注意: 要命中缓存, 下面的 noctalia input 不能对 nixpkgs 设置 `follows`。
+  # Noctalia binary cache (without this it will compile locally, slowly).
+  # Note: to hit the cache, the noctalia input below must NOT set `follows` on nixpkgs.
   nixConfig = {
     extra-substituters = [ "https://noctalia.cachix.org" ];
     extra-trusted-public-keys = [
@@ -18,7 +18,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # 锁定 `cachix` 分支: 始终指向最新一个已被 CI 预构建的提交。
+    # Pin the `cachix` branch: always points to the latest CI-prebuilt commit.
     noctalia.url = "github:noctalia-dev/noctalia/cachix";
   };
 
@@ -30,10 +30,10 @@
     {
       nixosConfigurations.huawei = nixpkgs.lib.nixosSystem {
         inherit system;
-        # 把 inputs 传给所有模块, 让 home-manager 能拿到 noctalia 的模块
+        # Pass inputs to all modules so home-manager can reach noctalia's modules
         specialArgs = { inherit inputs; };
         modules = [
-          ./configuration.nix
+          ./hosts/huawei
           home-manager.nixosModules.home-manager
         ];
       };

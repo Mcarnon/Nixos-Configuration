@@ -1,9 +1,13 @@
-# 链接 niri 的 KDL 配置目录到 ~/.config/niri
-# (config.kdl 通过 include 拆分引用同目录下的子文件)
-{ config, pkgs, lib, ... }:
+# Link niri's KDL config to ~/.config/niri.
+# Shared config files are linked individually; the machine-specific output
+# config (niri-hardware.kdl) is passed in from the host.
+{ config, pkgs, lib, hostPath, ... }:
 {
-  xdg.configFile."niri" = {
-    source = ./niri;
-    recursive = true;
+  xdg.configFile = {
+    "niri/config.kdl".source = ./niri/config.kdl;
+    "niri/binds.kdl".source = ./niri/binds.kdl;
+    "niri/startup.kdl".source = ./niri/startup.kdl;
+    "niri/windowrule.kdl".source = ./niri/windowrule.kdl;
+    "niri/niri-hardware.kdl".source = hostPath + "/niri-hardware.kdl";
   };
 }

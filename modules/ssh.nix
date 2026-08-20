@@ -1,4 +1,4 @@
-# SSH: 连接另一台电脑远程同步/部署配置
+# SSH: connect to another machine to sync/deploy the config remotely
 { config, pkgs, lib, ... }:
 {
   programs.ssh = {
@@ -6,18 +6,18 @@
     startAgent = true;
 
     matchBlocks = {
-      # 远端电脑别名。运行 `ssh nixos-remote` 即可连接。
-      # 配套的同步脚本见 scripts/sync.sh
+      # Alias for the remote machine. Run `ssh nixos-remote` to connect.
+      # See scripts/sync.sh for the companion sync script.
       "nixos-remote" = {
-        hostname = "192.168.1.100"; # TODO: 改成远端 IP 或域名
-        user = "alice";             # TODO: 改成远端用户名
+        hostname = "192.168.1.100"; # TODO: set to the remote IP or hostname
+        user = "alice";             # TODO: set to the remote username
         # port = 22;
         # identityFile = "~/.ssh/id_ed25519";
       };
     };
   };
 
-  # 可选: 让本机也开启 sshd, 以便另一台电脑反向同步本机。
+  # Optional: also run sshd on this machine so another machine can sync to it.
   # services.openssh = {
   #   enable = true;
   #   settings.PasswordAuthentication = false;

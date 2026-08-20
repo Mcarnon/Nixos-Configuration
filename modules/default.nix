@@ -1,9 +1,8 @@
-# 模块汇总: 所有功能模块在此导入
+# Module summary: all functional modules are imported here
 {
   imports = [
     ./niri.nix
     ./audio.nix
-    ./intel.nix
     ./laptop.nix
     ./ssh.nix
   ];

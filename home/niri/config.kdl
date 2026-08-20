@@ -1,5 +1,5 @@
-// niri 主配置 - 华为笔记本 + Noctalia 桌面外壳
-// 子配置用 include 拆分到同目录下的 *.kdl
+// niri main config - Huawei laptop + Noctalia desktop shell
+// Sub-configs are split via include into *.kdl files in the same directory
 
 input {
     keyboard {
@@ -17,7 +17,7 @@ input {
     }
 }
 
-include "output.kdl"
+include "niri-hardware.kdl"
 include "startup.kdl"
 include "windowrule.kdl"
 include "binds.kdl"

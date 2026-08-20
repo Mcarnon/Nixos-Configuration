@@ -1,2 +1,2 @@
-// 自动启动 Noctalia 桌面外壳
+// Start the Noctalia desktop shell
 spawn-at-startup "noctalia"

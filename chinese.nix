@@ -1,4 +1,4 @@
-# 中文环境: locale / 字体 / Fcitx5 输入法
+# Chinese environment: locale / fonts / Fcitx5 input method
 { config, pkgs, lib, ... }:
 {
   i18n = {
@@ -17,21 +17,21 @@
     supportedLocales = [ "zh_CN.UTF-8/UTF-8" "en_US.UTF-8/UTF-8" ];
   };
 
-  # 输入法: Fcitx5 拼音 (如需雾凇拼音 Rime 可换成 fcitx5-rime + rime-ice)
+  # Input method: Fcitx5 Pinyin (swap to fcitx5-rime + rime-ice for Wusong Pinyin)
   i18n.inputMethod = {
     enable = true;
     type = "fcitx5";
     fcitx5 = {
       waylandFrontend = true;
       addons = with pkgs; [
-        fcitx5-chinese-addons       # 拼音
-        fcitx5-gtk                  # GTK 输入法模块
+        fcitx5-chinese-addons       # Pinyin
+        fcitx5-gtk                  # GTK input method modules
         qt6Packages.fcitx5-configtool
       ];
     };
   };
 
-  # 应用输入法环境变量
+  # Input method environment variables
   environment.variables = {
     GTK_IM_MODULE = "fcitx";
     QT_IM_MODULE = "fcitx";
@@ -40,14 +40,14 @@
     GLFW_IM_MODULE = "ibus";
   };
 
-  # 中文字体
+  # Chinese fonts
   fonts = {
     packages = with pkgs; [
       noto-fonts
-      noto-fonts-cjk-sans       # 思源黑体
-      noto-fonts-cjk-serif      # 思源宋体
+      noto-fonts-cjk-sans       # Source Han Sans
+      noto-fonts-cjk-serif      # Source Han Serif
       noto-fonts-color-emoji
-      nerd-fonts.jetbrains-mono # 等宽 + 图标字体
+      nerd-fonts.jetbrains-mono # monospace + icon font
       nerd-fonts.symbols-only
     ];
     fontconfig = {

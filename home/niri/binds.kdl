@@ -1,23 +1,23 @@
-// 快捷键
+// Keybindings
 binds {
-    // ---- Noctalia 核心快捷键 ----
+    // ---- Noctalia core keybindings ----
     Mod+Space { spawn-sh "noctalia msg panel-toggle launcher"; }
     Mod+S { spawn-sh "noctalia msg panel-toggle control-center"; }
     Mod+Comma { spawn-sh "noctalia msg settings-toggle"; }
     Alt+Tab { spawn-sh "noctalia msg window-switcher"; }
 
-    // ---- 音量 / 亮度 (交给 Noctalia 显示 OSD) ----
+    // ---- Volume / brightness (Noctalia shows the OSD) ----
     XF86AudioRaiseVolume { spawn-sh "noctalia msg volume-up"; }
     XF86AudioLowerVolume { spawn-sh "noctalia msg volume-down"; }
     XF86AudioMute { spawn-sh "noctalia msg volume-mute"; }
     XF86MonBrightnessUp { spawn-sh "noctalia msg brightness-up"; }
     XF86MonBrightnessDown { spawn-sh "noctalia msg brightness-down"; }
 
-    // ---- 启动程序 / 帮助 ----
+    // ---- Launch / help ----
     Mod+Return { spawn "foot"; }
     Mod+Shift+Slash { show-hotkey-overlay; }
 
-    // ---- 窗口操作 ----
+    // ---- Window actions ----
     Mod+Q { close-window; }
     Mod+V { toggle-window-floating; }
     Mod+F { maximize-column; }
@@ -27,7 +27,7 @@ binds {
     Mod+Minus { set-column-width "-10%"; }
     Mod+Equal { set-column-width "+10%"; }
 
-    // ---- 聚焦 / 移动 ----
+    // ---- Focus / move ----
     Mod+H { focus-column-left; }
     Mod+J { focus-window-down; }
     Mod+K { focus-window-up; }
@@ -39,7 +39,7 @@ binds {
     Mod+Shift+H { focus-monitor-left; }
     Mod+Shift+L { focus-monitor-right; }
 
-    // ---- 工作区 ----
+    // ---- Workspaces ----
     Mod+Page_Down { focus-workspace-down; }
     Mod+Page_Up { focus-workspace-up; }
     Mod+1 { focus-workspace 1; }
@@ -61,13 +61,13 @@ binds {
     Mod+Ctrl+8 { move-column-to-workspace 8; }
     Mod+Ctrl+9 { move-column-to-workspace 9; }
 
-    // ---- 截图 ----
+    // ---- Screenshots ----
     Print { screenshot; }
     Ctrl+Print { screenshot-screen; }
     Alt+Print { screenshot-window; }
 
-    // ---- 锁屏 / 退出 ----
-    // Noctalia 自带锁屏 (若 IPC 命令不同请按需调整)
+    // ---- Lock / quit ----
+    // Noctalia's built-in lock screen (adjust if the IPC command differs)
     Super+Alt+L { spawn-sh "noctalia msg session lock"; }
     Mod+Shift+E { quit; }
     Mod+Shift+P { power-off-monitors; }

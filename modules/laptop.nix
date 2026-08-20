@@ -1,21 +1,21 @@
-# 笔记本电源 / 蓝牙 / 固件管理
+# Laptop power / bluetooth / firmware management
 { config, pkgs, lib, ... }:
 {
-  # 蓝牙
+  # Bluetooth
   hardware.bluetooth.enable = true;
   hardware.bluetooth.powerOnBoot = true;
 
-  # 电源与硬件抽象 (Noctalia 的电池/电源面板依赖这些)
+  # Power & hardware abstraction (Noctalia's battery/power panel depends on these)
   services.upower.enable = true;
   services.power-profiles-daemon.enable = true;
 
-  # Intel 温控
+  # Intel thermal management
   services.thermald.enable = true;
 
-  # 固件升级 (华为部分机型通过 fwupd 下发固件)
+  # Firmware updates (some Huawei models ship firmware via fwupd)
   services.fwupd.enable = true;
 
-  # 合盖挂起
+  # Suspend on lid close
   services.logind.lidSwitch = "suspend";
   services.logind.lidSwitchExternalPower = "suspend";
 }

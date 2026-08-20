@@ -1,126 +1,117 @@
-# NixOS + Flake + Home Manager — 华为笔记本 (niri + Noctalia)
+# NixOS + Flake + Home Manager
 
-面向华为笔记本 (Intel CPU + Iris 核显) 的 NixOS 配置，包含：
+## Features
 
-- **Flake + Home Manager** 声明式管理
-- **tmpfs 根分区** + 细粒度 **btrfs 子卷**（`nix` / `var` / `etc` / `home`）
-- **niri** 可滚动平铺 Wayland 合成器 + **Noctalia** 桌面外壳
-- **Intel Iris Xe** 图形加速（VA-API）
-- **中文环境**（locale + 字体 + Fcitx5 输入法）
-- **SSH 远程同步 / 部署**到另一台电脑
+- **Flake + Home Manager** declarative management
+- **disko** partitioning as code (tmpfs root + fine-grained btrfs subvolumes)
+- **hosts/<host>/** machine-specific isolation (hardware / disks / display)
+- **niri** scrollable-tiling Wayland compositor + **Noctalia** desktop shell
+- **Intel Iris Xe** graphics acceleration (VA-API)
+- **Chinese environment** (locale + fonts + Fcitx5 input method)
+- **SSH remote sync / deploy** to another machine
 
-## 目录结构
+## Directory structure
 
 ```
 .
-├── flake.nix                    # flake 入口 (inputs + nixosConfigurations)
-├── configuration.nix            # 主机主配置 (用户/引导/网络/nix/home-manager 接线)
-├── hardware-configuration.nix   # 硬件 + tmpfs 根 + btrfs 子卷挂载
-├── chinese.nix                  # 中文 locale / 字体 / Fcitx5 输入法
-├── modules/
-│   ├── default.nix              # 模块汇总
-│   ├── niri.nix                 # niri + greetd 登录
+├── flake.nix                    # flake entry (inputs + nixosConfigurations.huawei)
+├── chinese.nix                  # Chinese locale / fonts / Fcitx5 input method (shared)
+├── hosts/
+│   └── huawei/                  # machine-specific
+│       ├── default.nix          # host main config (user/boot/network/nix/home-manager wiring)
+│       ├── hardware-configuration.nix  # tmpfs root + btrfs subvolume mounts
+│       ├── disko-fs.nix         # partitioning as code (disko)
+│       ├── intel.nix            # Intel microcode + Iris Xe
+│       └── niri-hardware.kdl    # display / output config
+├── modules/                     # shared system modules
+│   ├── default.nix              # module summary
+│   ├── niri.nix                 # niri + greetd login
 │   ├── audio.nix                # PipeWire
-│   ├── intel.nix                # Intel 微码 + Iris Xe
-│   ├── laptop.nix               # 电源 / 蓝牙 / fwupd
-│   └── ssh.nix                  # SSH 客户端 + 远端主机别名
-├── home/
-│   ├── default.nix              # 用户环境 (Home Manager)
-│   ├── niri.nix                 # 链接 niri 配置目录
-│   ├── noctalia.nix             # Noctalia 配置
-│   └── niri/                    # niri KDL 配置 (拆分)
-│       ├── config.kdl           # 主配置 (include 子文件)
-│       ├── binds.kdl            # 快捷键
-│       ├── output.kdl           # 输出
-│       ├── startup.kdl          # 自启动
-│       └── windowrule.kdl       # 窗口/层规则
+│   ├── laptop.nix               # power / bluetooth / fwupd
+│   └── ssh.nix                  # SSH client + remote host alias
+├── home/                        # user environment (Home Manager)
+│   ├── default.nix
+│   ├── niri.nix                 # links niri config (incl. host's niri-hardware.kdl)
+│   ├── noctalia.nix             # Noctalia config
+│   └── niri/                    # shared niri KDL config
+│       ├── config.kdl           # main config (includes sub-files)
+│       ├── binds.kdl            # keybindings
+│       ├── startup.kdl          # startup commands
+│       └── windowrule.kdl       # window / layer rules
 └── scripts/
-    ├── setup-btrfs.sh           # 一次性创建 btrfs 子卷
-    └── sync.sh                  # SSH 同步/部署
+    └── sync.sh                  # SSH sync / deploy
 ```
 
-## 磁盘设计（tmpfs + btrfs 子卷）
+## Disk layout (tmpfs + btrfs subvolumes)
 
+- The root filesystem `/` is mounted as **tmpfs** and is wiped on every reboot ("erase your darlings").
+- Data that must persist lives on dedicated btrfs subvolumes:
 
-- 根文件系统 `/` 挂载为 **tmpfs**，重启即清空（“erase your darlings”）。
-- 需要持久化的数据用独立的 btrfs 子卷挂载：
+| subvolume | mountpoint | contents |
+|-----------|------------|----------|
+| `@nix`  | `/nix`  | Nix store (must persist) |
+| `@var`  | `/var`  | logs, runtime state |
+| `@etc`  | `/etc`  | machine-id, SSH host keys, etc. |
+| `@home` | `/home` | user data |
 
-| 子卷   | 挂载点  | 内容 |
-|--------|---------|------|
-| `@nix`  | `/nix`  | Nix store（必须持久） |
-| `@var`  | `/var`  | 日志、运行状态 |
-| `@etc`  | `/etc`  | `machine-id`、SSH 主机密钥等 |
-| `@home` | `/home` | 用户数据 |
+`/boot` is a separate EFI system partition (ESP).
 
-`/boot` 是独立的 EFI 系统分区（ESP）。
+## SSH remote sync / deploy
 
-## 安装
-
-1. 用 NixOS 安装 ISO 启动。
-2. 分区：创建 ESP（类型 `EF00`，约 1G）+ 一个 btrfs 分区（其余空间）。
-3. 格式化：
-   ```bash
-   mkfs.fat -F 32 -n BOOT /dev/nvme0n1p1        # ESP
-   mkfs.btrfs -f -L nixos /dev/nvme0n1p2        # btrfs
-   ```
-4. 创建子卷并挂载：
-   ```bash
-   mount /dev/nvme0n1p2 /mnt
-   ./scripts/setup-btrfs.sh /mnt
-   umount /mnt
-
-   mount -t tmpfs none /mnt
-   mkdir -p /mnt/{boot,nix,var,etc,home}
-   mount /dev/nvme0n1p1 /mnt/boot
-   mount -o subvol=@nix,compress=zstd,noatime  /dev/nvme0n1p2 /mnt/nix
-   mount -o subvol=@var,compress=zstd,noatime  /dev/nvme0n1p2 /mnt/var
-   mount -o subvol=@etc,compress=zstd,noatime  /dev/nvme0n1p2 /mnt/etc
-   mount -o subvol=@home,compress=zstd,noatime /dev/nvme0n1p2 /mnt/home
-   ```
-   > 设备名以 `lsblk` 为准（常见 `/dev/nvme0n1` 或 `/dev/nvme1n1`）。
-5. 查 UUID 并填入 `hardware-configuration.nix`：
-   ```bash
-   blkid
-   ```
-   把 btrfs 分区的 UUID 填到 `<BTRFS-UUID>`，ESP 的 UUID 填到 `<ESP-UUID>`。
-6. 安装：
-   ```bash
-   sudo nixos-install --flake .#huawei
-   ```
-7. 重启后通过 greetd 登录进入 niri。
-
-## 首次使用前要改的东西
-
-| 位置 | 内容 |
-|------|------|
-| `hardware-configuration.nix` | 磁盘 UUID（`blkid` 查看） |
-| `configuration.nix` | 用户名 `userName`、`hostName`、`stateVersion` |
-| `modules/ssh.nix` | 远端电脑 IP / 用户名 |
-| `home/noctalia.nix` | 壁纸路径、主题 |
-| `chinese.nix` | 输入法方案（如需 Rime 雾凇拼音） |
-
-## SSH 远程同步 / 部署
-
-配置里定义了 SSH 别名 `nixos-remote`（见 `modules/ssh.nix`），先改成你的远端电脑地址。
+An SSH alias `nixos-remote` is defined in `modules/ssh.nix` — change it to your remote machine's address first.
 
 ```bash
 chmod +x scripts/sync.sh
 
-./scripts/sync.sh push    # 把本机配置推到远端
-./scripts/sync.sh pull    # 从远端拉取配置
-./scripts/sync.sh deploy  # 推送 + 远端 nixos-rebuild 切换
+./scripts/sync.sh push    # push this machine's config to the remote
+./scripts/sync.sh pull    # pull config from the remote
+./scripts/sync.sh deploy  # push + remote nixos-rebuild switch
 ```
 
-也可以直接用 NixOS 内置的远程部署：
+Or use NixOS's built-in remote deployment:
 
 ```bash
 nixos-rebuild switch --flake .#huawei --target-host alice@192.168.1.100
 ```
 
-## 说明与可选增强
+## Installation
 
-- **Noctalia 二进制缓存**：已在 `flake.nix` / `configuration.nix` 配置 Cachix；`noctalia` 输入锁定 `cachix` 分支，且未对 nixpkgs 设置 `follows`（否则失去缓存）。
-- **impermanence**：当前直接用 btrfs 子卷做持久化。若想让 `/etc`、`/home` 也变成 tmpfs、只持久化少量文件，可引入 `nix-community/impermanence`。
-- **polkit 认证代理**：niri 本身不带图形 polkit agent，需要 GUI 提权时可自行添加（如 `polkit_gnome`）。
-- **XWayland**：默认关闭，需要运行 X11 程序可参考 niri 文档配置 `xwayland-satellite`。
-- **锁屏**：Noctalia 自带锁屏，快捷键 `Super+Alt+L`；合盖挂起默认交给 logind。
+disko performs partitioning + formatting + subvolume creation + mounting in one step (it wipes the target disk — fresh installs only).
+
+1. Boot the NixOS installation ISO, connect to the network, and `git clone` this repo.
+2. Change `device` in `hosts/huawei/disko-fs.nix` to your actual disk (see `lsblk`).
+3. Partition, format, create subvolumes and mount:
+   ```bash
+   nix run github:nix-community/disko -- --mode disko ./hosts/huawei/disko-fs.nix
+   ```
+4. Generate the hardware config and fill in the UUIDs:
+   ```bash
+   nixos-generate-config --root /mnt
+   blkid
+   ```
+   Fill the btrfs partition UUID into `<BTRFS-UUID>` and the ESP UUID into `<ESP-UUID>` in `hosts/huawei/hardware-configuration.nix`.
+5. Install:
+   ```bash
+   sudo nixos-install --flake .#huawei
+   ```
+6. Reboot and log in via greetd into niri.
+
+## Things to change before first use
+
+| Location | What |
+|----------|------|
+| `hosts/huawei/disko-fs.nix` | target disk `device` |
+| `hosts/huawei/hardware-configuration.nix` | disk UUIDs (see `blkid`) |
+| `hosts/huawei/default.nix` | user name `userName`, `hostName`, `stateVersion` |
+| `hosts/huawei/niri-hardware.kdl` | display resolution / scale |
+| `modules/ssh.nix` | remote IP / user |
+| `home/noctalia.nix` | wallpaper path, theme |
+| `chinese.nix` | input method (e.g. Rime Wusong Pinyin if desired) |
+
+## Notes & optional enhancements
+
+- **Noctalia binary cache**: configured in `flake.nix` / `hosts/huawei/default.nix` via Cachix; the `noctalia` input is pinned to the `cachix` branch and intentionally does **not** set `follows` on nixpkgs (otherwise the cache is lost).
+- **impermanence**: this setup persists state directly with btrfs subvolumes. If you want `/etc` and `/home` on tmpfs too, persisting only a few files, add `nix-community/impermanence`.
+- **polkit auth agent**: niri ships no graphical polkit agent; add one (e.g. `polkit_gnome`) if you need GUI privilege prompts.
+- **XWayland**: off by default; configure `xwayland-satellite` per the niri docs if you need X11 apps.
+- **Lock screen**: Noctalia has a built-in lock screen bound to `Super+Alt+L`; lid-close suspend is handled by logind.

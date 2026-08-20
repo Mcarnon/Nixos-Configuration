@@ -1,31 +1,32 @@
-# 主机主配置: 用户 / 引导 / 网络 / Nix 设置 / Home Manager 接线
+# Host main config: user / boot / network / Nix settings / Home Manager wiring
 { config, pkgs, inputs, lib, ... }:
 
 let
-  # TODO: 改成你的用户名
+  # TODO: change to your username
   userName = "alice";
 in
 {
   imports = [
     ./hardware-configuration.nix
-    ./chinese.nix
-    ./modules
+    ./intel.nix
+    ../../modules
+    ../../chinese.nix
   ];
 
-  # ---- 引导 ----
+  # ---- Boot ----
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
   boot.supportedFilesystems = [ "btrfs" ];
-  # tmpfs 根模式需要在 initrd 里启用 systemd (见 hardware-configuration.nix)
+  # tmpfs root mode requires systemd in the initrd (see hardware-configuration.nix)
   boot.initrd.systemd.enable = true;
 
-  # ---- 网络 / 主机 ----
-  networking.hostName = "huawei"; # TODO: 按需修改
+  # ---- Network / host ----
+  networking.hostName = "huawei"; # TODO: change as needed
   networking.networkmanager.enable = true;
 
   time.timeZone = "Asia/Shanghai";
 
-  # ---- 用户 ----
+  # ---- User ----
   users.users.${userName} = {
     isNormalUser = true;
     description = "Huawei laptop user";
@@ -41,24 +42,27 @@ in
     # shell = pkgs.fish;
   };
 
-  # ---- Wayland / niri 环境变量 ----
-  # Ozone Wayland: Electron/Chromium 应用自动走 Wayland
+  # ---- Wayland / niri environment variables ----
+  # Ozone Wayland: Electron/Chromium apps automatically use Wayland
   environment.sessionVariables = {
     NIXOS_OZONE_WAYLAND = "1";
     XDG_CURRENT_DESKTOP = "niri";
   };
 
-  # ---- Home Manager 作为 NixOS 模块接入 ----
+  # ---- Home Manager wired in as a NixOS module ----
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
-    extraSpecialArgs = { inherit inputs; };
+    extraSpecialArgs = {
+      inherit inputs;
+      hostPath = ./.;
+    };
     users.${userName} = {
-      imports = [ ./home ];
+      imports = [ ../../home ];
     };
   };
 
-  # ---- Nix 设置 ----
+  # ---- Nix settings ----
   nix = {
     settings = {
       experimental-features = [ "nix-command" "flakes" ];
@@ -75,7 +79,7 @@ in
     };
   };
 
-  # TODO: 改成你首次安装时的 NixOS 版本号 (影响后续升级兼容性)
+  # TODO: set to the NixOS version at first install (affects upgrade compatibility)
   system.stateVersion = "25.05";
 
   environment.systemPackages = with pkgs; [
