@@ -8,7 +8,6 @@
 - **niri** scrollable-tiling Wayland compositor + **Noctalia** desktop shell
 - **Intel Iris Xe** graphics acceleration (VA-API)
 - **Chinese environment** (locale + fonts + Fcitx5 input method)
-- **SSH remote sync / deploy** to another machine
 
 ## Directory structure
 
@@ -27,19 +26,16 @@
 │   ├── default.nix              # module summary
 │   ├── niri.nix                 # niri + greetd login
 │   ├── audio.nix                # PipeWire
-│   ├── laptop.nix               # power / bluetooth / fwupd
-│   └── ssh.nix                  # SSH client + remote host alias
-├── home/                        # user environment (Home Manager)
-│   ├── default.nix
-│   ├── niri.nix                 # links niri config (incl. host's niri-hardware.kdl)
-│   ├── noctalia.nix             # Noctalia config
-│   └── niri/                    # shared niri KDL config
-│       ├── config.kdl           # main config (includes sub-files)
-│       ├── binds.kdl            # keybindings
-│       ├── startup.kdl          # startup commands
-│       └── windowrule.kdl       # window / layer rules
-└── scripts/
-    └── sync.sh                  # SSH sync / deploy
+│   └── laptop.nix               # power / bluetooth / fwupd
+└── home/                        # user environment (Home Manager)
+    ├── default.nix
+    ├── niri.nix                 # links niri config (incl. host's niri-hardware.kdl)
+    ├── noctalia.nix             # Noctalia config
+    └── niri/                    # shared niri KDL config
+        ├── config.kdl           # main config (includes sub-files)
+        ├── binds.kdl            # keybindings
+        ├── startup.kdl          # startup commands
+        └── windowrule.kdl       # window / layer rules
 ```
 
 ## Disk layout (tmpfs + btrfs subvolumes)
@@ -55,24 +51,6 @@
 | `@home` | `/home` | user data |
 
 `/boot` is a separate EFI system partition (ESP).
-
-## SSH remote sync / deploy
-
-An SSH alias `nixos-remote` is defined in `modules/ssh.nix` — change it to your remote machine's address first.
-
-```bash
-chmod +x scripts/sync.sh
-
-./scripts/sync.sh push    # push this machine's config to the remote
-./scripts/sync.sh pull    # pull config from the remote
-./scripts/sync.sh deploy  # push + remote nixos-rebuild switch
-```
-
-Or use NixOS's built-in remote deployment:
-
-```bash
-nixos-rebuild switch --flake .#laptop --target-host alice@192.168.1.100
-```
 
 ## Installation
 
@@ -104,7 +82,6 @@ disko performs partitioning + formatting + subvolume creation + mounting in one 
 | `hosts/laptop/hardware-configuration.nix` | disk UUIDs (see `blkid`) |
 | `hosts/laptop/default.nix` | user name `userName`, `hostName`, `stateVersion` |
 | `hosts/laptop/niri-hardware.kdl` | display resolution / scale |
-| `modules/ssh.nix` | remote IP / user |
 | `home/noctalia.nix` | wallpaper path, theme |
 | `chinese.nix` | input method (e.g. Rime Wusong Pinyin if desired) |
 
