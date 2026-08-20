@@ -9,8 +9,8 @@
       # Alias for the remote machine. Run `ssh nixos-remote` to connect.
       # See scripts/sync.sh for the companion sync script.
       "nixos-remote" = {
-        hostname = "192.168.1.100"; # TODO: set to the remote IP or hostname
-        user = "alice";             # TODO: set to the remote username
+        hostname = "192.168.2.68"; # TODO: set to the remote IP or hostname
+        user = "mccarnon";             # TODO: set to the remote username
         # port = 22;
         # identityFile = "~/.ssh/id_ed25519";
       };

@@ -3,7 +3,7 @@
 # partitioning commands.
 #
 # Run from the NixOS installation ISO (wipes the target disk; fresh installs only):
-#   nix run github:nix-community/disko -- --mode disko ./hosts/huawei/disko-fs.nix
+#   nix run github:nix-community/disko -- --mode disko ./hosts/laptop/disko-fs.nix
 #
 # Afterwards you still need `nixos-generate-config --root /mnt` to generate the
 # hardware-configuration.nix, then fill in the real UUIDs in ./hardware-configuration.nix.

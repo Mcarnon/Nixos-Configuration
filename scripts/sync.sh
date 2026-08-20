@@ -38,7 +38,7 @@ do_push() {
 case "${1:-}" in
   push)
     do_push
-    echo "==> Done. On the remote run: sudo nixos-rebuild switch --flake ${REMOTE_DIR}#huawei"
+    echo "==> Done. On the remote run: sudo nixos-rebuild switch --flake ${REMOTE_DIR}#laptop"
     ;;
   pull)
     echo "==> Pulling config from ${REMOTE}:${REMOTE_DIR}"
@@ -49,7 +49,7 @@ case "${1:-}" in
   deploy)
     do_push
     echo "==> Rebuilding and switching on the remote"
-    ssh "${REMOTE}" "cd ${REMOTE_DIR} && sudo nixos-rebuild switch --flake .#huawei"
+    ssh "${REMOTE}" "cd ${REMOTE_DIR} && sudo nixos-rebuild switch --flake .#laptop"
     ;;
   *)
     usage

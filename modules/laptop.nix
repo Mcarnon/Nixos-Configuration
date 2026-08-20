@@ -12,7 +12,7 @@
   # Intel thermal management
   services.thermald.enable = true;
 
-  # Firmware updates (some Huawei models ship firmware via fwupd)
+  # Firmware updates (some laptops ship firmware via fwupd)
   services.fwupd.enable = true;
 
   # Suspend on lid close

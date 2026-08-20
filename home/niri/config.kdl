@@ -1,4 +1,4 @@
-// niri main config - Huawei laptop + Noctalia desktop shell
+// niri main config - laptop + Noctalia desktop shell
 // Sub-configs are split via include into *.kdl files in the same directory
 
 input {

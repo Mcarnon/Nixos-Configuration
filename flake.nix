@@ -1,5 +1,5 @@
 {
-  description = "NixOS + Home Manager: niri + Noctalia on a Huawei Intel laptop";
+  description = "NixOS + Home Manager: niri + Noctalia on an Intel laptop";
 
   # Noctalia binary cache (without this it will compile locally, slowly).
   # Note: to hit the cache, the noctalia input below must NOT set `follows` on nixpkgs.
@@ -28,12 +28,12 @@
       system = "x86_64-linux";
     in
     {
-      nixosConfigurations.huawei = nixpkgs.lib.nixosSystem {
+      nixosConfigurations.laptop = nixpkgs.lib.nixosSystem {
         inherit system;
         # Pass inputs to all modules so home-manager can reach noctalia's modules
         specialArgs = { inherit inputs; };
         modules = [
-          ./hosts/huawei
+          ./hosts/laptop
           home-manager.nixosModules.home-manager
         ];
       };

@@ -15,7 +15,7 @@
     "thunderbolt"
     "usb_storage"
     "sd_mod"
-    "rtsx_pci" # card reader on some Huawei models
+    "rtsx_pci" # card reader on some laptops
   ];
   boot.kernelModules = [ "kvm-intel" ];
 

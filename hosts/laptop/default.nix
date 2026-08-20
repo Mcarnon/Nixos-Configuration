@@ -3,7 +3,7 @@
 
 let
   # TODO: change to your username
-  userName = "alice";
+  userName = "mccarnon";
 in
 {
   imports = [
@@ -21,7 +21,7 @@ in
   boot.initrd.systemd.enable = true;
 
   # ---- Network / host ----
-  networking.hostName = "huawei"; # TODO: change as needed
+  networking.hostName = "nixos"; # TODO: change as needed
   networking.networkmanager.enable = true;
 
   time.timeZone = "Asia/Shanghai";
@@ -29,7 +29,7 @@ in
   # ---- User ----
   users.users.${userName} = {
     isNormalUser = true;
-    description = "Huawei laptop user";
+    description = "Laptop user";
     extraGroups = [
       "wheel"
       "networkmanager"
@@ -80,7 +80,7 @@ in
   };
 
   # TODO: set to the NixOS version at first install (affects upgrade compatibility)
-  system.stateVersion = "25.05";
+  system.stateVersion = "26.05";
 
   environment.systemPackages = with pkgs; [
     git
