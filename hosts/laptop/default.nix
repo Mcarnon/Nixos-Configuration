@@ -69,6 +69,8 @@ in
     settings = {
       experimental-features = [ "nix-command" "flakes" ];
       auto-optimise-store = true;
+      # Trust this user so flake-level substituters (noctalia cachix, CN mirrors) apply
+      trusted-users = [ "root" userName ];
     };
     gc = {
       automatic = true;
