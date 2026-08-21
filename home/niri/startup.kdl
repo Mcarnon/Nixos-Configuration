@@ -1,0 +1,2 @@
+// Start the Noctalia desktop shell
+spawn-at-startup "noctalia"

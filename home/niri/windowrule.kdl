@@ -1,0 +1,26 @@
+// Noctalia window & layer rules
+
+// Rounded corners for all windows
+window-rule {
+    geometry-corner-radius 20
+    clip-to-geometry true
+}
+
+// Noctalia settings window: floating with a fixed size
+window-rule {
+    match app-id="dev.noctalia.Noctalia"
+    open-floating true
+    default-column-width { fixed 1080; }
+    default-window-height { fixed 920; }
+}
+
+// Allow Noctalia notification actions and window activation
+debug {
+    honor-xdg-activation-with-invalid-serial
+}
+
+// Put the Noctalia wallpaper layer behind the niri overview
+layer-rule {
+    match namespace="^noctalia-backdrop"
+    place-within-backdrop true
+}
