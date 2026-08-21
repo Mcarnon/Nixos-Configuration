@@ -26,8 +26,7 @@
 │   ├── default.nix              # module summary
 │   ├── niri.nix                 # niri + greetd login
 │   ├── audio.nix                # PipeWire
-│   ├── laptop.nix               # power / bluetooth / fwupd
-│   └── ssh.nix                  # SSH client aliases
+│   └── laptop.nix               # power / bluetooth / fwupd
 └── home/                        # user environment (Home Manager)
     ├── default.nix
     ├── niri.nix                 # links niri config (incl. host's niri-hardware.kdl)
