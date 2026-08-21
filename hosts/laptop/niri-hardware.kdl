@@ -1,6 +1,0 @@
-// Output config: the laptop's built-in panel is usually eDP-1; auto-detected if unset.
-// Uncomment to pin a resolution/scale:
-/-output "eDP-1" {
-    // mode "1920x1080@120"
-    // scale 1
-}
