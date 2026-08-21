@@ -67,7 +67,7 @@ disko performs partitioning + formatting + subvolume creation + mounting in one 
    nixos-generate-config --root /mnt
    blkid
    ```
-   Fill the btrfs partition UUID into `<BTRFS-UUID>` and the ESP UUID into `<ESP-UUID>` in `hosts/laptop/hardware-configuration.nix`.
+   Fill the btrfs partition UUID into `<BTRFS-UUID>`, the ESP UUID into `<ESP-UUID>`, and the swap partition UUID into `<SWAP-UUID>` in `hosts/laptop/hardware-configuration.nix`.
 5. Install:
    ```bash
    sudo nixos-install --flake .#laptop

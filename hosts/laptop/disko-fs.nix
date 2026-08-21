@@ -31,6 +31,12 @@
               mountOptions = [ "fmask=0022" "dmask=0022" ];
             };
           };
+          # Swap partition (kept in sync with swapDevices in hardware-configuration.nix;
+          # must come before "root" because root takes 100% of the remaining space)
+          swap = {
+            size = "8G";
+            content = { type = "swap"; };
+          };
           root = {
             size = "100%";
             content = {
@@ -56,11 +62,6 @@
               };
             };
           };
-          # Optional swap partition (kept in sync with hardware-configuration.nix; uncomment if needed)
-          # swap = {
-          #   size = "8G";
-          #   content = { type = "swap"; };
-          # };
         };
       };
     };

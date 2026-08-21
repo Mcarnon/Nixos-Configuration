@@ -10,9 +10,6 @@
     enable32Bit = true;
     extraPackages = with pkgs; [
       intel-media-driver # VA-API (iHD driver for Iris Xe)
-      intel-gpu-tools    # debug tools like intel_gpu_top
-      libva-vdpau-driver
-      libvdpau-va-gl
       # intel-compute-runtime # OpenCL, large, enable on demand
     ];
   };
@@ -21,4 +18,9 @@
     # Force the iHD driver (Iris Xe is Gen12+)
     LIBVA_DRIVER_NAME = "iHD";
   };
+
+  # Debug tools (e.g. intel_gpu_top)
+  environment.systemPackages = with pkgs; [
+    intel-gpu-tools
+  ];
 }
