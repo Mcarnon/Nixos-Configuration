@@ -30,6 +30,8 @@ in
   users.users.${userName} = {
     isNormalUser = true;
     description = "Laptop user";
+    # Only applied when the user account is first created; change it after first login
+    initialPassword = "1234";
     extraGroups = [
       "wheel"
       "networkmanager"
@@ -59,7 +61,6 @@ in
     };
     users.${userName} = {
       imports = [ ../../home ];
-      initialPassword = "change-me";
     };
   };
 
@@ -76,7 +77,7 @@ in
     };
   };
 
-  # TODO: set to the NixOS version at first install (affects upgrade compatibility)
+  # Set once at first install and never bump (it controls upgrade compatibility).
   system.stateVersion = "26.05";
 
   environment.systemPackages = with pkgs; [

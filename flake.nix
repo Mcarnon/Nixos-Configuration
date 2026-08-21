@@ -31,9 +31,11 @@
     { self, nixpkgs, home-manager, noctalia, ... }@inputs:
     let
       system = "x86_64-linux";
+      pkgs = nixpkgs.legacyPackages.${system};
+      lib = nixpkgs.lib;
     in
     {
-      nixosConfigurations.laptop = nixpkgs.lib.nixosSystem {
+      nixosConfigurations.laptop = lib.nixosSystem {
         inherit system;
         # Pass inputs to all modules so home-manager can reach noctalia's modules
         specialArgs = { inherit inputs; };
@@ -43,6 +45,6 @@
         ];
       };
 
-      formatter.${system} = nixpkgs.legacyPackages.${system}.nixfmt-rfc-style;
+      formatter.${system} = pkgs.nixfmt-rfc-style;
     };
 }

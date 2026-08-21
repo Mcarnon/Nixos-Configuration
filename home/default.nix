@@ -6,7 +6,8 @@
     ./noctalia.nix
   ];
 
-  home.stateVersion = "26.05"; # TODO: keep in sync with the host stateVersion
+  # Set once at first install and never bump (independent of system.stateVersion).
+  home.stateVersion = "26.05";
 
   home.packages = with pkgs; [
     # terminal

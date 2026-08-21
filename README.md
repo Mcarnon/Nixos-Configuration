@@ -50,7 +50,7 @@
 | `@etc`  | `/etc`  | machine-id, SSH host keys, etc. |
 | `@home` | `/home` | user data |
 
-`/boot` is a separate EFI system partition (ESP).
+`/boot` is a separate EFI system partition (ESP); a dedicated swap partition is configured for hibernation.
 
 ## Installation
 

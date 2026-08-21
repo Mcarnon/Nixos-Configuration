@@ -13,7 +13,7 @@
       default_session = {
         user = "greeter";
         # --cmd is the session command run after login (niri-session starts the systemd user session)
-        command = "${lib.getExe pkgs.tuigreet} --time --cmd ${pkgs.niri}/bin/niri-session";
+        command = "${lib.getExe pkgs.tuigreet} --time --cmd ${lib.getExe' pkgs.niri "niri-session"}";
       };
     };
   };
