@@ -11,7 +11,7 @@
     extraPackages = with pkgs; [
       intel-media-driver # VA-API (iHD driver for Iris Xe)
       intel-gpu-tools    # debug tools like intel_gpu_top
-      vaapiVdpau
+      libva-vdpau-driver
       libvdpau-va-gl
       # intel-compute-runtime # OpenCL, large, enable on demand
     ];
