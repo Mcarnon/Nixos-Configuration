@@ -4,5 +4,6 @@
     ./niri.nix
     ./audio.nix
     ./laptop.nix
+    ./ssh.nix
   ];
 }
