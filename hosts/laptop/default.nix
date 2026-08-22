@@ -10,8 +10,15 @@ in
     ./hardware-configuration.nix
     ./intel.nix
     ../../modules
-    ../../chinese.nix
+    ../../locales
   ];
+
+  # ---- Locale / environment ----
+  # Enable the region environments you need; add more in locales/<region>.nix.
+  locales = {
+    defaultLocale = "zh_CN.UTF-8";
+    zh-cn.enable = true;
+  };
 
   # ---- Boot ----
   boot.loader.systemd-boot.enable = true;

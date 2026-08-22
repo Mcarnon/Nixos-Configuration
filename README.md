@@ -15,7 +15,9 @@
 ```
 .
 ├── flake.nix                    # flake entry (inputs + nixosConfigurations.laptop)
-├── chinese.nix                  # Chinese locale / fonts / Fcitx5 input method (shared)
+├── locales/                     # locale / input method / font framework + region profiles
+│   ├── default.nix              # shared framework (primary locale, Fcitx5, base fonts)
+│   └── zh-cn.nix                # Chinese (Simplified) environment
 ├── hosts/
 │   └── laptop/                  # machine-specific
 │       ├── default.nix          # host main config (user/boot/network/nix/home-manager wiring)
@@ -41,6 +43,22 @@
 └── scripts/
     └── sync.sh                  # SSH sync / deploy
 ```
+
+## Adding a region environment
+
+Locale / input-method / font setup is split into a shared **framework**
+(`locales/default.nix`) and one **profile per region** (`locales/zh-cn.nix`).
+The framework owns the Fcitx5 input-method framework and the base fonts; each
+region only adds its own locale, input engine and font preferences.
+
+To add e.g. Japanese:
+
+1. Create `locales/ja-jp.nix` and declare `options.locales.ja-jp.enable`.
+2. Import it in `locales/default.nix`.
+3. Enable it in `hosts/laptop/default.nix` (`locales.ja-jp.enable = true;`).
+
+Several regions can be enabled at once; only `locales.defaultLocale` is a
+single value.
 
 ## Disk layout (tmpfs + btrfs subvolumes)
 
@@ -106,7 +124,7 @@ disko performs partitioning + formatting + subvolume creation + mounting in one 
 | `hosts/laptop/niri-hardware.kdl` | display resolution / scale |
 | `modules/ssh.nix` | remote IP / user |
 | `home/noctalia.nix` | wallpaper path, theme |
-| `chinese.nix` | input method (e.g. Rime Wusong Pinyin if desired) |
+| `locales/zh-cn.nix` | input method (e.g. Rime Wusong Pinyin if desired) |
 
 ## Notes & optional enhancements
 

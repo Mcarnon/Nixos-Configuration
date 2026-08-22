@@ -17,6 +17,10 @@ binds {
     Mod+Return { spawn "foot"; }
     Mod+Shift+Slash { show-hotkey-overlay; }
 
+    // ---- Applications ----
+    Mod+E { spawn "nautilus"; }
+    Mod+B { spawn "firefox"; }
+
     // ---- Window actions ----
     Mod+Q { close-window; }
     Mod+V { toggle-window-floating; }

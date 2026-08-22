@@ -13,6 +13,8 @@
     foot
     # file manager (niri's portal file picker also depends on it)
     nautilus
+    # browser
+    firefox
     # screenshots
     grim
     slurp
