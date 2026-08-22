@@ -24,20 +24,13 @@
     fcitx5 = {
       waylandFrontend = true;
       addons = with pkgs; [
-        fcitx5-chinese-addons       # Pinyin
-        fcitx5-gtk                  # GTK input method modules
+        (fcitx5-rime.override {
+          rimeDataPkgs = [ rime-ice ];
+        })
+        fcitx5-gtk
         qt6Packages.fcitx5-configtool
       ];
     };
-  };
-
-  # Input method environment variables
-  environment.variables = {
-    GTK_IM_MODULE = "fcitx";
-    QT_IM_MODULE = "fcitx";
-    XMODIFIERS = "@im=fcitx";
-    SDL_IM_MODULE = "fcitx";
-    GLFW_IM_MODULE = "ibus";
   };
 
   # Chinese fonts
