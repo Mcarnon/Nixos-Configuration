@@ -94,20 +94,37 @@ nixos-rebuild switch --flake .#laptop --target-host alice@192.168.1.100
 
 ## Installation
 
-disko performs partitioning + formatting + subvolume creation + mounting in one step (it wipes the target disk — fresh installs only).
+disko performs partitioning + formatting + subvolume creation + mounting in one step.
 
-1. Boot the NixOS installation ISO, connect to the network, and `git clone` this repo.
-2. Change `device` in `hosts/laptop/disko-fs.nix` to your actual disk (see `lsblk`).
+1. Boot the NixOS installation ISO, and make sure to wipe all the data on the target disk use:
+```bash
+blkid /dev/sdX
+```
+2. Clone this repo to anywhere then `cd` into it.
 3. Partition, format, create subvolumes and mount:
    ```bash
    nix run github:nix-community/disko -- --mode disko ./hosts/laptop/disko-fs.nix
    ```
-4. Generate the hardware config and fill in the UUIDs:
-   ```bash
-   nixos-generate-config --root /mnt
-   blkid
+  (Note: If you don't have nix-command and flakes installed, you'd need to run `export NIX_CONFIG="experimental-features = nix-command flakes"` before running the command above.)
+
+4. Generate the hardware config:
+   ```bash 
+   cp -r Nixos-Configuration /mnt/etc/nixos
    ```
-   Fill the btrfs partition UUID into `<BTRFS-UUID>` and the ESP UUID into `<ESP-UUID>` in `hosts/laptop/hardware-configuration.nix`.
+  - For new installs, run:
+    ```bash
+    nixos-generate-config --root /mnt
+    ```
+  - For existing installs, its needed to clean the previous hardware config:
+    ```bash
+    rm -rf /mnt/etc/nixos
+    ```
+    then run `cp` again.
+  Go to `/mnt/etc/nixos` and delete `configuration.nix` and 
+  ```bash
+  mv hardware-configuration ./hosts/laptop/
+  ```
+  
 5. Install:
    ```bash
    sudo nixos-install --flake .#laptop
