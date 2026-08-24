@@ -34,7 +34,7 @@
 
   programs.git = {
     enable = true;
-    # userName = "Your Name";
-    # userEmail = "you@example.com";
+    userName = "Mcarnon";
+    userEmail = "3273556124@qq.com";
   };
 }
