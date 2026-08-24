@@ -1,18 +1,18 @@
 { config, pkgs, lib, ... }:
 
 let
-  # 自定义固件包：解压 .zst 并重命名拓扑文件
   mySofFirmware = pkgs.runCommand "my-sof-firmware"
     { nativeBuildInputs = [ pkgs.zstd ]; }
     ''
       mkdir -p $out/lib/firmware/intel/sof
       mkdir -p $out/lib/firmware/intel/sof-tplg
 
-      # 复制源文件（从 sof-firmware 包中）
-      cp ${pkgs.sof-firmware}/lib/firmware/intel/sof/sof-tgl.ri.zst $out/lib/firmware/intel/sof/
-      cp ${pkgs.sof-firmware}/lib/firmware/intel/sof-tplg/sof-tgl-es8336.tplg.zst $out/lib/firmware/intel/sof-tplg/
+      # 复制固件（实际文件在 intel-signed 子目录）
+      cp -L ${pkgs.sof-firmware}/lib/firmware/intel/sof/intel-signed/sof-tgl.ri.zst $out/lib/firmware/intel/sof/
+      # 复制拓扑（在 sof-tplg 目录下）
+      cp -L ${pkgs.sof-firmware}/lib/firmware/intel/sof-tplg/sof-tgl-es8336.tplg.zst $out/lib/firmware/intel/sof-tplg/
 
-      # 解压固件（输出不加 .zst）
+      # 解压固件
       zstd -d $out/lib/firmware/intel/sof/sof-tgl.ri.zst -o $out/lib/firmware/intel/sof/sof-tgl.ri
 
       # 解压拓扑并重命名为驱动期望的名称
@@ -33,22 +33,18 @@ in
     pulse.enable = true;
   };
 
-  # 使用自定义固件（优先级高于系统默认）
   hardware.firmware = [ mySofFirmware ];
 
-  # 内核参数
   boot.kernelParams = [
     "snd-intel-dspcfg.dsp_driver=3"
     "sof_pci_debug=1"
   ];
 
-  # 模块参数（针对 ES8336）
   boot.extraModprobeConfig = ''
     options snd-intel-dspcfg dsp_driver=3
     options snd_soc_sof_es8336 quirk=0x02
   '';
 
-  # 预加载音频模块（确保顺序）
   boot.initrd.kernelModules = [
     "snd_soc_sof_es8336"
     "snd_sof_pci_intel_tgl"
@@ -57,6 +53,6 @@ in
   environment.systemPackages = with pkgs; [
     alsa-utils
     sof-tools
-    zstd  # 便于调试
+    zstd
   ];
 }
