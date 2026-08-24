@@ -19,7 +19,7 @@ in
   # ---- Identity ----
   networking.hostName = "nixos"; # TODO: change as needed
   time.timeZone = "Asia/Shanghai";
-  system.stateVersion = "26.11"; # pinned at first install; do NOT bump on upgrade
+  system.stateVersion = "26.05"; # pinned at first install; do NOT bump on upgrade
 
   # ---- Locale / environment ----
   locales = {

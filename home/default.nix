@@ -8,7 +8,7 @@
     ./cli.nix
   ];
 
-  home.stateVersion = "26.05"; # TODO: keep in sync with the host stateVersion
+  home.stateVersion = "26.11"; # TODO: keep in sync with the host stateVersion
 
   home.packages = with pkgs; [
     # terminal

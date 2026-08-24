@@ -112,7 +112,7 @@ to erase the disk completely first, e.g. for an SSD reinstall:
 1. Boot the NixOS installation ISO, connect to the network, and get this repo
    onto the machine (it lives on the ISO's RAM for now — that's fine):
    ```bash
-   git clone https://github.com/Mcarnon/Nixos-Configuration && cd Nixos-Configuration
+   git clone <your-repo-url> Nixos-Configuration && cd Nixos-Configuration
    ```
 2. Set the target disk in `hosts/laptop/disko-fs.nix`
    (`device = "/dev/nvme0n1"`, or `/dev/disk/by-id/...`).
