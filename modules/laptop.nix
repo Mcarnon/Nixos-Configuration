@@ -20,7 +20,5 @@
   services.logind.lidSwitchExternalPower = "suspend";
 
   # Time spent suspended before falling through to hibernate.
-  systemd.sleep.extraConfig = ''
-    HibernateDelaySec=2h
-  '';
+  systemd.sleep.settings.Sleep.HibernateDelaySec = "2h";
 }
