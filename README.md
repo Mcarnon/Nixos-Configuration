@@ -15,18 +15,24 @@
 ```
 .
 ├── flake.nix                    # flake entry (inputs + nixosConfigurations.laptop)
+├── MAINTENANCE.md               # day-to-day maintenance (updates / hardware / config)
 ├── locales/                     # locale / input method / font framework + region profiles
 │   ├── default.nix              # shared framework (primary locale, Fcitx5, base fonts)
 │   └── zh-cn.nix                # Chinese (Simplified) environment
 ├── hosts/
 │   └── laptop/                  # machine-specific
-│       ├── default.nix          # host main config (user/boot/network/nix/home-manager wiring)
-│       ├── hardware-configuration.nix  # tmpfs root + btrfs subvolume mounts
+│       ├── default.nix          # host identity (user/hostname/timezone/stateVersion) + wiring
+│       ├── hardware-configuration.nix  # tmpfs root + btrfs subvolume mounts (real UUIDs on the machine)
 │       ├── disko-fs.nix         # partitioning as code (disko)
 │       ├── intel.nix            # Intel microcode + Iris Xe
 │       └── niri-hardware.kdl    # display / output config
-├── modules/                     # shared system modules
+├── modules/                     # reusable, host-agnostic system modules
 │   ├── default.nix              # module summary
+│   ├── boot.nix                 # systemd-boot + initrd systemd
+│   ├── network.nix              # NetworkManager
+│   ├── nix.nix                  # nix settings + GC
+│   ├── cli.nix                  # base CLI tools
+│   ├── diagnostics.nix          # maintenance / diagnostic tools
 │   ├── niri.nix                 # niri + greetd login
 │   ├── audio.nix                # PipeWire
 │   ├── laptop.nix               # power / bluetooth / fwupd
@@ -43,6 +49,9 @@
 └── scripts/
     └── sync.sh                  # SSH sync / deploy
 ```
+
+Rule of thumb: if a setting only applies to *this* laptop, put it in
+`hosts/laptop/`; if it could apply to any machine, put it in `modules/`.
 
 ## Adding a region environment
 
@@ -94,49 +103,59 @@ nixos-rebuild switch --flake .#laptop --target-host alice@192.168.1.100
 
 ## Installation
 
-disko performs partitioning + formatting + subvolume creation + mounting in one step.
+disko does partitioning + formatting + subvolume creation + mounting in one
+step. Its `destroy` stage wipes partition-table and filesystem *signatures*
+before re-formatting, so **no manual `wipefs -a` is needed**. (If you do want
+to erase the disk completely first, e.g. for an SSD reinstall:
+`sudo blkdiscard /dev/nvme0n1`.)
 
-1. Boot the NixOS installation ISO, and make sure to wipe all the data on the target disk use:
-```bash
-blkid /dev/sdX
-```
-2. Clone this repo to anywhere then `cd` into it.
-3. Partition, format, create subvolumes and mount:
+1. Boot the NixOS installation ISO, connect to the network, and get this repo
+   onto the machine (it lives on the ISO's RAM for now — that's fine):
    ```bash
-   nix run github:nix-community/disko -- --mode disko ./hosts/laptop/disko-fs.nix
+   git clone <your-repo-url> Nixos-Configuration && cd Nixos-Configuration
    ```
-  (Note: If you don't have nix-command and flakes installed, you'd need to run `export NIX_CONFIG="experimental-features = nix-command flakes"` before running the command above.)
-
-4. Generate the hardware config:
-   ```bash 
-   cp -r Nixos-Configuration /mnt/etc/nixos
-   ```
-  - For new installs, run:
-    ```bash
-    nixos-generate-config --root /mnt
-    ```
-  - For existing installs, its needed to clean the previous hardware config:
-    ```bash
-    rm -rf /mnt/etc/nixos
-    ```
-    then run `cp` again.
-  Go to `/mnt/etc/nixos` and delete `configuration.nix` and 
-  ```bash
-  mv hardware-configuration ./hosts/laptop/
-  ```
-  
-5. Install:
+2. Set the target disk in `hosts/laptop/disko-fs.nix`
+   (`device = "/dev/nvme0n1"`, or `/dev/disk/by-id/...`).
+3. Partition, format, create subvolumes and mount (wipes the target disk):
    ```bash
+   sudo nix run github:nix-community/disko/latest -- \
+     --mode destroy,format,mount ./hosts/laptop/disko-fs.nix
+   ```
+   > If `nix-command` / `flakes` are not enabled on the ISO, run
+   > `export NIX_CONFIG="experimental-features = nix-command flakes"` first.
+4. Copy the repo into the target so it survives on the `@home` subvolume (root
+   is tmpfs and wiped on every reboot):
+   ```bash
+   sudo mkdir -p /mnt/home/<user>
+   sudo cp -r Nixos-Configuration /mnt/home/<user>/
+   ```
+5. Generate a hardware config with the real disk UUIDs:
+   ```bash
+   sudo nixos-generate-config --root /mnt
+   blkid
+   ```
+   Replace the placeholders `<BTRFS-UUID>` / `<ESP-UUID>` in
+   `/mnt/home/<user>/Nixos-Configuration/hosts/laptop/hardware-configuration.nix`
+   with the real btrfs / ESP UUIDs.
+6. Flakes ignore untracked files — stage your edits — then install from the
+   copy inside the target:
+   ```bash
+   cd /mnt/home/<user>/Nixos-Configuration
+   git add -A
    sudo nixos-install --flake .#laptop
    ```
-6. Reboot and log in via greetd into niri.
+7. Reboot and log in via greetd into niri. The repo now lives at
+   `~/Nixos-Configuration`; see [MAINTENANCE.md](MAINTENANCE.md) for everything
+   after that.
+
+Reinstalling later is the same flow — disko's `destroy` step handles the wipe.
 
 ## Things to change before first use
 
 | Location | What |
 |----------|------|
 | `hosts/laptop/disko-fs.nix` | target disk `device` |
-| `hosts/laptop/hardware-configuration.nix` | disk UUIDs (see `blkid`) |
+| `hosts/laptop/hardware-configuration.nix` | disk UUIDs (auto-filled during install, see above) |
 | `hosts/laptop/default.nix` | user name `userName`, `hostName`, `stateVersion` |
 | `hosts/laptop/niri-hardware.kdl` | display resolution / scale |
 | `modules/ssh.nix` | remote IP / user |
@@ -145,7 +164,7 @@ blkid /dev/sdX
 
 ## Notes & optional enhancements
 
-- **Noctalia binary cache**: configured in `flake.nix` / `hosts/laptop/default.nix` via Cachix; the `noctalia` input is pinned to the `cachix` branch and intentionally does **not** set `follows` on nixpkgs (otherwise the cache is lost).
+- **Noctalia binary cache**: configured in `flake.nix` (`nixConfig`) and `modules/nix.nix` via Cachix; the `noctalia` input is pinned to the `cachix` branch and intentionally does **not** set `follows` on nixpkgs (otherwise the cache is lost).
 - **impermanence**: this setup persists state directly with btrfs subvolumes. If you want `/etc` and `/home` on tmpfs too, persisting only a few files, add `nix-community/impermanence`.
 - **polkit auth agent**: niri ships no graphical polkit agent; add one (e.g. `polkit_gnome`) if you need GUI privilege prompts.
 - **XWayland**: off by default; configure `xwayland-satellite` per the niri docs if you need X11 apps.

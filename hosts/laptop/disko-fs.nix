@@ -2,11 +2,17 @@
 # Equivalent to the mount scheme in hardware-configuration.nix; replaces manual
 # partitioning commands.
 #
-# Run from the NixOS installation ISO (wipes the target disk; fresh installs only):
-#   nix run github:nix-community/disko -- --mode disko ./hosts/laptop/disko-fs.nix
+# Run once from the NixOS installation ISO (wipes signatures + repartitions;
+# fresh installs only — no manual `wipefs -a` needed):
+#   nix run github:nix-community/disko/latest -- \
+#     --mode destroy,format,mount ./hosts/laptop/disko-fs.nix
 #
-# Afterwards you still need `nixos-generate-config --root /mnt` to generate the
-# hardware-configuration.nix, then fill in the real UUIDs in ./hardware-configuration.nix.
+# Note: `--mode disko` is a legacy alias for `destroy,format,mount` (removed in
+# disko 2.0). The btrfs `extraArgs = [ "-f" ]` only takes effect if mkfs runs
+# against an existing btrfs; the destroy stage wipes signatures first.
+#
+# Afterwards run `nixos-generate-config --root /mnt` and fill the real UUIDs
+# into ./hardware-configuration.nix.
 {
   disko.devices = {
     # tmpfs root: matches fileSystems."/" in hardware-configuration.nix
@@ -56,11 +62,10 @@
               };
             };
           };
-          # Optional swap partition (kept in sync with hardware-configuration.nix; uncomment if needed)
-          # swap = {
-          #   size = "8G";
-          #   content = { type = "swap"; };
-          # };
+          swap = {
+            size = "8G";
+            content = { type = "swap"; };
+          };
         };
       };
     };

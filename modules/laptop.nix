@@ -15,7 +15,12 @@
   # Firmware updates (some laptops ship firmware via fwupd)
   services.fwupd.enable = true;
 
-  # Suspend on lid close
-  services.logind.lidSwitch = "suspend";
+  # Lid close: suspend first, hibernate after HibernateDelaySec (below).
+  services.logind.lidSwitch = "suspend-then-hibernate";
   services.logind.lidSwitchExternalPower = "suspend";
+
+  # Time spent suspended before falling through to hibernate.
+  systemd.sleep.extraConfig = ''
+    HibernateDelaySec=2h
+  '';
 }

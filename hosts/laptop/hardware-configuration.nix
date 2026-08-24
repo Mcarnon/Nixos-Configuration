@@ -63,6 +63,5 @@
     options = [ "fmask=0022" "dmask=0022" ];
   };
 
-  # Optional swap partition (uncomment if needed)
-  # swapDevices = [ { device = "/dev/disk/by-uuid/<SWAP-UUID>"; } ];
+  swapDevices = [ { device = "/dev/disk/by-uuid/<SWAP-UUID>"; } ];
 }

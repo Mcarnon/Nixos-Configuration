@@ -1,9 +1,12 @@
-# Host main config: user / boot / network / Nix settings / Home Manager wiring
+# Host: laptop (Huawei, Intel + Iris Xe).
+#
+# This file is the "host manifest": only host-specific choices live here
+# (identity, user, locale, stateVersion, session env, Home Manager wiring).
+# All reusable "how" lives in ../../modules, imported below.
 { config, pkgs, inputs, lib, ... }:
 
 let
-  # TODO: change to your username
-  userName = "mccarnon";
+  userName = "mccarnon"; # TODO: your username
 in
 {
   imports = [
@@ -13,25 +16,16 @@ in
     ../../locales
   ];
 
+  # ---- Identity ----
+  networking.hostName = "nixos"; # TODO: change as needed
+  time.timeZone = "Asia/Shanghai";
+  system.stateVersion = "26.05"; # pinned at first install; do NOT bump on upgrade
+
   # ---- Locale / environment ----
-  # Enable the region environments you need; add more in locales/<region>.nix.
   locales = {
     defaultLocale = "zh_CN.UTF-8";
     zh-cn.enable = true;
   };
-
-  # ---- Boot ----
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
-  boot.supportedFilesystems = [ "btrfs" ];
-  # tmpfs root mode requires systemd in the initrd (see hardware-configuration.nix)
-  boot.initrd.systemd.enable = true;
-
-  # ---- Network / host ----
-  networking.hostName = "nixos"; # TODO: change as needed
-  networking.networkmanager.enable = true;
-
-  time.timeZone = "Asia/Shanghai";
 
   # ---- User ----
   users.users.${userName} = {
@@ -46,11 +40,13 @@ in
       "render"
       "dialout"
     ];
-    # shell = pkgs.fish;
+    shell = pkgs.fish; # enabled in modules/shell.nix, configured in home/shell.nix
+    # First-login password placeholder (plaintext lands in the Nix store —
+    # change it right after first login with `passwd`).
+    initialPassword = "nixos";
   };
 
   # ---- Wayland / niri environment variables ----
-  # Ozone Wayland: Electron/Chromium apps automatically use Wayland
   environment.sessionVariables = {
     NIXOS_OZONE_WAYLAND = "1";
     XDG_CURRENT_DESKTOP = "niri";
@@ -68,34 +64,4 @@ in
       imports = [ ../../home ];
     };
   };
-
-  # ---- Nix settings ----
-  nix = {
-    settings = {
-      experimental-features = [ "nix-command" "flakes" ];
-      auto-optimise-store = true;
-      extra-substituters = [ "https://noctalia.cachix.org" ];
-      extra-trusted-public-keys = [
-        "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4="
-      ];
-    };
-    gc = {
-      automatic = true;
-      dates = "weekly";
-      options = "--delete-older-than 7d";
-    };
-  };
-
-  # TODO: set to the NixOS version at first install (affects upgrade compatibility)
-  system.stateVersion = "26.05";
-
-  environment.systemPackages = with pkgs; [
-    git
-    curl
-    wget
-    rsync
-    btrfs-progs
-    file
-    htop
-  ];
 }
