@@ -1,4 +1,5 @@
 # Screenshot / clipboard / volume tools.
+# 注意：cliphist 服务已迁移至 modules/home/services/cliphist.nix (services.cliphist.enable)
 { config, pkgs, ... }:
 {
   home.packages = with pkgs; [
@@ -8,20 +9,4 @@
     pamixer # volume control (fallback; Noctalia has its own OSD)
     cliphist # clipboard history store
   ];
-
-  # Feed cliphist from wl-clipboard so history survives across copies.
-  systemd.user.services.cliphist = {
-    Unit = {
-      Description = "Clipboard history store (cliphist)";
-      After = [ "graphical-session.target" ];
-      PartOf = [ "graphical-session.target" ];
-    };
-    Service = {
-      ExecStart = "${pkgs.wl-clipboard}/bin/wl-paste --watch ${pkgs.cliphist}/bin/cliphist store";
-      Restart = "on-failure";
-    };
-    Install = {
-      WantedBy = [ "graphical-session.target" ];
-    };
-  };
 }

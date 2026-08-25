@@ -12,6 +12,9 @@
   alsa-lib,
   fontconfig,
   freetype,
+  # Runtime deps (arch PKGBUILD: depends=(alsa-lib chafa gcc-libs glibc ripgrep))
+  ripgrep,
+  chafa,
 }:
 
 rustPlatform.buildRustPackage (finalAttrs: {
@@ -41,21 +44,29 @@ rustPlatform.buildRustPackage (finalAttrs: {
     alsa-lib
     fontconfig
     freetype
+    ripgrep # runtime dep (miyu uses rg for file search)
+    chafa   # runtime dep (image display in terminal)
   ];
 
   # build.rs embeds prompts and builds tiktoken/jieba indices at compile time.
   # No special flags needed beyond the default cargo build.
 
-  # Install runtime assets (WebUI, knowledge base, resources) to share/miyu
-  # so the binary can find them (it probes /usr/share/miyu as fallback).
+  # Install runtime assets to share/miyu — NixOS has no /usr/share so the binary
+  # looks next to itself at ../share/miyu (relative to $out/bin/miyu).
   postInstall = ''
-    mkdir -p $out/share/miyu
+    mkdir -p $out/share/miyu/{fonts,memes,scripts,default-kb}
     cp -a web $out/share/miyu/web
     cp -a kb $out/share/miyu/kb
     cp -a resources $out/share/miyu/resources
     # assets/ contains build-time inputs (tiktoken, jieba dict) and possibly
     # runtime extras — ship the whole dir to match the Arch package layout.
     cp -a assets $out/share/miyu/assets
+    # Fonts (Noto CJK + Emoji + JetBrains) for long-reply image rendering.
+    cp -a assets/fonts/* $out/share/miyu/fonts/ 2>/dev/null || true
+    # Memes (built-in sticker library; follows default persona).
+    cp -a src/memes/* $out/share/miyu/memes/ 2>/dev/null || true
+    # System scripts.
+    cp -a src/scripts/* $out/share/miyu/scripts/ 2>/dev/null || true
   '';
 
   meta = with lib; {
