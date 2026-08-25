@@ -1,105 +1,58 @@
 # Miyu: terminal-native AI assistant (https://github.com/SHORiN-KiWATA/Miyu)
 #
-# Built from the upstream Arch prebuilt release (pkg.tar.zst) because the binary
-# is not in nixpkgs. Reuses the AUR strategy: unpack and repack for Nix store.
-# On rebuild, bump `version` and update `hash` (SRI) from the GitHub release.
+# Built from source via cargo (avoids Arch glibc 2.43 mismatch).
+# On rebuild, bump `version` and update `rev` + `hash` (SRI) from the repo.
 {
   lib,
-  stdenv,
-  fetchurl,
-  autoPatchelfHook,
-  makeWrapper,
-  libarchive, # provides bsdtar for unpacking Arch .pkg.tar.zst
-  # runtime deps — Miyu is Rust (rustls, bundled sqlite) but dynamically links
-  # against common system libs. Keep this list minimal; extend if ldd complains.
-  glibc,
-  gcc-unwrapped,
-  zlib,
-  bzip2,
-  xz,
-  zstd,
-  openssl ? null, # not needed with rustls, kept optional for future
+  rustPlatform,
+  fetchFromGitHub,
+  pkg-config,
+  perl,
+  libclang,
   alsa-lib,
-  expat,
   fontconfig,
   freetype,
 }:
 
-stdenv.mkDerivation (finalAttrs: {
+rustPlatform.buildRustPackage (finalAttrs: {
   pname = "miyu";
   version = "0.4.5";
 
-  src = fetchurl {
-    url = "https://github.com/SHORiN-KiWATA/Miyu/releases/download/v${finalAttrs.version}/miyu-${finalAttrs.version}-1-x86_64.pkg.tar.zst";
-    hash = "sha256-TEiUGQxywjzxMmVCTWIrxwlLSWF02mHK4EVqox96yXU=";
+  src = fetchFromGitHub {
+    owner = "SHORiN-KiWATA";
+    repo = "Miyu";
+    rev = "v${finalAttrs.version}";
+    hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="; # placeholder: replace with `nix build` error output
   };
 
+  cargoLock.lockFile = ./Cargo.lock;
+
   nativeBuildInputs = [
-    autoPatchelfHook
-    makeWrapper
-    libarchive
-    zstd
+    pkg-config
+    perl # needed by some crate build scripts
+    libclang # for bindgen (alsa-sys)
   ];
 
   buildInputs = [
-    glibc
-    gcc-unwrapped.lib
-    zlib
-    bzip2
-    xz
-    zstd
     alsa-lib
-    expat
     fontconfig
     freetype
-  ] ++ lib.optional (openssl != null) openssl;
+  ];
 
-  # The .pkg.tar.zst is an Arch package (bsdtar archive with ./usr hierarchy).
-  # Nix's unpackPhase handles zstd transparently; we just rearrange into $out.
-  # Arch packages may contain UTF-8 filenames — ensure bsdtar has a UTF-8 locale.
-  unpackPhase = ''
-    runHook preUnpack
-    export LC_ALL=C.UTF-8
-    export LANG=C.UTF-8
-    bsdtar -xf $src
-    runHook postUnpack
+  # build.rs embeds prompts and builds tiktoken/jieba indices at compile time.
+  # No special flags needed beyond the default cargo build.
+
+  # Install runtime assets (WebUI, knowledge base, resources) to share/miyu
+  # so the binary can find them (it probes /usr/share/miyu as fallback).
+  postInstall = ''
+    mkdir -p $out/share/miyu
+    cp -a web $out/share/miyu/web
+    cp -a kb $out/share/miyu/kb
+    cp -a resources $out/share/miyu/resources
+    # assets/ contains build-time inputs (tiktoken, jieba dict) and possibly
+    # runtime extras — ship the whole dir to match the Arch package layout.
+    cp -a assets $out/share/miyu/assets
   '';
-
-  installPhase = ''
-    runHook preInstall
-
-    # Arch package layout: usr/bin/miyu, usr/share/miyu, usr/share/licenses, etc.
-    mkdir -p $out
-    if [ -d usr ]; then
-      cp -a usr/* $out/
-      # Normalise: binary at $out/bin/miyu, assets at $out/share/miyu
-      mkdir -p $out/bin
-      # In case bsdtar placed bin elsewhere, ensure it exists
-      if [ ! -f $out/bin/miyu ] && [ -f usr/bin/miyu ]; then
-        cp -a usr/bin/miyu $out/bin/miyu
-      fi
-    else
-      echo "unexpected archive layout — no usr/ found; listing:"
-      ls -R
-      exit 1
-    fi
-
-    # Some releases put the binary directly at bin/miyu; ensure executable
-    chmod +x $out/bin/miyu
-
-    # Wrap so the binary finds its assets at $out/share/miyu even though it
-    # historically probes /usr/share/miyu. The Rust code probes relative to
-    # exe + XDG + fallback to /usr/share/miyu; providing MIYU_DATA_DIR is
-    # the cleanest bridge if the binary honours env — otherwise the assets
-    # are still at the Nix store path and most features work via ~/.miyu/data.
-    wrapProgram $out/bin/miyu \
-      --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath finalAttrs.buildInputs}"
-
-    runHook postInstall
-  '';
-
-  # Let autoPatchelf fix RPATH for the prebuilt ELF
-  dontStrip = false;
 
   meta = with lib; {
     description = "Miyu — terminal-native anime AI assistant (shell hook + daemon + WebUI)";
