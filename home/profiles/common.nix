@@ -1,16 +1,5 @@
-# Home profile: common — every user on every host gets this (scale: cross-host reuse).
+# Home profile: common — shim to roles/home/common (保留兼容)
 { config, pkgs, lib, ... }:
 {
-  imports = [
-    ../shell.nix
-    ../packages
-  ];
-
-  programs.git = {
-    enable = true;
-    settings.user = {
-      name = "Mcarnon";
-      email = "3273556124@qq.com";
-    };
-  };
+  imports = [ ../../roles/home/common.nix ];
 }

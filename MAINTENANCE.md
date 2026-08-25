@@ -9,18 +9,19 @@ How to keep this NixOS system up to date and how the repo is organised.
 | `flake.nix` + `flake-parts/` | Standardized entry (flake-parts perSystem memoization, `nix flake check`); `hosts.nix`/`packages.nix`/`checks.nix` |
 | `lib/` | Helpers (`mkHost`, hardware helpers) — cross-host reuse |
 | `pkgs/` + `pkgs/default.nix` | Overlay (`overlays.default` = `{miyu}`) — single audit surface for custom binaries |
-| `profiles/` | Host composition (base/desktop) — scale by picking profiles |
-| `hosts/laptop/` | **Machine-specific** (hardware-configuration/disko-fs/niri-hardware + `default.nix` which picks `profiles/desktop` + `hardware.intel.enable`) |
-| `modules/` | Reusable per-domain: `system/` (boot/kernel/nix/shell/snapshot/locales), `services/` (network/openssh/niri/pipewire/laptop), `hardware/` (intel/nvidia/disko), `security/` (secrets/hardening/firewall/sops), `packages/` |
-| `modules/security/hardening.nix` | Hardening baseline + zram/BBR (performance + security) + `security/firewall.nix` (only 22) |
-| `locales/` | Locale / input-method / fonts |
-| `home/` + `home/profiles/` | Per-user HM (common/desktop) — `home/modules/miyu.nix` owns miyu |
-| `home/files/` | Static assets (`miyu.fish`) — `xdg.configFile` sources |
+| `roles/nixos/` + `roles/home/` | Host composition (base/desktop) — 新 canonical，`profiles/` 仅垫片 |
+| `hosts/laptop/` | **Machine-specific** (hardware-configuration/disko-fs/niri-hardware + `default.nix` which picks `roles/nixos/desktop` + `hardware.intel.enable`) |
+| `modules/nixos/` | Reusable system modules: `core/` (boot/nix/shell/persist/kernel/cli/diagnostics), `desktop/` (niri/greetd/audio), `hardware/` (intel/nvidia/power/disko), `network/` (manager/openssh/firewall), `security/` (secrets/hardening/sops), `i18n/` -> `locales/` |
+| `modules/home/` | Reusable HM modules: `shell/` (fish/tools), `desktop/` (niri/noctalia), `apps/` (cli/gui/media/network/ai), `services/` (miyu/cliphist) |
+| `modules/_templates/` | 新模块脚手架 |
+| `locales/` | Locale / input-method / fonts (canonical，`modules/nixos/i18n` 垫片) |
+| `home/` + `home/profiles/`(垫片) | Per-user HM entry — `home/files/miyu.fish` + `home/niri/*.kdl` |
+| `docs/` | `QUICK_START.md` / `STRUCTURE.md` / `MIGRATION.md` |
 | `checks/` | NixOS VM tests (e.g. `miyu.nix`) wired as `perSystem.checks` |
 | `.github/workflows/ci.yml` | `nix flake check` + `nix fmt --check` |
 | `scripts/sync.sh` | rsync + rebuild to another machine |
 
-Rule of thumb: `hosts/<host>/` = identity + hardware + profile choice; `modules/` = reusable per-domain; `profiles/` = composition; `home/profiles/` = user env reuse.
+Rule of thumb: `hosts/<host>/` = 身份+硬件+选 `roles/`；`modules/nixos+home` = 按域可复用；`roles/` = 组合。
 
 ## Day-to-day: edit → rebuild
 
@@ -51,7 +52,7 @@ sudo nixos-rebuild switch --flake .#laptop
 
 ## Garbage collection / disk space
 
-Automatic weekly GC is configured in `modules/system/nix.nix`. Manual cleanup:
+Automatic weekly GC is configured in `modules/nixos/core/nix.nix`. Manual cleanup:
 
 ```bash
 sudo nix-collect-garbage -d       # delete unreferenced store paths + old profiles
@@ -61,15 +62,15 @@ sudo nix store optimise           # dedupe (auto-optimise-store is already on)
 ## Hardware maintenance
 
 - **Firmware**: `sudo fwupdmgr refresh && sudo fwupdmgr update` (BIOS / SSD / etc.).
-- **CPU microcode**: `hardware.intel.enable = true` (`modules/hardware/intel.nix`) — HAL, set per host, microcode ships with kernel.
+- **CPU microcode**: `hardware.intel.enable = true` (`modules/nixos/hardware/intel.nix`) — HAL, set per host, microcode ships with kernel.
 - **GPU / VA-API**: `intel-media-driver` (iHD, Iris Xe) via same HAL; verify with `vainfo`.
-- **Diagnostics** (installed by `modules/packages/diagnostics.nix`):
+- **Diagnostics** (installed by `modules/nixos/core/diagnostics.nix`):
   `lspci`, `lsusb`, `dmidecode`, `smartctl -a /dev/nvme0n1`, `nvme list`,
   `sensors`, `powertop`, `inxi -F`.
 - **LUKS**: the disk is unlocked at boot (passphrase) as `/dev/mapper/cryptroot`.
   `sudo cryptsetup luksDump /dev/nvme0n1p2` shows header info; add/remove a
   passphrase slot with `cryptsetup luksAddKey` / `luksRemoveKey`.
-- **Audio** (Huawei / Intel SOF — PipeWire in `modules/services/pipewire.nix`):
+- **Audio** (Huawei / Intel SOF — PipeWire in `modules/nixos/desktop/audio.nix`):
   ```bash
   lspci -nnk | grep -iA3 audio                    # kernel sees the sound card?
   aplay -l                                        # ALSA devices
@@ -103,8 +104,8 @@ laptop and re-apply it after a push — or commit the real UUIDs into the repo.
 ## Miyu AI assistant
 
 - Binary via overlay `pkgs.miyu` (`pkgs/miyu` v0.4.5, `nix build .#miyu`). Update: bump `version` + `hash` in `pkgs/miyu/default.nix` from GitHub asset `miyu-*.pkg.tar.zst`.
-- Fish hook `home/files/miyu.fish` → `xdg.configFile fish/conf.d/zz-miyu.fish` in `home/modules/miyu.nix` (loads after starship). Never run `miyu fish-init` under HM. Diagnostics: `miyu --shell-intercept --shell fish -- <cmd>` (hook silences stderr).
-- First-run init: `home/modules/miyu.nix` `home.activation.miyuInit` runs `miyu init` if `~/.miyu` missing (also `miyu daemon start`). Verify `miyu paths` / `miyu -h`.
+- Fish hook `home/files/miyu.fish` → `xdg.configFile fish/conf.d/zz-miyu.fish` in `modules/home/services/miyu.nix` (loads after starship). Never run `miyu fish-init` under HM. Diagnostics: `miyu --shell-intercept --shell fish -- <cmd>` (hook silences stderr).
+- First-run init: `modules/home/services/miyu.nix` `home.activation.miyuInit` runs `miyu init` if `~/.miyu` missing (also `miyu daemon start`). Verify `miyu paths` / `miyu -h`.
 - Model / opencode / prompt: `miyu config` (TUI, DB at `~/.miyu`) → 供应商和模型 (default opencode public API; add own OpenAI-compatible or enable Claude Code provider) → 自定义提示词 (new persona) + 用户身份. Also `miyu models`, `miyu daemon logs request`, `miyu export --dry-run`.
 
 ## Performance & security baselines
@@ -116,7 +117,7 @@ laptop and re-apply it after a push — or commit the real UUIDs into the repo.
 ## Secrets
 
 Never commit passwords or SSH private keys. Secrets are managed with **agenix**
-(see `modules/security/secrets.nix`): encrypted `.age` blobs live in `secrets/`, and only
+(see `modules/nixos/security/secrets.nix`): encrypted `.age` blobs live in `secrets/`, and only
 the target host's age identity (by default `~/.ssh/id_ed25519`) can decrypt
 them. The plaintext is only ever written to `/run/agenix.d/` (tmpfs). To add a
 secret, follow the steps at the top of `modules/security/secrets.nix`.

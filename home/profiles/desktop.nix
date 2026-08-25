@@ -1,10 +1,5 @@
-# Home profile: desktop — common + graphical user env (performance: Wayland-only).
+# Home profile: desktop — shim to roles/home/desktop (保留兼容)
 { config, pkgs, lib, ... }:
 {
-  imports = [
-    ./common.nix
-    ../niri.nix
-    ../noctalia.nix
-    ../modules/miyu.nix
-  ];
+  imports = [ ../../roles/home/desktop.nix ];
 }

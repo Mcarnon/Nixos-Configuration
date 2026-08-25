@@ -15,84 +15,47 @@
 - **Hardened baseline**: firewall default-closed, SSH keys-only (TODO flip after agenix), zram + BBR + GC/auto-optimise
 - **CI**: `nix flake check` (VM test `checks/miyu.nix`) in `.github/workflows/ci.yml`
 
+## 快速开始
+
+> 详细教程见 [docs/QUICK_START.md](docs/QUICK_START.md)，结构说明见 [docs/STRUCTURE.md](docs/STRUCTURE.md)
+
+```bash
+git clone <your-repo> Nixos-Configuration && cd Nixos-Configuration
+$EDITOR hosts/laptop/disko-fs.nix          # 改 device
+sudo nix run github:nix-community/disko/latest -- --mode destroy,format,mount ./hosts/laptop/disko-fs.nix
+sudo nixos-generate-config --root /mnt && blkid  # 填 hosts/laptop/hardware-configuration.nix 的 UUID
+git add -A && sudo nixos-install --flake .#laptop
+# 日常
+git add -A && sudo nixos-rebuild switch --flake .#laptop
+```
+
 ## Directory structure
 
 ```
 .
-├── flake.nix                    # pure entry: inputs + imports = [ flake-parts/* ]
-├── flake-parts/                 # standardized per flake-parts
-│   ├── hosts.nix                # nixosConfigurations via lib.mkHost
-│   ├── packages.nix             # perSystem.packages.miyu + formatter
-│   └── checks.nix               # perSystem.checks (wires ./checks/*)
-├── lib/                         # shared helpers (mkHost, hardware helpers)
-│   └── default.nix
-├── pkgs/                        # custom packages + overlay (single audit surface)
-│   ├── default.nix              # overlays.default = { miyu = ...; }
-│   └── miyu/                    # Miyu (prebuilt Arch release → Nix, autoPatchelf)
-├── profiles/                    # host composition (scale: add a host = compose)
-│   ├── base.nix                 # boot/network/nix/packages/shell/snapshot/secrets/security/ssh
-│   └── desktop.nix              # base + niri/audio/laptop (Wayland-only)
-├── hosts/
-│   └── laptop/                  # machine-specific (identity + hardware + profile selection)
-│       ├── default.nix          # hostName/timeZone/stateVersion + hardware.intel.enable + imports profiles/desktop + locales
-│       ├── hardware-configuration.nix  # LUKS unlock + tmpfs root + btrfs mounts (real UUIDs)
-│       ├── disko-fs.nix         # partitioning as code (disko, LUKS + subvolumes + swapfile)
-│       └── niri-hardware.kdl    # display / output config
-├── modules/                     # reusable, host-agnostic system modules (by domain)
-│   ├── default.nix              # compat shim → re-exports services/hardware/security/system
-│   ├── system/                  # 系统底层
-│   │   ├── boot.nix             # GRUB (EFI) + initrd systemd
-│   │   ├── kernel.nix           # kernel knobs (BBR 等在 security/hardening)
-│   │   ├── nix.nix              # nix settings (trusted-users, GC, auto-optimise, keep-*)
-│   │   ├── shell.nix            # fish (system-wide)
-│   │   ├── snapshot.nix         # snapper btrfs snapshots
-│   │   └── locales.nix          # re-export top-level locales/
-│   ├── services/                # 各类服务
-│   │   ├── network.nix          # NetworkManager + resolved cache (firewall 在 security/firewall)
-│   │   ├── openssh.nix          # SSH client alias + hardened sshd
-│   │   ├── niri.nix             # niri + greetd login + polkit agent
-│   │   ├── pipewire.nix         # PipeWire (原 audio.nix)
-│   │   └── laptop.nix           # power / bluetooth / fwupd / logind
-│   ├── hardware/                # 硬件相关
-│   │   ├── intel.nix            # `hardware.intel.enable` HAL (microcode + Iris Xe)
-│   │   ├── nvidia.nix           # `hardware.nvidia.enable` HAL (stub for next host)
-│   │   └── disko.nix            # disko 模板占位（具体布局在 hosts/*/disko-fs.nix）
-│   ├── security/                # 安全
-│   │   ├── secrets.nix          # agenix (age identity + usage)
-│   │   ├── hardening.nix        # sudo/kernel sysctl (BBR/fq, swappiness) + zram
-│   │   ├── firewall.nix         # firewall default-closed (only 22)
-│   │   └── sops.nix             # sops 占位（agenix 为主）
-│   └── packages/                # 系统软件（按类别分组）
-│       ├── default.nix
-│       ├── cli.nix
-│       └── diagnostics.nix
-├── locales/                     # locale / input method / font framework + region profiles
-│   ├── default.nix              # shared framework (primary locale, Fcitx5, base fonts)
-│   └── zh-cn.nix
-├── home/                        # user environment (Home Manager)
-│   ├── default.nix              # thin entry → profiles/desktop
-│   ├── profiles/
-│   │   ├── common.nix           # git + shell + packages (cross-host reuse)
-│   │   └── desktop.nix          # common + niri/noctalia/miyu
-│   ├── modules/
-│   │   └── miyu.nix             # miyu (pkgs.miyu + fish hook + activation + docs)
-│   ├── files/
-│   │   └── miyu.fish            # miyu fish integration (upstream `miyu fish-init` verbatim)
-│   ├── shell.nix                # fish + starship + direnv + fzf + eza + zoxide (pure)
-│   ├── niri.nix / noctalia.nix
-│   ├── packages/                # user software, grouped by category
-│   │   ├── default.nix
-│   │   ├── ai.nix               # opencode/aichat/tgpt (miyu lives in home/modules/miyu.nix)
-│   │   ├── cli.nix / gui.nix / media.nix / network.nix
-│   └── niri/{config,binds,startup,windowrule}.kdl
-├── checks/
-│   └── miyu.nix                 # NixOS VM test (binary + fish hook smoke)
-├── .github/workflows/ci.yml     # nix flake check + fmt --check
-├── MAINTENANCE.md
-└── scripts/sync.sh
+├── flake.nix / flake-parts/{hosts,packages,checks}.nix / lib/default.nix / pkgs/ # 入口/装配/覆盖层
+├── modules/
+│   ├── nixos/default.nix        # 唯一聚合: [core desktop hardware network security i18n]
+│   │   ├── core/{boot.nix,nix.nix,shell.nix,persist.nix,kernel.nix,cli.nix,diagnostics.nix}
+│   │   ├── desktop/{niri.nix,greetd.nix,audio.nix}  # niri拆greetd, pipewire->audio
+│   │   ├── hardware/{intel.nix,nvidia.nix,power.nix,disko.nix} # laptop->power
+│   │   ├── network/{manager.nix,openssh.nix,firewall.nix}
+│   │   ├── security/{hardening.nix,secrets.nix,sops.nix}
+│   │   └── i18n/ -> ../../locales
+│   ├── home/{shell/{fish,tools},desktop/{niri,noctalia},apps/{cli,gui,media,network,ai},services/{miyu,cliphist}}
+│   ├── _templates/{enable-option.nix,nested-import.nix,example-simple.nix}
+│   └── default.nix              # 垫片 -> ./nixos
+├── roles/                       # 取代 profiles/，语义更准（profiles 保留垫片）
+│   ├── nixos/{base.nix,desktop.nix}
+│   └── home/{common.nix,desktop.nix}
+├── hosts/laptop/{default.nix,hardware-configuration.nix,disko-fs.nix,niri-hardware.kdl}
+├── locales/ -> modules/nixos/i18n (垫片，canonical 已迁移)
+├── home/{default.nix,files/miyu.fish,niri/*.kdl,profiles/->roles} # profiles垫片
+├── docs/{QUICK_START.md,STRUCTURE.md,MIGRATION.md}
+├── checks/miyu.nix  .github/workflows/ci.yml  scripts/sync.sh
 ```
 
-Rule of thumb: `hosts/<host>/` = only identity + hardware + profile choice; `modules/` = reusable per-domain; `profiles/` = composition; `home/profiles/` = user env reuse.
+Rule of thumb: `hosts/<host>/` = 身份+硬件+选 `roles/`；`modules/nixos+home` = 按域可复用；`roles/` = 组合。
 
 ## Adding a region environment
 
@@ -205,23 +168,23 @@ Reinstalling later is the same flow — disko's `destroy` step handles the wipe.
 | Location | What |
 |----------|------|
 | `hosts/laptop/disko-fs.nix` | target disk `device` |
-| `hosts/laptop/hardware-configuration.nix` | LUKS / ESP UUIDs + swapfile resume offset (auto-filled during install, see above) |
-| `hosts/laptop/default.nix` | `userName`/`hostName`/`stateVersion` + `hardware.intel.enable` (HAL) + profile choice (`profiles/desktop` vs `base`) |
+| `hosts/laptop/hardware-configuration.nix` | LUKS / ESP UUIDs + swapfile resume offset |
+| `hosts/laptop/default.nix` | `userName`/`hostName`/`stateVersion` + `hardware.intel.enable` + `roles/nixos/desktop` vs `base` |
 | `hosts/laptop/niri-hardware.kdl` | display resolution / scale |
-| `modules/services/openssh.nix` | remote IP / user |
-| `modules/security/firewall.nix` | `allowedTCPPorts` (default only 22) |
-| `modules/security/hardening.nix` | `boot.kernel.sysctl` BBR/fq, `zramSwap` — tune or disable per host |
-| `home/noctalia.nix` | wallpaper path, theme |
-| `home/modules/miyu.nix` | Miyu model/provider is TUI (`miyu config`); no prefill needed |
-| `locales/zh-cn.nix` | input method (e.g. Rime Wusong Pinyin if desired) |
+| `modules/nixos/network/openssh.nix` | remote IP / user |
+| `modules/nixos/network/firewall.nix` | `allowedTCPPorts` (default only 22) |
+| `modules/nixos/security/hardening.nix` | `boot.kernel.sysctl` BBR/fq, `zramSwap` |
+| `modules/home/desktop/noctalia.nix` | wallpaper path, theme |
+| `modules/home/services/miyu.nix` | Miyu TUI (`miyu config`); no prefill needed |
+| `locales/zh-cn.nix` | input method (e.g. Rime) |
 
 ## Notes & optional enhancements
 
-- **Noctalia binary cache**: configured in `flake.nix` (`nixConfig`) and `modules/system/nix.nix` via Cachix; the `noctalia` input is pinned to the `cachix` branch and intentionally does **not** set `follows` on nixpkgs (otherwise the cache is lost).
-- **impermanence**: this setup persists state directly with btrfs subvolumes. If you want `/etc` and `/home` on tmpfs too, persisting only a few files, add `nix-community/impermanence`.
-- **polkit auth agent**: `polkit_gnome` runs as a graphical-session service (in `modules/services/niri.nix`) so GUI privilege prompts work.
-- **Miyu AI assistant**: binary via overlay `pkgs.miyu` (`pkgs/miyu` prebuilt Arch release, autoPatchelf), fish hook via `home/files/miyu.fish` → `xdg.configFile fish/conf.d/zz-miyu.fish` in `home/modules/miyu.nix` (loads after starship), auto-init via `home.activation.miyuInit`. Configure: `miyu config` / `miyu models` / `miyu paths`. See `home/modules/miyu.nix` header.
-- **Performance**: `flake-parts` perSystem memoization, `nix.settings.max-jobs/cores`, `nix.gc` weekly + `--delete-older-than 7d`, `auto-optimise-store`, `zramSwap` (zstd), `net.ipv4.tcp_congestion_control=bbr` + `fq`, `services.resolved` cache. Binary caches in `flake.nix:nixConfig` + `modules/system/nix.nix`.
-- **Security**: `age` via `agenix` (`/run/agenix.d`, tmpfs), `LUKS` (`allowDiscards` = TRIM, comment out for stricter), `networking.firewall` default-closed (only 22), `services.openssh` `PermitRootLogin no` + flip `PasswordAuthentication` to `false` after agenix, `security.sudo.execWheelOnly`, `boot.kernel.sysctl` (`kptr_restrict`, `ptrace_scope`), `nix.settings.trusted-users = [ root @wheel ]`, `nix.channel.enable = false`.
+- **Noctalia binary cache**: `flake.nix:nixConfig` + `modules/nixos/core/nix.nix` via Cachix；`noctalia` pin `cachix` 分支不 `follows` nixpkgs。
+- **impermanence**: btrfs 子卷直接持久化，需更激进可用 `nix-community/impermanence`。
+- **polkit auth agent**: `polkit_gnome` 在 `modules/nixos/desktop/niri.nix` 以 `graphical-session` 服务运行。
+- **Miyu**: `pkgs.miyu` overlay + `modules/home/services/miyu.nix` 的 `fish/conf.d/zz-miyu.fish` + `home.activation.miyuInit`；`miyu config` 配置。
+- **Performance**: `flake-parts` perSystem 缓存，`nix.gc` weekly，`zramSwap` zstd，`BBR/fq`，`services.resolved` 缓存。
+- **Security**: `agenix` `/run/agenix.d` tmpfs，`LUKS`，`networking.firewall` 默认关，`PermitRootLogin no`。
 - **XWayland**: off by default; configure `xwayland-satellite` per the niri docs if you need X11 apps.
 - **Lock screen**: Noctalia has a built-in lock screen bound to `Super+Alt+L`; lid-close suspend is handled by logind.

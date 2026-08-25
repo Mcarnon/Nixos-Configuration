@@ -9,12 +9,10 @@ in
 {
   imports = [
     ./hardware-configuration.nix
-    ../../modules/hardware/intel.nix
-    ../../profiles/desktop.nix
-    ../../locales
+    ../../roles/nixos/desktop.nix
   ];
 
-  # Hardware HAL — single toggle per vendor (scale: add `hardware.amd.enable` for next host)
+  # Hardware HAL — single toggle per vendor (scale: add `hardware.nvidia.enable` for next host)
   hardware.intel.enable = true;
 
   # ---- Identity ----
