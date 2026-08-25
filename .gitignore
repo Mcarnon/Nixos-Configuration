@@ -2,3 +2,8 @@ result
 result-*
 .direnv
 *.swp
+
+# agenix: never commit private keys or decrypted secrets
+secrets/*.age.plain
+secrets/keys
+**/.age-secrets

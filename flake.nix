@@ -25,10 +25,13 @@
 
     # Pin the `cachix` branch: always points to the latest CI-prebuilt commit.
     noctalia.url = "github:noctalia-dev/noctalia/cachix";
+
+    # age-encrypted secrets (see modules/secrets.nix)
+    agenix.url = "github:ryantm/agenix";
   };
 
   outputs =
-    { self, nixpkgs, home-manager, noctalia, ... }@inputs:
+    { self, nixpkgs, home-manager, noctalia, agenix, ... }@inputs:
     let
       system = "x86_64-linux";
     in
@@ -40,8 +43,11 @@
         modules = [
           ./hosts/laptop
           home-manager.nixosModules.home-manager
+          agenix.nixosModules.default
         ];
       };
+
+      packages.${system}.miyu = nixpkgs.legacyPackages.${system}.callPackage ./pkgs/miyu { };
 
       formatter.${system} = nixpkgs.legacyPackages.${system}.nixfmt-rfc-style;
     };

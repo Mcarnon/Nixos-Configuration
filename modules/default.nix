@@ -5,10 +5,10 @@
     ./boot.nix
     ./network.nix
     ./nix.nix
-    ./cli.nix
-    ./diagnostics.nix
+    ./packages
     ./shell.nix
     ./snapshot.nix
+    ./secrets.nix
     ./niri.nix
     ./audio.nix
     ./laptop.nix

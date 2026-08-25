@@ -23,7 +23,7 @@
   programs.nh = {
     enable = true;
     # Where this flake lives on the machine (matches sync.sh's REMOTE_DIR).
-    flake = "/home/mccarnon/nixos"; # TODO: adjust to your local checkout path
+    flake = "/home/mccarnon/loliconOS"; # TODO: adjust to your local checkout path
     # nh.clean left off — `nix.gc` above already handles store cleanup.
   };
 

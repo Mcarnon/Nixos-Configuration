@@ -1,5 +1,3 @@
-# Host: laptop (Huawei, Intel + Iris Xe).
-#
 # This file is the "host manifest": only host-specific choices live here
 # (identity, user, locale, stateVersion, session env, Home Manager wiring).
 # All reusable "how" lives in ../../modules, imported below.
@@ -17,9 +15,9 @@ in
   ];
 
   # ---- Identity ----
-  networking.hostName = "nixos"; # TODO: change as needed
+  networking.hostName = "loliconOS"; # TODO: change as needed
   time.timeZone = "Asia/Shanghai";
-  system.stateVersion = "26.05"; # pinned at first install; do NOT bump on upgrade
+  system.stateVersion = "26.11"; # pinned at first install; do NOT bump on upgrade
 
   # ---- Locale / environment ----
   locales = {

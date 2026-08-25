@@ -1,12 +1,11 @@
-# Modern CLI tools (user-level). Rescue/root tools stay in modules/cli.nix.
+# Screenshot / clipboard / volume tools.
 { config, pkgs, ... }:
 {
   home.packages = with pkgs; [
-    bat # cat with syntax highlight
-    yazi # TUI file manager
-    lazygit # git TUI
-    btop # resource monitor (replaces htop for daily use)
-    fastfetch # system info banner
+    grim # screenshot
+    slurp # region select for screenshots
+    wl-clipboard # Wayland clipboard (wl-copy / wl-paste)
+    pamixer # volume control (fallback; Noctalia has its own OSD)
     cliphist # clipboard history store
   ];
 
