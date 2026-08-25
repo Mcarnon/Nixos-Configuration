@@ -12,11 +12,12 @@
 
   services.resolved = {
     enable = true;
-    # Performance: cache + DNSSEC where available
-    extraConfig = ''
-      Cache=yes
-      CacheFromLocalhost=yes
-    '';
+    settings = {
+      Resolve = {
+        Cache = "yes";
+        CacheFromLocalhost = "yes";
+      };
+    };
   };
   # CN-friendly fallback servers when no DNS is pushed by the network.
   services.resolved.fallbackDns = [
