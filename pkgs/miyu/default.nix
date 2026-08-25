@@ -22,7 +22,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
     owner = "SHORiN-KiWATA";
     repo = "Miyu";
     rev = "v${finalAttrs.version}";
-    hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="; # placeholder: replace with `nix build` error output
+    hash = "sha256-PEyVg0SEPKf85E14EusgGmNIYOcr5KXOuS9e9QftlPo=";
   };
 
   cargoLock.lockFile = ./Cargo.lock;
