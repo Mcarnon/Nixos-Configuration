@@ -2,7 +2,7 @@
 # All helpers are pure and take `inputs` explicitly to stay flake-part-friendly.
 {
   # mkHost: canonical nixosSystem wrapper
-  # - Applies the repo overlay (pkgs/default.nix) so custom packages are globally available
+  # - Applies the repo overlay (pkgs/default.nix) so `pkgs.miyu` is globally available
   # - Wires agenix + home-manager exactly once (security: single decryption/activation path)
   # - Performance: avoids per-host boilerplate eval duplication
   mkHost =

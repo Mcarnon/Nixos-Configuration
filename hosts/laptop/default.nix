@@ -51,12 +51,6 @@ in
   environment.sessionVariables = {
     NIXOS_OZONE_WAYLAND = "1";
     XDG_CURRENT_DESKTOP = "niri";
-    # Fcitx5 input method — ensures GTK/Qt/XWayland apps pick up the IM framework.
-    GTK_IM_MODULE = "fcitx";
-    QT_IM_MODULE = "fcitx";
-    XMODIFIERS = "@im=fcitx";
-    SDL_IM_MODULE = "fcitx";
-    GLFW_IM_MODULE = "ibus"; # some GL apps only support ibus protocol
   };
 
   # ---- Home Manager wired in as a NixOS module ----

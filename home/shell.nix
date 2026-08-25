@@ -1,5 +1,5 @@
 # User shell: fish + starship + direnv, plus proxy on/off helpers.
-# Domain: pure shell (starship prompt, fish config, aliases).
+# Domain: pure shell (miyu lives in home/modules/miyu.nix).
 { config, pkgs, lib, ... }:
 {
   programs.starship.enable = true;

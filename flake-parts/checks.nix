@@ -3,7 +3,12 @@
 {
   perSystem =
     { pkgs, system, ... }:
+    let
+      miyuTest = pkgs.callPackage ../checks/miyu.nix { };
+    in
     {
-      checks = { };
+      checks = {
+        miyu-smoke = miyuTest;
+      };
     };
 }
