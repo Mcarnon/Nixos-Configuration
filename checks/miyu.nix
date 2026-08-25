@@ -1,7 +1,7 @@
 # NixOS VM test: Miyu package + fish hook (security: no network, smoke only).
 # Performance: VM boots once, runs two quick checks.
 { pkgs, ... }:
-pkgs.nixosTest {
+pkgs.testers.nixosTest {
   name = "miyu-smoke";
   nodes.machine =
     { config, pkgs, ... }:

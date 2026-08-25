@@ -4,7 +4,7 @@
 {
   flake.nixosConfigurations =
     let
-      lib = import ../lib { };
+      lib = import ../lib;
     in
     {
       # Single-host today; adding a second host is:
