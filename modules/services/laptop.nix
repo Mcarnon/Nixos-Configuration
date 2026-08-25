@@ -16,8 +16,10 @@
   services.fwupd.enable = true;
 
   # Lid close: suspend first, hibernate after HibernateDelaySec (below).
-  services.logind.lidSwitch = "suspend-then-hibernate";
-  services.logind.lidSwitchExternalPower = "suspend";
+  services.logind.settings.Login = {
+    HandleLidSwitch = "suspend-then-hibernate";
+    HandleLidSwitchExternalPower = "suspend";
+  };
 
   # Time spent suspended before falling through to hibernate.
   systemd.sleep.settings.Sleep.HibernateDelaySec = "2h";

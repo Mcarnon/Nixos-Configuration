@@ -8,7 +8,9 @@
 
   programs.git = {
     enable = true;
-    userName = "Mcarnon";
-    userEmail = "3273556124@qq.com";
+    settings.user = {
+      name = "Mcarnon";
+      email = "3273556124@qq.com";
+    };
   };
 }

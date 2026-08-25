@@ -12,18 +12,12 @@
 
   services.resolved = {
     enable = true;
-    settings = {
-      Resolve = {
-        Cache = "yes";
-        CacheFromLocalhost = "yes";
-      };
+    settings.Resolve = {
+      Cache = "yes";
+      CacheFromLocalhost = "yes";
+      FallbackDNS = "223.5.5.5 119.29.29.29"; # AliDNS + DNSPod (space-separated)
     };
   };
-  # CN-friendly fallback servers when no DNS is pushed by the network.
-  services.resolved.fallbackDns = [
-    "223.5.5.5" # AliDNS
-    "119.29.29.29" # DNSPod
-  ];
 
   # Firewall is in ../security/firewall.nix (kept separate for security audit).
 }

@@ -9,6 +9,7 @@
   fetchurl,
   autoPatchelfHook,
   makeWrapper,
+  libarchive, # provides bsdtar for unpacking Arch .pkg.tar.zst
   # runtime deps — Miyu is Rust (rustls, bundled sqlite) but dynamically links
   # against common system libs. Keep this list minimal; extend if ldd complains.
   glibc,
@@ -36,6 +37,7 @@ stdenv.mkDerivation (finalAttrs: {
   nativeBuildInputs = [
     autoPatchelfHook
     makeWrapper
+    libarchive
     zstd
   ];
 
