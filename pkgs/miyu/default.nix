@@ -27,6 +27,10 @@ rustPlatform.buildRustPackage (finalAttrs: {
 
   cargoLock.lockFile = ./Cargo.lock;
 
+  # Upstream's test suite needs network + external services (fcitx wiki, MCP
+  # servers); we only want the binary, so skip `cargo test` in the build.
+  doCheck = false;
+
   nativeBuildInputs = [
     pkg-config
     perl # needed by some crate build scripts
