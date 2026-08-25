@@ -66,8 +66,8 @@ in
     fonts = {
       packages = with pkgs; [
         noto-fonts
-        noto-fonts-cjk-sans       # Source Han Sans (SC/TC/JP/KR)
-        noto-fonts-cjk-serif      # Source Han Serif
+        noto-fonts-cjk-sans # Source Han Sans (SC/TC/JP/KR)
+        noto-fonts-cjk-serif # Source Han Serif
         noto-fonts-color-emoji
         nerd-fonts.jetbrains-mono # monospace + icon font
         nerd-fonts.symbols-only
