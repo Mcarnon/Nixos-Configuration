@@ -56,9 +56,11 @@ stdenv.mkDerivation (finalAttrs: {
 
   # The .pkg.tar.zst is an Arch package (bsdtar archive with ./usr hierarchy).
   # Nix's unpackPhase handles zstd transparently; we just rearrange into $out.
+  # Arch packages may contain UTF-8 filenames — ensure bsdtar has a UTF-8 locale.
   unpackPhase = ''
     runHook preUnpack
-    # bsdtar is available in stdenv; explicitly use it for .pkg.tar.zst
+    export LC_ALL=C.UTF-8
+    export LANG=C.UTF-8
     bsdtar -xf $src
     runHook postUnpack
   '';
