@@ -9,10 +9,13 @@ in
 {
   imports = [
     ./hardware-configuration.nix
-    ./intel.nix
-    ../../modules
+    ../../modules/hardware/intel.nix
+    ../../profiles/desktop.nix
     ../../locales
   ];
+
+  # Hardware HAL — single toggle per vendor (scale: add `hardware.amd.enable` for next host)
+  hardware.intel.enable = true;
 
   # ---- Identity ----
   networking.hostName = "loliconOS"; # TODO: change as needed

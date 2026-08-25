@@ -6,21 +6,21 @@ How to keep this NixOS system up to date and how the repo is organised.
 
 | Path | Responsibility |
 |------|----------------|
-| `flake.nix` | Inputs (nixpkgs / home-manager / noctalia) + `nixosConfigurations.laptop` |
-| `hosts/laptop/` | **Machine-specific** files |
-| `hosts/laptop/default.nix` | Host identity (user, hostname, timezone, stateVersion) + wiring |
-| `hosts/laptop/hardware-configuration.nix` | Disk mounts / LUKS unlock / initrd modules / firmware. **Holds the real UUIDs on the laptop** |
-| `hosts/laptop/disko-fs.nix` | Partitioning as code (run once at install; LUKS + btrfs subvolumes + swapfile) |
-| `hosts/laptop/intel.nix` | Intel CPU microcode + Iris Xe graphics / VA-API |
-| `hosts/laptop/niri-hardware.kdl` | Screen resolution / scale |
-| `modules/` | **Reusable, host-agnostic** system modules (boot / network / nix / packages / shell / snapshot / secrets / niri / audio / laptop / ssh) |
-| `pkgs/miyu` | Miyu derivation (prebuilt Arch release, autoPatchelf) |
+| `flake.nix` + `flake-parts/` | Standardized entry (flake-parts perSystem memoization, `nix flake check`); `hosts.nix`/`packages.nix`/`checks.nix` |
+| `lib/` | Helpers (`mkHost`, hardware helpers) — cross-host reuse |
+| `pkgs/` + `pkgs/default.nix` | Overlay (`overlays.default` = `{miyu}`) — single audit surface for custom binaries |
+| `profiles/` | Host composition (base/desktop) — scale by picking profiles |
+| `hosts/laptop/` | **Machine-specific** (hardware-configuration/disko-fs/niri-hardware + `default.nix` which picks `profiles/desktop` + `hardware.intel.enable`) |
+| `modules/` | Reusable per-domain: `system/` (boot/kernel/nix/shell/snapshot/locales), `services/` (network/openssh/niri/pipewire/laptop), `hardware/` (intel/nvidia/disko), `security/` (secrets/hardening/firewall/sops), `packages/` |
+| `modules/security/hardening.nix` | Hardening baseline + zram/BBR (performance + security) + `security/firewall.nix` (only 22) |
 | `locales/` | Locale / input-method / fonts |
-| `home/` | Per-user Home Manager config |
+| `home/` + `home/profiles/` | Per-user HM (common/desktop) — `home/modules/miyu.nix` owns miyu |
+| `home/files/` | Static assets (`miyu.fish`) — `xdg.configFile` sources |
+| `checks/` | NixOS VM tests (e.g. `miyu.nix`) wired as `perSystem.checks` |
+| `.github/workflows/ci.yml` | `nix flake check` + `nix fmt --check` |
 | `scripts/sync.sh` | rsync + rebuild to another machine |
 
-Rule of thumb: if it's true for *this specific laptop only*, it belongs in
-`hosts/laptop/`. If it could apply to any machine, put it in `modules/`.
+Rule of thumb: `hosts/<host>/` = identity + hardware + profile choice; `modules/` = reusable per-domain; `profiles/` = composition; `home/profiles/` = user env reuse.
 
 ## Day-to-day: edit → rebuild
 
@@ -51,7 +51,7 @@ sudo nixos-rebuild switch --flake .#laptop
 
 ## Garbage collection / disk space
 
-Automatic weekly GC is configured in `modules/nix.nix`. Manual cleanup:
+Automatic weekly GC is configured in `modules/system/nix.nix`. Manual cleanup:
 
 ```bash
 sudo nix-collect-garbage -d       # delete unreferenced store paths + old profiles
@@ -61,15 +61,15 @@ sudo nix store optimise           # dedupe (auto-optimise-store is already on)
 ## Hardware maintenance
 
 - **Firmware**: `sudo fwupdmgr refresh && sudo fwupdmgr update` (BIOS / SSD / etc.).
-- **CPU microcode**: `hardware.cpu.intel.updateMicrocode` (in `intel.nix`) — ships with the kernel.
-- **GPU / VA-API**: `intel-media-driver` (iHD, Iris Xe) is configured in `intel.nix`; verify with `vainfo`.
+- **CPU microcode**: `hardware.intel.enable = true` (`modules/hardware/intel.nix`) — HAL, set per host, microcode ships with kernel.
+- **GPU / VA-API**: `intel-media-driver` (iHD, Iris Xe) via same HAL; verify with `vainfo`.
 - **Diagnostics** (installed by `modules/packages/diagnostics.nix`):
   `lspci`, `lsusb`, `dmidecode`, `smartctl -a /dev/nvme0n1`, `nvme list`,
   `sensors`, `powertop`, `inxi -F`.
 - **LUKS**: the disk is unlocked at boot (passphrase) as `/dev/mapper/cryptroot`.
   `sudo cryptsetup luksDump /dev/nvme0n1p2` shows header info; add/remove a
   passphrase slot with `cryptsetup luksAddKey` / `luksRemoveKey`.
-- **Audio** (Huawei / Intel SOF — PipeWire in `modules/audio.nix`):
+- **Audio** (Huawei / Intel SOF — PipeWire in `modules/services/pipewire.nix`):
   ```bash
   lspci -nnk | grep -iA3 audio                    # kernel sees the sound card?
   aplay -l                                        # ALSA devices
@@ -102,15 +102,21 @@ laptop and re-apply it after a push — or commit the real UUIDs into the repo.
 
 ## Miyu AI assistant
 
-- Binary at `pkgs/miyu` (v0.4.5, `nix build .#miyu`). Update: bump `version` + `hash` in `pkgs/miyu/default.nix` from the GitHub release asset `miyu-*.pkg.tar.zst`.
-- Fish hook is `home/miyu.fish` → `xdg.configFile fish/conf.d/zz-miyu.fish` (declarative `miyu fish-init`; loads after starship). Never run `miyu fish-init` imperatively under HM — it would be overwritten. Diagnostics: if typing does nothing, run `miyu --shell-intercept --shell fish -- <cmd>` to see the error (the hook silences stderr).
-- First-run init: `home.activation.miyuInit` runs `miyu init` if `~/.miyu` is missing. Manual alternative: `miyu init` or `miyu daemon start` (first start also inits). Verify with `miyu paths` / `miyu -h`.
-- Model / opencode / prompt: `miyu config` (TUI) is the intended config path — DB is at `~/.miyu`, not a plain file. Steps after rebuild: open a new shell → `miyu config` → 供应商和模型 (add your own OpenAI-compatible endpoint or enable Claude Code provider which reuses local `claude` subscription) → 自定义提示词 (new persona; default is read-only) + 用户身份. Also: `miyu models` to switch without TUI, `miyu daemon logs request` to inspect real LLM requests, `miyu export --dry-run` before migration.
+- Binary via overlay `pkgs.miyu` (`pkgs/miyu` v0.4.5, `nix build .#miyu`). Update: bump `version` + `hash` in `pkgs/miyu/default.nix` from GitHub asset `miyu-*.pkg.tar.zst`.
+- Fish hook `home/files/miyu.fish` → `xdg.configFile fish/conf.d/zz-miyu.fish` in `home/modules/miyu.nix` (loads after starship). Never run `miyu fish-init` under HM. Diagnostics: `miyu --shell-intercept --shell fish -- <cmd>` (hook silences stderr).
+- First-run init: `home/modules/miyu.nix` `home.activation.miyuInit` runs `miyu init` if `~/.miyu` missing (also `miyu daemon start`). Verify `miyu paths` / `miyu -h`.
+- Model / opencode / prompt: `miyu config` (TUI, DB at `~/.miyu`) → 供应商和模型 (default opencode public API; add own OpenAI-compatible or enable Claude Code provider) → 自定义提示词 (new persona) + 用户身份. Also `miyu models`, `miyu daemon logs request`, `miyu export --dry-run`.
+
+## Performance & security baselines
+
+- **Performance**: `flake-parts` perSystem caching, `nix.settings` (`max-jobs auto`, `cores 0`, `auto-optimise-store`, `keep-derivations false`), `nix.gc` weekly, `zramSwap` zstd 25%, `boot.kernel.sysctl` BBR/fq + `vm.swappiness 10`, `services.resolved` cache, CN mirror substituters with `noctalia.cachix.org` priority.
+- **Security**: `networking.firewall` closed (only 22), `services.openssh` `PermitRootLogin no` (flip `PasswordAuthentication` to `false` after agenix), `age` via `agenix` (tmpfs `/run/agenix.d`), `LUKS` (`/dev/mapper/cryptroot`), `security.sudo.execWheelOnly`, `boot.kernel.sysctl` (`kptr_restrict`, `ptrace_scope`), `nix.settings.trusted-users = [ root @wheel ]`, `nix.channel.enable = false`.
+- **CI**: `nix flake check` runs `checks/miyu.nix` VM smoke + `nix fmt --check`; add more VM tests under `checks/` and wire in `flake-parts/checks.nix`.
 
 ## Secrets
 
 Never commit passwords or SSH private keys. Secrets are managed with **agenix**
-(see `modules/secrets.nix`): encrypted `.age` blobs live in `secrets/`, and only
+(see `modules/security/secrets.nix`): encrypted `.age` blobs live in `secrets/`, and only
 the target host's age identity (by default `~/.ssh/id_ed25519`) can decrypt
 them. The plaintext is only ever written to `/run/agenix.d/` (tmpfs). To add a
-secret, follow the steps at the top of `modules/secrets.nix`.
+secret, follow the steps at the top of `modules/security/secrets.nix`.

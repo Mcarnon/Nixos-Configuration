@@ -1,8 +1,6 @@
 # User shell: fish + starship + direnv, plus proxy on/off helpers.
+# Domain: pure shell (miyu lives in home/modules/miyu.nix).
 { config, pkgs, lib, ... }:
-let
-  miyuPkg = pkgs.callPackage ../pkgs/miyu { };
-in
 {
   programs.starship.enable = true;
 
@@ -62,35 +60,4 @@ in
     enable = true;
     enableFishIntegration = true; # `z` smart cd
   };
-
-  # Miyu fish hook — declarative equivalent of `miyu fish-init`.
-  # Source is ./miyu.fish (verbatim upstream output). Installed as zz-miyu.fish
-  # so it loads AFTER starship (conf.d is alphabetical; starship.fish < zz-miyu.fish),
-  # ensuring the wrapper sees starship's fish_prompt.
-  xdg.configFile."fish/conf.d/zz-miyu.fish".source = ./miyu.fish;
-
-  # Auto-init Miyu state on first HM switch so `miyu config` / daemon work
-  # without a manual `miyu init`. Idempotent — only runs if ~/.miyu is missing.
-  home.activation.miyuInit = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    if [ ! -d "$HOME/.miyu" ]; then
-      echo "Miyu: initializing ~/.miyu (first run)..."
-      $DRY_RUN_CMD ${miyuPkg}/bin/miyu init 2>/dev/null || true
-    fi
-  '';
-
-  # Optional daemon auto-start (Miyu normally starts daemon on-demand from the
-  # shell hook / REPL, so this is NOT required. Uncomment if you want it always
-  # resident — e.g. for WebUI / QQ bridge without opening a terminal first).
-  # systemd.user.services.miyu-daemon = {
-  #   Unit = {
-  #     Description = "Miyu daemon (AI assistant)";
-  #     After = [ "graphical-session.target" ];
-  #     PartOf = [ "graphical-session.target" ];
-  #   };
-  #   Service = {
-  #     ExecStart = "${miyuPkg}/bin/miyu daemon start";
-  #     Restart = "on-failure";
-  #   };
-  #   Install.WantedBy = [ "graphical-session.target" ];
-  # };
 }

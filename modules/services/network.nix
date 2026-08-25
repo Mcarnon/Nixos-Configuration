@@ -1,4 +1,6 @@
 # Network: NetworkManager for Wi-Fi/Ethernet, systemd-resolved for DNS.
+# Security: firewall default-closed, only SSH explicitly opened; Performance:
+# resolved caching.
 { config, pkgs, ... }:
 {
   networking.networkmanager = {
@@ -8,13 +10,19 @@
     dns = "systemd-resolved";
   };
 
-  services.resolved.enable = true;
+  services.resolved = {
+    enable = true;
+    # Performance: cache + DNSSEC where available
+    extraConfig = ''
+      Cache=yes
+      CacheFromLocalhost=yes
+    '';
+  };
   # CN-friendly fallback servers when no DNS is pushed by the network.
   services.resolved.fallbackDns = [
     "223.5.5.5" # AliDNS
     "119.29.29.29" # DNSPod
   ];
 
-  # Allow inbound SSH so scripts/sync.sh and remote deploys work over LAN.
-  networking.firewall.allowedTCPPorts = [ 22 ];
+  # Firewall is in ../security/firewall.nix (kept separate for security audit).
 }

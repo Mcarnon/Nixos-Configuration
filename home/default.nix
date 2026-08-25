@@ -1,18 +1,9 @@
-# User environment (Home Manager)
+# User environment (Home Manager) — thin entry (scale: host picks a profile).
 { config, pkgs, inputs, lib, ... }:
 {
   imports = [
-    ./niri.nix
-    ./noctalia.nix
-    ./shell.nix
-    ./packages
+    ./profiles/desktop.nix
   ];
 
   home.stateVersion = "26.11"; # TODO: keep in sync with the host stateVersion
-
-  programs.git = {
-    enable = true;
-    userName = "Mcarnon";
-    userEmail = "3273556124@qq.com";
-  };
 }

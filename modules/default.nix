@@ -1,17 +1,25 @@
-# Module summary: all reusable system modules are imported here.
-# A host only needs to import `../../modules` to pull in the whole set.
+# Compatibility shim: new code should import via `profiles/*` or per-domain `modules/<domain>/*`.
+# This file keeps `imports = [ ../../modules ]` working for any legacy host.
 {
   imports = [
-    ./boot.nix
-    ./network.nix
-    ./nix.nix
+    ./system/boot.nix
+    ./system/kernel.nix
+    ./system/locales.nix
+    ./system/nix.nix
+    ./system/shell.nix
+    ./system/snapshot.nix
     ./packages
-    ./shell.nix
-    ./snapshot.nix
-    ./secrets.nix
-    ./niri.nix
-    ./audio.nix
-    ./laptop.nix
-    ./ssh.nix
+    ./services/network.nix
+    ./services/openssh.nix
+    ./services/niri.nix
+    ./services/pipewire.nix
+    ./services/laptop.nix
+    ./security/secrets.nix
+    ./security/hardening.nix
+    ./security/firewall.nix
+    ./security/sops.nix
+    ./hardware/intel.nix
+    ./hardware/nvidia.nix
+    ./hardware/disko.nix
   ];
 }
