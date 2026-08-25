@@ -5,6 +5,5 @@
     ./common.nix
     ../niri.nix
     ../noctalia.nix
-    ../modules/miyu.nix
   ];
 }

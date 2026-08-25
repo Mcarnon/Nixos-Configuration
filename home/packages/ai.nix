@@ -1,8 +1,8 @@
-# AI assistants / LLM CLIs for terminal use (Miyu package lives in home/modules/miyu.nix via `pkgs.miyu`).
+# AI assistants / LLM CLIs for terminal use.
 { config, pkgs, ... }:
 {
   home.packages = with pkgs; [
-    # Terminal coding agent; also the default backend Miyu talks to.
+    # Terminal coding agent; also the default backend for opencode-based services.
     opencode
 
     # Zero-config chat CLI (multi-model, scriptable: `echo x | aichat`).
@@ -17,5 +17,4 @@
   # `claude-code` above and set:
   #   environment.sessionVariables.SHELL = "/run/current-system/sw/bin/bash";
   # (fish stays your interactive shell; claude-code just spawns bash for itself.)
-  # Miyu lives in home/modules/miyu.nix (pkgs.miyu) — see that file for model/opencode/prompt setup.
 }
