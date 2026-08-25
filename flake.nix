@@ -30,6 +30,12 @@
     # Pin the `cachix` branch: always points to the latest CI-prebuilt commit.
     noctalia.url = "github:noctalia-dev/noctalia/cachix";
 
+    # Zen Browser (Firefox-based, not in nixpkgs; wraps upstream binaries).
+    zen-browser = {
+      url = "github:youwen5/zen-browser-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # age-encrypted secrets (see modules/secrets.nix)
     agenix.url = "github:ryantm/agenix";
   };
