@@ -72,8 +72,34 @@ in
       GLFW_IM_MODULE = "ibus"; # fcitx via ibus bridge for some GLFW apps
     };
 
-    # Ensure fcitx5 dbus service is available
+    # Ensure fcitx5 + Qt/GTK frontends for Wayland candidate window
     services.dbus.packages = lib.mkIf cfg.inputMethod.enable (with pkgs; [ fcitx5 ]);
+
+    # Qt + GTK frontends ensure the candidate window renders on Wayland
+    environment.systemPackages = lib.mkIf cfg.inputMethod.enable (with pkgs; [
+      fcitx5-gtk
+      qt6Packages.fcitx5-chinese-addons
+      qt6Packages.fcitx5-qt
+      qt6Packages.fcitx5-configtool
+    ]);
+
+    # Auto-start fcitx5 daemon on login (NixOS i18n.inputMethod only sets env, not the service)
+    systemd.user.services.fcitx5 = lib.mkIf cfg.inputMethod.enable {
+      Unit = {
+        Description = "Fcitx5 input method";
+        After = [ "graphical-session.target" ];
+        PartOf = [ "graphical-session.target" ];
+      };
+      Service = {
+        ExecStart = "${pkgs.fcitx5}/bin/fcitx5";
+        Restart = "on-failure";
+      };
+      Install = {
+        WantedBy = [ "graphical-session.target" ];
+      };
+    };
+
+    # Rime default schema deployed from modules/home/fcitx5.nix (HM module)
 
     fonts = {
       packages = with pkgs; [

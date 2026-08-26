@@ -19,7 +19,7 @@ binds {
 
     // ---- Applications ----
     Mod+E { spawn "nautilus"; }
-    Mod+B { spawn "firefox"; }
+    Mod+B { spawn "zen-beta"; }
 
     // ---- Window actions ----
     Mod+Q { close-window; }

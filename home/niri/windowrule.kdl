@@ -1,12 +1,44 @@
-// Noctalia window & layer rules
+// Noctalia window & layer rules + global window blur.
+// Blur values below must stay in sync with modules/home/desktop/theme.nix.
 
-// Rounded corners for all windows
+// Global blur tuning.
+blur {
+    passes 2
+    offset 3.0
+    noise 0.03
+    saturation 1.0
+}
+
+// All windows: rounded corners + blurred background.
+// xray=false keeps the wallpaper visible (and blurred) behind translucent windows.
 window-rule {
     geometry-corner-radius 20
     clip-to-geometry true
+    draw-border-with-background false
+    background-effect {
+        blur true
+        xray false
+    }
 }
 
-// Noctalia settings window: floating with a fixed size
+// Noctalia surfaces: disable xray so they composite/blur correctly.
+layer-rule {
+    match namespace="^noctalia-(bar-[^\"]+|notification|dock|panel|attached-panel|osd)$"
+    background-effect {
+        xray false
+    }
+}
+
+// Window switcher blur.
+layer-rule {
+    match namespace="noctalia-window-switcher"
+    background-effect {
+        blur true
+        xray false
+    }
+}
+
+// Noctalia settings window: floating with a fixed size.
 window-rule {
     match app-id="dev.noctalia.Noctalia"
     open-floating true
@@ -14,13 +46,18 @@ window-rule {
     default-window-height { fixed 920; }
 }
 
-// Allow Noctalia notification actions and window activation
+// Allow Noctalia notification actions and window activation.
 debug {
     honor-xdg-activation-with-invalid-serial
 }
 
-// Put the Noctalia wallpaper layer behind the niri overview
+// Put the Noctalia wallpaper / backdrop layers behind the niri overview.
 layer-rule {
     match namespace="^noctalia-backdrop"
+    place-within-backdrop true
+}
+
+layer-rule {
+    match namespace="^noctalia-wallpaper"
     place-within-backdrop true
 }
