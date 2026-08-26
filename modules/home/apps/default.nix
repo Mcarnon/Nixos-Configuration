@@ -5,5 +5,6 @@
     ./media.nix
     ./network.nix
     ./ai.nix
+    ./neovim.nix
   ];
 }

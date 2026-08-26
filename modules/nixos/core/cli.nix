@@ -6,7 +6,6 @@
     git
     curl
     wget
-    neovim
     rsync
     btrfs-progs
     file

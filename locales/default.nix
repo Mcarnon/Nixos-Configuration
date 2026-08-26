@@ -63,6 +63,18 @@ in
       };
     };
 
+    # Explicit env for apps that don't pick up Wayland IM protocol (foot, some Electron)
+    environment.variables = lib.mkIf cfg.inputMethod.enable {
+      GTK_IM_MODULE = "fcitx";
+      QT_IM_MODULE = "fcitx";
+      XMODIFIERS = "@im=fcitx";
+      SDL_IM_MODULE = "fcitx";
+      GLFW_IM_MODULE = "ibus"; # fcitx via ibus bridge for some GLFW apps
+    };
+
+    # Ensure fcitx5 dbus service is available
+    services.dbus.packages = lib.mkIf cfg.inputMethod.enable (with pkgs; [ fcitx5 ]);
+
     fonts = {
       packages = with pkgs; [
         noto-fonts

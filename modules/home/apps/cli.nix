@@ -1,4 +1,4 @@
-# Modern CLI tools (user-level). Rescue/root tools stay in modules/packages/.
+# Modern CLI tools (user-level). Rescue/root tools stay in modules/nixos/core/.
 { config, pkgs, ... }:
 {
   home.packages = with pkgs; [

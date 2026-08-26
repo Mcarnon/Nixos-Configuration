@@ -31,6 +31,6 @@
   # hardware helpers (HAL) — map a declarative attrset to concrete modules
   # Example: lib.hardware.intel -> imports intel microcode + gpu iris-xe
   hardware = {
-    intel = ../modules/hardware/intel.nix;
+    intel = ../modules/nixos/hardware/intel.nix;
   };
 }
