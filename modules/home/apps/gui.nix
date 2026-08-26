@@ -1,12 +1,12 @@
 # GUI / desktop applications.
-{ config, pkgs, ... }:
+{ config, pkgs, inputs, ... }:
 {
   home.packages = with pkgs; [
 
     # -- Essentials --
     foot # Wayland terminal emulator
     nautilus # file manager (niri's portal file picker also depends on it)
-    zen-browser # browser
+    inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default # browser
     xdg-utils # xdg-open & friends
 
     # -- Users specific --

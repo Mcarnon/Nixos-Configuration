@@ -188,7 +188,8 @@
         "home-manager": "home-manager_2",
         "nixpkgs": "nixpkgs_2",
         "noctalia": "noctalia",
-        "systems": "systems_2"
+        "systems": "systems_2",
+        "zen-browser": "zen-browser"
       }
     },
     "systems": {
@@ -218,6 +219,29 @@
       "original": {
         "owner": "nix-systems",
         "repo": "default",
+        "type": "github"
+      }
+    },
+    "zen-browser": {
+      "inputs": {
+        "home-manager": [
+          "home-manager"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1787713512,
+        "narHash": "sha256-brCGUIoHou+llpUrUFZgnKP94bd9CZC2y+v+6xEyBuk=",
+        "owner": "0xc000022070",
+        "repo": "zen-browser-flake",
+        "rev": "9fd493ab844f57827451de25075becc0d33cd410",
+        "type": "github"
+      },
+      "original": {
+        "owner": "0xc000022070",
+        "repo": "zen-browser-flake",
         "type": "github"
       }
     }
