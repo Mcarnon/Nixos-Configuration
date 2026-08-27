@@ -92,7 +92,7 @@ can load the kernel.
 
 ## SSH remote sync / deploy
 
-An SSH alias `nixos-remote` is defined in `modules/services/openssh.nix` — change it to your remote machine's address first.
+An SSH alias `nixos-remote` is defined in `modules/nixos/network/openssh.nix` — change it to your remote machine's address first.
 
 ```bash
 chmod +x scripts/sync.sh

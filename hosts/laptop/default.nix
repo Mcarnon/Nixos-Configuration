@@ -39,7 +39,7 @@ in
       "render"
       "dialout"
     ];
-    shell = pkgs.fish; # enabled in modules/shell.nix, configured in home/shell.nix
+    shell = pkgs.fish; # enabled in modules/nixos/core/shell.nix, configured in home/shell.nix
     # First-login password placeholder (plaintext lands in the Nix store —
     # change it right after first login with `passwd`).
     initialPassword = "nixos";

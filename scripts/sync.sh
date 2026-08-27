@@ -6,13 +6,13 @@
 #   ./scripts/sync.sh pull   [remote]   # pull config from the remote to this machine
 #   ./scripts/sync.sh deploy [remote]   # push + remote nixos-rebuild switch
 #
-# remote defaults to the SSH alias nixos-remote (see modules/ssh.nix)
+# remote defaults to the SSH alias nixos-remote (see modules/nixos/network/openssh.nix)
 
 set -euo pipefail
 
 REMOTE="${2:-nixos-remote}"
 # directory on the remote that holds the config (supports ~ expansion)
-REMOTE_DIR="${REMOTE_DIR:-~/nixos}"
+REMOTE_DIR="${REMOTE_DIR:-~/Nixos-Configuration}"
 
 # repository root (one level above scripts/)
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

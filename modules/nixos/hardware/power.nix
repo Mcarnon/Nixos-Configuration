@@ -15,12 +15,15 @@
   # Firmware updates (some laptops ship firmware via fwupd)
   services.fwupd.enable = true;
 
-  # Lid close: suspend first, hibernate after HibernateDelaySec (below).
-  services.logind.settings.Login = {
-    HandleLidSwitch = "suspend-then-hibernate";
+  # Lid close: suspend. Hibernation is not wired up yet (the swapfile resume
+  # offset in hosts/laptop/hardware-configuration.nix is still commented out),
+  # so don't use "suspend-then-hibernate" here until resume is configured.
+  services.logind.settings = {
+    HandleLidSwitch = "suspend";
     HandleLidSwitchExternalPower = "suspend";
   };
 
-  # Time spent suspended before falling through to hibernate.
+  # Time spent suspended before falling through to hibernate. Only relevant
+  # once HandleLidSwitch is set back to "suspend-then-hibernate".
   systemd.sleep.settings.Sleep.HibernateDelaySec = "2h";
 }

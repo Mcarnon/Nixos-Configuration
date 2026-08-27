@@ -19,7 +19,7 @@
 { config, pkgs, lib, ... }:
 {
   # Where agenix looks for the private key at activation.
-  # Uses the same SSH key as modules/ssh.nix; TODO: keep in sync with your user.
+  # Uses the same SSH key as modules/nixos/network/openssh.nix; TODO: keep in sync with your user.
   age.identityPaths = [ "/home/mccarnon/.ssh/id_ed25519" ];
 
   # Example (uncomment + create the .age file as above):
