@@ -5,6 +5,6 @@
     { pkgs, system, ... }:
     {
       packages.miyu = pkgs.callPackage ../pkgs/miyu { };
-      formatter = pkgs.nixfmt;
+      formatter = pkgs.nixfmt-rfc-style;
     };
 }

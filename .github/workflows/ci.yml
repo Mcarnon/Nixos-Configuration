@@ -14,4 +14,4 @@ jobs:
       - name: nix flake check (all checks + VM tests; security + performance regressions)
         run: nix flake check --accept-flake-config --all-systems --show-trace
       - name: formatter check (nixfmt-rfc-style)
-        run: nix fmt -- --check
+        run: nix fmt . -- --check
