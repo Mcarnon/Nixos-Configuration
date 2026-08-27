@@ -12,6 +12,6 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@v14
       - uses: DeterminateSystems/magic-nix-cache-action@v8
       - name: nix flake check (all checks + VM tests; security + performance regressions)
-        run: nix flake check --all-systems --show-trace
+        run: nix flake check --accept-flake-config --all-systems --show-trace
       - name: formatter check (nixfmt-rfc-style)
         run: nix fmt -- --check

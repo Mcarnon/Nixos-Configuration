@@ -48,10 +48,6 @@
       # and `nix flake check` parallelism. Add aarch64-linux here when you add that host.
       systems = [ "x86_64-linux" ];
 
-      perSystem = { pkgs, ... }: {
-        formatter = pkgs.nixfmt;   # Disable nixfmt-rfc-style
-      };
-
       imports = [
         ./flake-parts/hosts.nix
         ./flake-parts/packages.nix
