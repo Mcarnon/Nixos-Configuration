@@ -15,12 +15,11 @@
   # Firmware updates (some laptops ship firmware via fwupd)
   services.fwupd.enable = true;
 
-  # Lid close: suspend first, hibernate after HibernateDelaySec (below).
+  # Lid close: suspend. Hibernation is optional on this host and is not
+  # configured (no boot.resumeDevice / resume_offset); see
+  # hosts/laptop/hardware-configuration.nix if you want to enable it.
   services.logind.settings.Login = {
-    HandleLidSwitch = "suspend-then-hibernate";
+    HandleLidSwitch = "suspend";
     HandleLidSwitchExternalPower = "suspend";
   };
-
-  # Time spent suspended before falling through to hibernate.
-  systemd.sleep.settings.Sleep.HibernateDelaySec = "2h";
 }
