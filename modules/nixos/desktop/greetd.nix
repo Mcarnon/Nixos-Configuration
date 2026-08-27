@@ -64,4 +64,8 @@
       }
     '';
   };
+
+  # ReGreet runs on cage inside a greetd session; the greeter user needs
+  # DRM / GPU / input access. nixpkgs' greetd module does NOT add these.
+  users.users.greeter.extraGroups = [ "video" "input" "render" ];
 }

@@ -84,18 +84,16 @@ in
     ]);
 
     # Auto-start fcitx5 daemon on login (NixOS i18n.inputMethod only sets env, not the service)
+    # NB: NixOS `systemd.user.services` uses wantedBy/after/serviceConfig (not Unit/Service/Install).
     systemd.user.services.fcitx5 = lib.mkIf cfg.inputMethod.enable {
-      Unit = {
-        Description = "Fcitx5 input method";
-        After = [ "graphical-session.target" ];
-        PartOf = [ "graphical-session.target" ];
-      };
-      Service = {
+      description = "Fcitx5 input method";
+      wantedBy = [ "graphical-session.target" ];
+      wants = [ "graphical-session.target" ];
+      after = [ "graphical-session.target" ];
+      serviceConfig = {
+        Type = "simple";
         ExecStart = "${pkgs.fcitx5}/bin/fcitx5";
         Restart = "on-failure";
-      };
-      Install = {
-        WantedBy = [ "graphical-session.target" ];
       };
     };
 
