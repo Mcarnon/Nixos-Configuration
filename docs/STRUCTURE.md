@@ -1,28 +1,26 @@
 # 结构说明
 
 ```
-flake.nix / flake-parts/{hosts,packages,checks}.nix / lib/default.nix / pkgs/  # 入口/装配/覆盖层 不动
+flake.nix / flake-parts/{hosts,packages,checks}.nix / lib/default.nix / pkgs/  # 入口/装配/覆盖层
 modules/
-  nixos/default.nix -> [core desktop hardware network security i18n]  # 唯一聚合
+  nixos/
     core/{boot.nix,nix.nix,shell.nix,persist.nix,kernel.nix,cli.nix,diagnostics.nix}
-    desktop/{niri.nix,greetd.nix,audio.nix}   # pipewire->audio, niri拆greetd
-    hardware/{intel.nix,nvidia.nix,power.nix,disko.nix} # laptop->power
+    desktop/{niri.nix,greetd.nix,audio.nix}      # pipewire->audio, niri拆greetd
+    hardware/{intel.nix,nvidia.nix,power.nix,disko.nix}
     network/{manager.nix,openssh.nix,firewall.nix}
     security/{hardening.nix,secrets.nix,sops.nix}
-    i18n/ -> ../../locales  # 吸收顶级 locales/
-  home/default.nix -> [shell desktop apps services]
-    shell/{fish.nix,tools.nix}  # 原 home/shell.nix 拆分
-    desktop/{niri.nix,noctalia.nix}
-    apps/{cli,gui,media,network,ai}.nix
+    i18n/ -> ../../locales                        # 垫片，canonical 在 locales/
+  home/
+    shell/{fish.nix,tools.nix}
+    desktop/{niri.nix,appearance.nix,noctalia/}   # noctalia 按域拆子模块
+    apps/{cli,gui,media,network,ai,neovim}.nix
     services/{miyu.nix,cliphist.nix}
-  _templates/  # 新模块脚手架
-modules/default.nix  # 垫片 -> ./nixos
-locales/  # 垫片，canonical 已迁至 modules/nixos/i18n
-roles/nixos/{base.nix,desktop.nix}  # 取代 profiles/
-roles/home/{common.nix,desktop.nix} # 取代 home/profiles/
-profiles/ / home/profiles/  # 垫片 -> roles/
+  _templates/                                     # 新模块脚手架
+locales/{default.nix,zh-cn.nix}                   # locale/输入法/字体框架（canonical）
+roles/nixos/{base.nix,desktop.nix}                # 主机组合
+roles/home/{common.nix,desktop.nix}               # 用户组合
 hosts/laptop/{default.nix,hardware-configuration.nix,disko-fs.nix,niri-hardware.kdl}
-home/{files/miyu.fish,niri/*.kdl} / checks/miyu.nix / scripts/sync.sh  # 不动
+home/{default.nix,files/miyu.fish,niri/*.kdl} / wallpapers/ / docs/ / checks/ / scripts/ / .github/
 ```
 
 **原则**：`hosts` 只放身份+硬件+选 `roles`；`modules` 按域可复用；`roles` 做组合。

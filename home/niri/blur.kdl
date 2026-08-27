@@ -1,0 +1,30 @@
+// Window blur (niri 26.04+).
+// The compositor re-blurs the live framebuffer every frame, so video,
+// wallpaper transitions, and moving windows all show through in real time.
+// Note: non-xray blur is experimental and is not rendered during window
+// open/close animations.
+blur {
+    passes 3        // keep <= 3 on Intel iGPU for perf/quality balance
+    offset 3.0
+    noise 0.02
+    saturation 1.5
+}
+
+// Floating windows / dialogs: full (regular) blur; tiled windows keep the
+// default efficient xray blur.
+window-rule {
+    match is-floating=true
+    background-effect {
+        xray false
+    }
+}
+
+// Blur popup menus too (e.g. Nautilus context menus).
+window-rule {
+    match app-id="Nautilus"
+    popups {
+        background-effect {
+            blur true
+        }
+    }
+}

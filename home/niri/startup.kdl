@@ -1,2 +1,8 @@
 // Start the Noctalia desktop shell
 spawn-at-startup "noctalia"
+
+// XWayland is off by default. To enable X11 apps, install xwayland-satellite
+// and add the block below to config.kdl (niri 25.08 auto-spawns it on demand):
+//   xwayland-satellite {
+//       path "xwayland-satellite"
+//   }

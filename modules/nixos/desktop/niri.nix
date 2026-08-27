@@ -3,6 +3,20 @@
 {
   programs.niri.enable = true;
 
+  # xdg-desktop-portal routing: `programs.niri` already enables the portal +
+  # GNOME backend (required for screencast); route file dialogs to the GTK
+  # backend.
+  xdg.portal = {
+    enable = lib.mkDefault true;
+    extraPortals = with pkgs; [
+      xdg-desktop-portal-gnome
+      xdg-desktop-portal-gtk
+    ];
+    config.niri = {
+      default = [ "gnome" "gtk" ];
+      "org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
+    };
+  };
 
   # Known fixes for the niri session + xdg-desktop-portal (see openbit/niri-noctalia)
   # graphical-session.target defaults to RefuseManualStart=yes, which blocks niri

@@ -63,9 +63,8 @@ in
       };
     };
 
-    # Explicit env for apps that don't pick up Wayland IM protocol (foot, some Electron).
-    # sessionVariables (not environment.variables) so the greetd -> niri session picks these up.
-    environment.sessionVariables = lib.mkIf cfg.inputMethod.enable {
+    # Explicit env for apps that don't pick up Wayland IM protocol (foot, some Electron)
+    environment.variables = lib.mkIf cfg.inputMethod.enable {
       GTK_IM_MODULE = "fcitx";
       QT_IM_MODULE = "fcitx";
       XMODIFIERS = "@im=fcitx";
@@ -79,14 +78,13 @@ in
     # Qt + GTK frontends ensure the candidate window renders on Wayland
     environment.systemPackages = lib.mkIf cfg.inputMethod.enable (with pkgs; [
       fcitx5-gtk
-      qt6Packages.fcitx5-chinese-addons
+      fcitx5-chinese-addons
       qt6Packages.fcitx5-qt
       qt6Packages.fcitx5-configtool
     ]);
 
     # Auto-start fcitx5 daemon on login (NixOS i18n.inputMethod only sets env, not the service)
     systemd.user.services.fcitx5 = lib.mkIf cfg.inputMethod.enable {
-      wantedBy = [ "graphical-session.target" ];
       Unit = {
         Description = "Fcitx5 input method";
         After = [ "graphical-session.target" ];
@@ -95,6 +93,9 @@ in
       Service = {
         ExecStart = "${pkgs.fcitx5}/bin/fcitx5";
         Restart = "on-failure";
+      };
+      Install = {
+        WantedBy = [ "graphical-session.target" ];
       };
     };
 

@@ -1,60 +1,67 @@
-# greetd login manager for niri, using gtkgreet (graphical, CSS-themed) on cage.
+# greetd login manager: ReGreet (GTK4 greeter, fully themeable).
+#
+# The login background references a file under the repo's `wallpapers/`
+# directory (relative path -> store path, readable by the greeter user and
+# reproducible). Drop `login.png` (or a `.mp4` — ReGreet bundles GStreamer for
+# video/animated backgrounds) there and uncomment `settings.background`.
 { config, pkgs, lib, ... }:
 {
-  services.greetd = {
+  services.displayManager.regreet = {
     enable = true;
+
+    # GTK appearance via the module options (avoids clashing with the
+    # module's own `settings.GTK.*` assignments).
+    theme = {
+      name = "Adwaita";
+      package = pkgs.gnome-themes-extra;
+    };
+    iconTheme = {
+      name = "Papirus-Dark";
+      package = pkgs.papirus-icon-theme;
+    };
+    font = {
+      name = "JetBrainsMono Nerd Font";
+      size = 16;
+      package = pkgs.nerd-fonts.jetbrains-mono;
+    };
+    cursorTheme = {
+      name = "volantes_cursors";
+      package = pkgs.volantes_cursors;
+    };
+
     settings = {
-      default_session = {
-        user = "greeter";
-        # cage hosts gtkgreet (a Wayland compositor is required for GUI greeters);
-        # -s loads the custom CSS, -c is the session started after login.
-        command = "${lib.getExe pkgs.cage} -- ${lib.getExe pkgs.gtkgreet} -s /etc/greetd/style.css -c ${pkgs.niri}/bin/niri-session";
+      # TODO: drop a file at wallpapers/login.png and uncomment to use it.
+      # background = {
+      #   path = ../../../wallpapers/login.png;
+      #   fit = "Cover";
+      # };
+      GTK = {
+        application_prefer_dark_theme = true;
+      };
+      commands = {
+        reboot = [ "systemctl" "reboot" ];
+        poweroff = [ "systemctl" "poweroff" ];
+      };
+      appearance.greeting_msg = "Welcome back";
+      widget.clock = {
+        format = "%H:%M  %a %d %b";
+        resolution = "1000ms";
+        locale = "zh_CN";
       };
     };
-  };
 
-  # The greeter user runs a Wayland compositor (cage), so it needs DRM / input / GPU access.
-  users.users.greeter.extraGroups = [ "video" "input" "render" ];
-
-  # Catppuccin-Mocha-themed login screen (GTK3 CSS consumed by gtkgreet).
-  environment.etc."greetd/style.css".text = ''
-    window {
-        background-color: #1e1e2e;
-    }
-
-    #body {
-        background-color: rgba(49, 50, 68, 0.85);
+    # GTK4 CSS for the login screen (rounded cards, translucency, accent colors).
+    extraCss = ''
+      window.regreet-window {
+        background-color: transparent;
+      }
+      box.regreet-outer {
+        background-color: alpha(#181825, 0.72);
+        border-radius: 20px;
+      }
+      button {
         border-radius: 12px;
-        padding: 40px;
-    }
-
-    #clock {
-        color: #cdd6f4;
-        font-size: 48px;
-        font-weight: bold;
-    }
-
-    #input-field {
-        background-color: rgba(24, 24, 37, 0.8);
-        border-radius: 8px;
-        padding: 10px;
-        color: #cdd6f4;
-        caret-color: #cdd6f4;
-    }
-
-    label {
-        color: #cdd6f4;
-    }
-
-    button {
-        border-radius: 8px;
-        padding: 8px 16px;
-    }
-
-    button.suggested-action {
-        background-color: #89b4fa;
-        color: #11111b;
-        font-weight: bold;
-    }
-  '';
+      }
+    '';
+  };
 }

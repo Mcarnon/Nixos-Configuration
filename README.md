@@ -7,7 +7,7 @@
 - **disko** partitioning as code (tmpfs root + fine-grained btrfs subvolumes)
 - **LUKS** full-disk encryption (single passphrase, encrypted swap) + hardware HAL (`hardware.intel.enable`)
 - **agenix** secrets management (age-encrypted, decrypt only on the target host)
-- **profiles/** host composition (base/desktop) — cross-host reuse without double-eval
+- **roles/** host composition (base/desktop) — cross-host reuse without double-eval
 - **niri** scrollable-tiling Wayland compositor + **Noctalia** desktop shell
 - **Intel Iris Xe** graphics acceleration (VA-API) via `modules/hardware/intel.nix`
 - **Chinese environment** (locale + fonts + Fcitx5 input method)
@@ -35,23 +35,27 @@ git add -A && sudo nixos-rebuild switch --flake .#laptop
 .
 ├── flake.nix / flake-parts/{hosts,packages,checks}.nix / lib/default.nix / pkgs/ # 入口/装配/覆盖层
 ├── modules/
-│   ├── nixos/default.nix        # 唯一聚合: [core desktop hardware network security i18n]
+│   ├── nixos/
 │   │   ├── core/{boot.nix,nix.nix,shell.nix,persist.nix,kernel.nix,cli.nix,diagnostics.nix}
-│   │   ├── desktop/{niri.nix,greetd.nix,audio.nix}  # niri拆greetd, pipewire->audio
-│   │   ├── hardware/{intel.nix,nvidia.nix,power.nix,disko.nix} # laptop->power
+│   │   ├── desktop/{niri.nix,greetd.nix,audio.nix}   # niri拆greetd, pipewire->audio
+│   │   ├── hardware/{intel.nix,nvidia.nix,power.nix,disko.nix}
 │   │   ├── network/{manager.nix,openssh.nix,firewall.nix}
 │   │   ├── security/{hardening.nix,secrets.nix,sops.nix}
-│   │   └── i18n/ -> ../../locales
-│   ├── home/{shell/{fish,tools},desktop/{niri,noctalia},apps/{cli,gui,media,network,ai},services/{miyu,cliphist}}
-│   ├── _templates/{enable-option.nix,nested-import.nix,example-simple.nix}
-│   └── default.nix              # 垫片 -> ./nixos
-├── roles/                       # 取代 profiles/，语义更准（profiles 保留垫片）
+│   │   └── i18n/ -> ../../locales                    # locale框架垫片
+│   ├── home/
+│   │   ├── shell/{fish.nix,tools.nix}
+│   │   ├── desktop/{niri.nix,appearance.nix,noctalia/} # noctalia按域拆子模块
+│   │   ├── apps/{cli,gui,media,network,ai,neovim}.nix
+│   │   └── services/{miyu,cliphist}.nix
+│   └── _templates/{enable-option.nix,nested-import.nix,example-simple.nix}
+├── roles/                       # 主机/用户组合（base/desktop）
 │   ├── nixos/{base.nix,desktop.nix}
 │   └── home/{common.nix,desktop.nix}
 ├── hosts/laptop/{default.nix,hardware-configuration.nix,disko-fs.nix,niri-hardware.kdl}
-├── locales/ -> modules/nixos/i18n (垫片，canonical 已迁移)
-├── home/{default.nix,files/miyu.fish,niri/*.kdl,profiles/->roles} # profiles垫片
-├── docs/{QUICK_START.md,STRUCTURE.md,MIGRATION.md}
+├── locales/{default.nix,zh-cn.nix}                   # locale/输入法/字体框架（canonical）
+├── home/{default.nix,files/miyu.fish,niri/*.kdl}
+├── wallpapers/                                       # 登录界面背景
+├── docs/{QUICK_START,STRUCTURE,MIGRATION,DESKTOP,FAQ}.md
 ├── checks/miyu.nix  .github/workflows/ci.yml  scripts/sync.sh
 ```
 
@@ -92,7 +96,7 @@ can load the kernel.
 
 ## SSH remote sync / deploy
 
-An SSH alias `nixos-remote` is defined in `modules/nixos/network/openssh.nix` — change it to your remote machine's address first.
+An SSH alias `nixos-remote` is defined in `modules/services/openssh.nix` — change it to your remote machine's address first.
 
 ```bash
 chmod +x scripts/sync.sh
@@ -174,7 +178,7 @@ Reinstalling later is the same flow — disko's `destroy` step handles the wipe.
 | `modules/nixos/network/openssh.nix` | remote IP / user |
 | `modules/nixos/network/firewall.nix` | `allowedTCPPorts` (default only 22) |
 | `modules/nixos/security/hardening.nix` | `boot.kernel.sysctl` BBR/fq, `zramSwap` |
-| `modules/home/desktop/noctalia.nix` | wallpaper path, theme |
+| `modules/home/desktop/noctalia/{theme,wallpaper}.nix` | wallpaper directory, theme source |
 | `modules/home/services/miyu.nix` | Miyu TUI (`miyu config`); no prefill needed |
 | `locales/zh-cn.nix` | input method (e.g. Rime) |
 

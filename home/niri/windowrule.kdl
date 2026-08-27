@@ -1,63 +1,77 @@
-// Noctalia window & layer rules + global window blur.
-// Blur values below must stay in sync with modules/home/desktop/theme.nix.
+// Window & layer rules
 
-// Global blur tuning.
-blur {
-    passes 2
-    offset 3.0
-    noise 0.03
-    saturation 1.0
-}
-
-// All windows: rounded corners + blurred background.
-// xray=false keeps the wallpaper visible (and blurred) behind translucent windows.
+// Rounded corners for all windows.
 window-rule {
-    geometry-corner-radius 20
+    geometry-corner-radius 12
     clip-to-geometry true
-    draw-border-with-background false
-    background-effect {
-        blur true
-        xray false
-    }
 }
 
-// Noctalia surfaces: disable xray so they composite/blur correctly.
-layer-rule {
-    match namespace="^noctalia-(bar-[^\"]+|notification|dock|panel|attached-panel|osd)$"
-    background-effect {
-        xray false
-    }
-}
-
-// Window switcher blur.
-layer-rule {
-    match namespace="noctalia-window-switcher"
-    background-effect {
-        blur true
-        xray false
-    }
-}
-
-// Noctalia settings window: floating with a fixed size.
+// ---- Per-app opacity (pairs with blur: transparency makes blur visible) ----
 window-rule {
-    match app-id="dev.noctalia.Noctalia"
+    match app-id="^foot$"
+    opacity 0.92
+}
+window-rule {
+    match app-id="^zen-beta$"
+    opacity 0.95
+}
+window-rule {
+    match app-id="^obsidian$"
+    opacity 0.93
+}
+window-rule {
+    match app-id=r#"^dev\.zed\.Zed$"#
+    opacity 0.95
+}
+
+// ---- Floating windows ----
+// Noctalia settings window
+window-rule {
+    match app-id=r#"^dev\.noctalia\.Noctalia$"#
     open-floating true
     default-column-width { fixed 1080; }
     default-window-height { fixed 920; }
 }
+// Nautilus
+window-rule {
+    match app-id=r#"^org\.gnome\.Nautilus$"#
+    open-floating true
+    default-column-width { fixed 1200; }
+    default-window-height { fixed 800; }
+}
+// Volume control (pavucontrol)
+window-rule {
+    match app-id="^pavucontrol$"
+    open-floating true
+    default-column-width { fixed 800; }
+    default-window-height { fixed 600; }
+}
+// Picture-in-Picture: floating, bottom-right
+window-rule {
+    match title="^Picture-in-Picture$"
+    open-floating true
+    default-column-width { fixed 480; }
+    default-window-height { fixed 270; }
+    default-floating-position x=32 y=32 relative-to="bottom-right"
+}
+// Open/Save file dialogs
+window-rule {
+    match title="^(Open|Save) File.*$"
+    open-floating true
+}
+// OBS: needs a min width with server-side decorations
+window-rule {
+    match app-id=r#"^com\.obsproject\.Studio$"#
+    min-width 876
+}
 
-// Allow Noctalia notification actions and window activation.
+// Allow Noctalia notification actions and window activation
 debug {
     honor-xdg-activation-with-invalid-serial
 }
 
-// Put the Noctalia wallpaper / backdrop layers behind the niri overview.
+// Put the Noctalia wallpaper layer behind the niri overview
 layer-rule {
     match namespace="^noctalia-backdrop"
-    place-within-backdrop true
-}
-
-layer-rule {
-    match namespace="^noctalia-wallpaper"
     place-within-backdrop true
 }

@@ -1,35 +1,49 @@
 // Keybindings
 binds {
-    // ---- Noctalia core keybindings ----
-    Mod+Space { spawn-sh "noctalia msg panel-toggle launcher"; }
-    Mod+S { spawn-sh "noctalia msg panel-toggle control-center"; }
+    // ---- Noctalia shell ----
+    Mod+Space hotkey-overlay-title="App launcher" { spawn-sh "noctalia msg panel-toggle launcher"; }
+    Mod+S hotkey-overlay-title="Control center" { spawn-sh "noctalia msg panel-toggle control-center"; }
     Mod+Comma { spawn-sh "noctalia msg settings-toggle"; }
     Alt+Tab { spawn-sh "noctalia msg window-switcher"; }
+    Mod+W hotkey-overlay-title="Wallpaper picker" { spawn-sh "noctalia msg panel-toggle wallpaper"; }
+    Mod+V hotkey-overlay-title="Clipboard history" { spawn-sh "noctalia msg panel-toggle clipboard"; }
+    Mod+Shift+B { spawn-sh "noctalia msg bar-toggle"; }
+    Mod+Shift+N { spawn-sh "noctalia msg nightlight-toggle"; }
 
     // ---- Volume / brightness (Noctalia shows the OSD) ----
-    XF86AudioRaiseVolume { spawn-sh "noctalia msg volume-up"; }
-    XF86AudioLowerVolume { spawn-sh "noctalia msg volume-down"; }
-    XF86AudioMute { spawn-sh "noctalia msg volume-mute"; }
-    XF86MonBrightnessUp { spawn-sh "noctalia msg brightness-up"; }
-    XF86MonBrightnessDown { spawn-sh "noctalia msg brightness-down"; }
+    XF86AudioRaiseVolume allow-when-locked=true { spawn-sh "noctalia msg volume-up"; }
+    XF86AudioLowerVolume allow-when-locked=true { spawn-sh "noctalia msg volume-down"; }
+    XF86AudioMute allow-when-locked=true { spawn-sh "noctalia msg volume-mute"; }
+    XF86MonBrightnessUp allow-when-locked=true { spawn-sh "noctalia msg brightness-up"; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn-sh "noctalia msg brightness-down"; }
+
+    // ---- Media (MPRIS, needs playerctl) ----
+    Mod+P { spawn "playerctl" "play-pause"; }
+    XF86AudioPlay { spawn "playerctl" "play-pause"; }
+    XF86AudioNext { spawn "playerctl" "next"; }
+    XF86AudioPrev { spawn "playerctl" "previous"; }
+    XF86AudioStop { spawn "playerctl" "stop"; }
 
     // ---- Launch / help ----
-    Mod+Return { spawn "foot"; }
+    Mod+Return hotkey-overlay-title="Terminal" { spawn "foot"; }
+    Mod+E hotkey-overlay-title="File manager" { spawn "nautilus"; }
+    Mod+B hotkey-overlay-title="Browser" { spawn "zen-beta"; }
     Mod+Shift+Slash { show-hotkey-overlay; }
-
-    // ---- Applications ----
-    Mod+E { spawn "nautilus"; }
-    Mod+B { spawn "zen-beta"; }
+    Mod+Escape { toggle-keyboard-shortcuts-inhibit; }
 
     // ---- Window actions ----
     Mod+Q { close-window; }
-    Mod+V { toggle-window-floating; }
+    Mod+T { toggle-window-floating; }
     Mod+F { maximize-column; }
     Mod+Shift+F { fullscreen-window; }
     Mod+C { center-column; }
     Mod+R { switch-preset-column-width; }
+    Mod+Shift+R { reset-window-height; }
     Mod+Minus { set-column-width "-10%"; }
     Mod+Equal { set-column-width "+10%"; }
+    Mod+G { toggle-column-tabbed-display; }
+    Mod+O { toggle-overview; }
+    Mod+Shift+O { toggle-window-rule-opacity; }
 
     // ---- Focus / move ----
     Mod+H { focus-column-left; }
@@ -55,6 +69,7 @@ binds {
     Mod+7 { focus-workspace 7; }
     Mod+8 { focus-workspace 8; }
     Mod+9 { focus-workspace 9; }
+    Mod+0 { focus-workspace 10; }
     Mod+Ctrl+1 { move-column-to-workspace 1; }
     Mod+Ctrl+2 { move-column-to-workspace 2; }
     Mod+Ctrl+3 { move-column-to-workspace 3; }
@@ -64,14 +79,14 @@ binds {
     Mod+Ctrl+7 { move-column-to-workspace 7; }
     Mod+Ctrl+8 { move-column-to-workspace 8; }
     Mod+Ctrl+9 { move-column-to-workspace 9; }
+    Mod+Ctrl+0 { move-column-to-workspace 10; }
 
-    // ---- Screenshots ----
+    // ---- Screenshots (Print = built-in interactive selection) ----
     Print { screenshot; }
-    Ctrl+Print { screenshot-screen; }
-    Alt+Print { screenshot-window; }
+    Ctrl+Print { screenshot-screen write-to-disk=false; }
+    Alt+Print { screenshot-window write-to-disk=false; }
 
     // ---- Lock / quit ----
-    // Noctalia's built-in lock screen (adjust if the IPC command differs)
     Super+Alt+L { spawn-sh "noctalia msg session lock"; }
     Mod+Shift+E { quit; }
     Mod+Shift+P { power-off-monitors; }

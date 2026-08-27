@@ -6,6 +6,7 @@
   xdg.configFile = {
     "niri/config.kdl".source = ../../../home/niri/config.kdl;
     "niri/binds.kdl".source = ../../../home/niri/binds.kdl;
+    "niri/blur.kdl".source = ../../../home/niri/blur.kdl;
     "niri/startup.kdl".source = ../../../home/niri/startup.kdl;
     "niri/windowrule.kdl".source = ../../../home/niri/windowrule.kdl;
     "niri/niri-hardware.kdl".source = hostPath + "/niri-hardware.kdl";
