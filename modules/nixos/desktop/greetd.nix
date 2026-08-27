@@ -25,8 +25,8 @@
       package = pkgs.nerd-fonts.jetbrains-mono;
     };
     cursorTheme = {
-      name = "volantes_cursors";
-      package = pkgs.volantes_cursors;
+      name = "volantes_cursors"; # XCursor 主题名（下划线）
+      package = pkgs.volantes-cursors; # nixpkgs 属性名（连字符）
     };
 
     settings = {

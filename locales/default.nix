@@ -78,7 +78,7 @@ in
     # Qt + GTK frontends ensure the candidate window renders on Wayland
     environment.systemPackages = lib.mkIf cfg.inputMethod.enable (with pkgs; [
       fcitx5-gtk
-      fcitx5-chinese-addons
+      qt6Packages.fcitx5-chinese-addons # 新 nixpkgs 中已从顶层移到 qt6Packages
       qt6Packages.fcitx5-qt
       qt6Packages.fcitx5-configtool
     ]);
