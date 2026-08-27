@@ -10,12 +10,13 @@ blur {
     saturation 1.5
 }
 
-// Floating windows / dialogs: full (regular) blur; tiled windows keep the
-// default efficient xray blur.
+// Floating windows / dialogs: live (xray) transparency so they show whatever
+// is behind them in real time. (xray=false would use a static snapshot blur,
+// which is non-real-time and only rendered outside open/close animations.)
 window-rule {
     match is-floating=true
     background-effect {
-        xray false
+        xray true
     }
 }
 
