@@ -45,7 +45,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
     fontconfig
     freetype
     ripgrep # runtime dep (miyu uses rg for file search)
-    chafa   # runtime dep (image display in terminal)
+    chafa # runtime dep (image display in terminal)
   ];
 
   # build.rs embeds prompts and builds tiktoken/jieba indices at compile time.

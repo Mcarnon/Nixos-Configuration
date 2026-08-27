@@ -9,7 +9,12 @@
 #   1. create `locales/<region>.nix` with `options.locales.<region>.enable`,
 #   2. import it below,
 #   3. enable it from the host with `locales.<region>.enable = true`.
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.locales;
@@ -76,12 +81,15 @@ in
     services.dbus.packages = lib.mkIf cfg.inputMethod.enable (with pkgs; [ fcitx5 ]);
 
     # Qt + GTK frontends ensure the candidate window renders on Wayland
-    environment.systemPackages = lib.mkIf cfg.inputMethod.enable (with pkgs; [
-      fcitx5-gtk
-      qt6Packages.fcitx5-chinese-addons # 新 nixpkgs 中已从顶层移到 qt6Packages
-      qt6Packages.fcitx5-qt
-      qt6Packages.fcitx5-configtool
-    ]);
+    environment.systemPackages = lib.mkIf cfg.inputMethod.enable (
+      with pkgs;
+      [
+        fcitx5-gtk
+        qt6Packages.fcitx5-chinese-addons # 新 nixpkgs 中已从顶层移到 qt6Packages
+        qt6Packages.fcitx5-qt
+        qt6Packages.fcitx5-configtool
+      ]
+    );
 
     # Auto-start fcitx5 daemon on login (NixOS i18n.inputMethod only sets env, not the service)
     # NB: NixOS `systemd.user.services` uses wantedBy/after/serviceConfig (not Unit/Service/Install).
@@ -102,8 +110,8 @@ in
     fonts = {
       packages = with pkgs; [
         noto-fonts
-        noto-fonts-cjk-sans       # Source Han Sans (SC/TC/JP/KR)
-        noto-fonts-cjk-serif      # Source Han Serif
+        noto-fonts-cjk-sans # Source Han Sans (SC/TC/JP/KR)
+        noto-fonts-cjk-serif # Source Han Serif
         noto-fonts-color-emoji
         nerd-fonts.jetbrains-mono # monospace + icon font
         nerd-fonts.symbols-only

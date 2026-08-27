@@ -19,7 +19,11 @@
     # tmpfs root: matches fileSystems."/" in hardware-configuration.nix
     nodev."/" = {
       fsType = "tmpfs";
-      mountOptions = [ "defaults" "size=8G" "mode=755" ];
+      mountOptions = [
+        "defaults"
+        "size=8G"
+        "mode=755"
+      ];
     };
 
     disk.main = {
@@ -35,7 +39,10 @@
               type = "filesystem";
               format = "vfat";
               mountpoint = "/boot";
-              mountOptions = [ "fmask=0022" "dmask=0022" ];
+              mountOptions = [
+                "fmask=0022"
+                "dmask=0022"
+              ];
             };
           };
           root = {
@@ -54,19 +61,31 @@
                 subvolumes = {
                   "@nix" = {
                     mountpoint = "/nix";
-                    mountOptions = [ "compress=zstd" "noatime" ];
+                    mountOptions = [
+                      "compress=zstd"
+                      "noatime"
+                    ];
                   };
                   "@var" = {
                     mountpoint = "/var";
-                    mountOptions = [ "compress=zstd" "noatime" ];
+                    mountOptions = [
+                      "compress=zstd"
+                      "noatime"
+                    ];
                   };
                   "@etc" = {
                     mountpoint = "/etc";
-                    mountOptions = [ "compress=zstd" "noatime" ];
+                    mountOptions = [
+                      "compress=zstd"
+                      "noatime"
+                    ];
                   };
                   "@home" = {
                     mountpoint = "/home";
-                    mountOptions = [ "compress=zstd" "noatime" ];
+                    mountOptions = [
+                      "compress=zstd"
+                      "noatime"
+                    ];
                   };
                   # Swap lives as a swapfile inside the encrypted btrfs, so it is
                   # encrypted too (no separate swap partition / passphrase).

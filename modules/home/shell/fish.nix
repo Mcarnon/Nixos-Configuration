@@ -1,6 +1,11 @@
 # fish shell: prompt helpers + proxy toggles
 # tools (starship/direnv/fzf/eza/zoxide) live in ./tools.nix
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 {
   programs.fish = {
     enable = true;

@@ -1,5 +1,10 @@
 # Laptop power / bluetooth / firmware management
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 {
   # Bluetooth
   hardware.bluetooth.enable = true;

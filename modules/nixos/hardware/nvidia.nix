@@ -1,5 +1,10 @@
 # Hardware HAL: NVIDIA (stub for next host with dGPU)
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 let
   cfg = config.hardware.nvidia;
 in

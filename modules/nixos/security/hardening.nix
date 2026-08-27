@@ -1,7 +1,12 @@
 # Security baseline (hardening) + complementary performance tweaks.
 # - Security: sudo, polkit, kernel sysctl, AppArmor where cheap.
 # - Performance: zram, sysctl for desktop responsiveness.
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 {
   # Restrict sudo to wheel, no lecture spam
   security.sudo = {

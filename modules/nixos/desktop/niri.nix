@@ -1,5 +1,10 @@
 # niri compositor (greetd lives in ./greetd.nix)
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 {
   programs.niri.enable = true;
 
@@ -13,7 +18,10 @@
       xdg-desktop-portal-gtk
     ];
     config.niri = {
-      default = [ "gnome" "gtk" ];
+      default = [
+        "gnome"
+        "gtk"
+      ];
       "org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
     };
   };

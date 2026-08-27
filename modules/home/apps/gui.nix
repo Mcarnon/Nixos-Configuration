@@ -1,5 +1,10 @@
 # GUI / desktop applications.
-{ config, pkgs, inputs, ... }:
+{
+  config,
+  pkgs,
+  inputs,
+  ...
+}:
 {
   home.packages = with pkgs; [
 

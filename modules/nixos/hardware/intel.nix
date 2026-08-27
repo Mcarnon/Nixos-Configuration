@@ -1,6 +1,11 @@
 # Hardware HAL: Intel CPU + Iris Xe iGPU
 # Security: microcode updates; Performance: VA-API / GPU tools.
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 let
   cfg = config.hardware.intel;
 in

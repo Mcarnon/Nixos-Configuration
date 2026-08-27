@@ -4,7 +4,13 @@
 # (`theme.nix`, `bar.nix`, ...) deep-merges its own subtree here. The generated
 # config.toml is validated at build time (`validateConfig = true`), so a schema
 # mistake fails the build rather than breaking the desktop at runtime.
-{ config, pkgs, inputs, lib, ... }:
+{
+  config,
+  pkgs,
+  inputs,
+  lib,
+  ...
+}:
 {
   imports = [
     inputs.noctalia.homeModules.default

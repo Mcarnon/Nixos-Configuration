@@ -1,7 +1,13 @@
 # Link niri's KDL config to ~/.config/niri.
 # Shared config files are linked individually; the machine-specific output
 # config (niri-hardware.kdl) is passed in from the host.
-{ config, pkgs, lib, hostPath, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  hostPath,
+  ...
+}:
 {
   xdg.configFile = {
     "niri/config.kdl".source = ../../../home/niri/config.kdl;

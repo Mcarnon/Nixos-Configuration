@@ -20,22 +20,22 @@
         reserve_space = true;
 
         start = [
-          "launcher"   # app launcher
+          "launcher" # app launcher
           "workspaces" # workspace pill indicator
         ];
         center = [ "clock" ];
         end = [
-          "media"          # MPRIS media info (hidden when nothing plays)
-          "tray"           # system tray
-          "network"        # Wi-Fi / wired
+          "media" # MPRIS media info (hidden when nothing plays)
+          "tray" # system tray
+          "network" # Wi-Fi / wired
           "bluetooth"
           "volume"
           "brightness"
           "battery"
-          "clipboard"      # clipboard history panel entry
-          "notifications"  # notification bell
+          "clipboard" # clipboard history panel entry
+          "notifications" # notification bell
           "control-center" # control center entry
-          "session"        # power/session menu
+          "session" # power/session menu
         ];
       };
     };

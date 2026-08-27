@@ -10,7 +10,12 @@
 #   4. Also: `miyu models` to switch without TUI, `miyu daemon logs request` to inspect real LLM requests.
 #   5. Migration: `miyu export` / `miyu import` (see `miyu export --dry-run` and README).
 # Fish hook is declarative at xdg.configFile `fish/conf.d/zz-miyu.fish` (../files/miyu.fish, loads after starship); never run `miyu fish-init` under HM.
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 {
   # Package comes from the repo overlay (pkgs/default.nix); no `callPackage` at call sites.
   home.packages = [ pkgs.miyu ];
@@ -19,7 +24,7 @@
   xdg.configFile."fish/conf.d/zz-miyu.fish".source = ../../../home/files/miyu.fish;
 
   # First-run init: idempotent, only if ~/.miyu missing. Runs at HM activation (not every shell).
-  home.activation.miyuInit = lib.hm.dag.entryAfter ["writeBoundary"] ''
+  home.activation.miyuInit = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     if [ ! -d "$HOME/.miyu" ]; then
       echo "Miyu: initializing ~/.miyu (first run)..."
       $DRY_RUN_CMD ${pkgs.miyu}/bin/miyu init 2>/dev/null || true

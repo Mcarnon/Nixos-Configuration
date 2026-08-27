@@ -4,7 +4,12 @@
 # directory (relative path -> store path, readable by the greeter user and
 # reproducible). Drop `login.png` (or a `.mp4` — ReGreet bundles GStreamer for
 # video/animated backgrounds) there and uncomment `settings.background`.
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 {
   services.displayManager.regreet = {
     enable = true;
@@ -39,8 +44,14 @@
         application_prefer_dark_theme = true;
       };
       commands = {
-        reboot = [ "systemctl" "reboot" ];
-        poweroff = [ "systemctl" "poweroff" ];
+        reboot = [
+          "systemctl"
+          "reboot"
+        ];
+        poweroff = [
+          "systemctl"
+          "poweroff"
+        ];
       };
       appearance.greeting_msg = "Welcome back";
       widget.clock = {
@@ -67,5 +78,9 @@
 
   # ReGreet runs on cage inside a greetd session; the greeter user needs
   # DRM / GPU / input access. nixpkgs' greetd module does NOT add these.
-  users.users.greeter.extraGroups = [ "video" "input" "render" ];
+  users.users.greeter.extraGroups = [
+    "video"
+    "input"
+    "render"
+  ];
 }

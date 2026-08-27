@@ -1,19 +1,30 @@
 # Nix / store settings: flakes, store optimise, GC, and the Noctalia cache.
 # Performance: fewer evals (flake-parts), binary caches, auto-optimise; Security:
 # trusted-users, keep-derivations minimal, GC.
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 {
   nixpkgs.config.allowUnfree = true;
 
   nix = {
     settings = {
-      experimental-features = [ "nix-command" "flakes" ];
+      experimental-features = [
+        "nix-command"
+        "flakes"
+      ];
       # Performance: dedup store, keep build logs minimal
       auto-optimise-store = true;
       keep-derivations = false;
       keep-outputs = false;
       # Security: only wheel + root may manage the store / add substituters
-      trusted-users = [ "root" "@wheel" ];
+      trusted-users = [
+        "root"
+        "@wheel"
+      ];
       allowed-users = [ "@wheel" ];
       # Binary caches (Noctalia + CN mirrors already in flake.nix nixConfig for `nix` CLI)
       extra-substituters = [ "https://noctalia.cachix.org" ];

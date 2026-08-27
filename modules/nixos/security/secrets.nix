@@ -16,7 +16,12 @@
 #      into the secret, then):
 #        users.users.<name>.hashedPasswordFile = config.age.secrets.user-password.path;
 #   5. Rebuild: sudo nixos-rebuild switch --flake .#laptop
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 {
   # Where agenix looks for the private key at activation.
   # Uses the same SSH key as modules/ssh.nix; TODO: keep in sync with your user.

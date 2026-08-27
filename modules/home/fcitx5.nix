@@ -1,6 +1,11 @@
 # Fcitx5 home-manager config (rime schema + Wayland candidate window).
 # System-level fcitx5 (env vars, dbus, systemd service) lives in locales/default.nix.
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 {
   # Rime default schema: rime_ice (雾凇拼音) with page size 9.
   # Without this, fcitx5-rime falls back to its built-in schema and the

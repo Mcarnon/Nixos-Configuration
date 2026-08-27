@@ -1,6 +1,11 @@
 # SSH: connect to another machine to sync/deploy the config remotely
 # Security: hardening by default (keys only); Performance: keep minimal ciphers.
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 {
   # Client-side SSH config: what `ssh` uses when connecting out.
   programs.ssh = {

@@ -1,7 +1,13 @@
 # This file is the "host manifest": only host-specific choices live here
 # (identity, user, locale, stateVersion, session env, Home Manager wiring).
 # All reusable "how" lives in ../../modules, imported below.
-{ config, pkgs, inputs, lib, ... }:
+{
+  config,
+  pkgs,
+  inputs,
+  lib,
+  ...
+}:
 
 let
   userName = "mccarnon"; # TODO: your username

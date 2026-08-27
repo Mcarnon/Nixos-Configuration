@@ -1,5 +1,10 @@
 # Chinese (Simplified) environment: locale settings + rime (Wusong Pinyin) + fonts
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 {
   options.locales.zh-cn.enable = lib.mkEnableOption "Chinese (Simplified) locale environment";
 
@@ -26,8 +31,16 @@
     ];
 
     fonts.fontconfig.defaultFonts = {
-      sansSerif = [ "Noto Sans CJK SC" "Noto Sans" "Noto Color Emoji" ];
-      serif = [ "Noto Serif CJK SC" "Noto Serif" "Noto Color Emoji" ];
+      sansSerif = [
+        "Noto Sans CJK SC"
+        "Noto Sans"
+        "Noto Color Emoji"
+      ];
+      serif = [
+        "Noto Serif CJK SC"
+        "Noto Serif"
+        "Noto Color Emoji"
+      ];
     };
   };
 }

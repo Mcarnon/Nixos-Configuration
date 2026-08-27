@@ -10,7 +10,12 @@
 #      disko-fs.nix — you'll be prompted to set the LUKS passphrase).
 #   2. Find the LUKS / ESP UUIDs with `blkid` and replace <LUKS-UUID> / <ESP-UUID>.
 #   3. If you want hibernation, measure the swapfile resume offset (see bottom).
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 {
   boot.initrd.availableKernelModules = [
     "nvme"
@@ -37,45 +42,71 @@
   fileSystems."/" = {
     device = "none";
     fsType = "tmpfs";
-    options = [ "defaults" "size=8G" "mode=755" ];
+    options = [
+      "defaults"
+      "size=8G"
+      "mode=755"
+    ];
   };
 
   # All btrfs subvolumes live on the same unlocked LUKS mapper.
   fileSystems."/nix" = {
     device = "/dev/mapper/cryptroot";
     fsType = "btrfs";
-    options = [ "subvol=@nix" "compress=zstd" "noatime" ];
+    options = [
+      "subvol=@nix"
+      "compress=zstd"
+      "noatime"
+    ];
   };
 
   fileSystems."/var" = {
     device = "/dev/mapper/cryptroot";
     fsType = "btrfs";
-    options = [ "subvol=@var" "compress=zstd" "noatime" ];
+    options = [
+      "subvol=@var"
+      "compress=zstd"
+      "noatime"
+    ];
   };
 
   fileSystems."/etc" = {
     device = "/dev/mapper/cryptroot";
     fsType = "btrfs";
-    options = [ "subvol=@etc" "compress=zstd" "noatime" ];
+    options = [
+      "subvol=@etc"
+      "compress=zstd"
+      "noatime"
+    ];
   };
 
   fileSystems."/home" = {
     device = "/dev/mapper/cryptroot";
     fsType = "btrfs";
-    options = [ "subvol=@home" "compress=zstd" "noatime" ];
+    options = [
+      "subvol=@home"
+      "compress=zstd"
+      "noatime"
+    ];
   };
 
   fileSystems."/swap" = {
     device = "/dev/mapper/cryptroot";
     fsType = "btrfs";
-    options = [ "subvol=@swap" "noatime" ];
+    options = [
+      "subvol=@swap"
+      "noatime"
+    ];
   };
 
   # ESP (EFI system partition, unencrypted so UEFI/GRUB can load the kernel)
   fileSystems."/boot" = {
     device = "/dev/disk/by-uuid/<ESP-UUID>";
     fsType = "vfat";
-    options = [ "fmask=0022" "dmask=0022" ];
+    options = [
+      "fmask=0022"
+      "dmask=0022"
+    ];
   };
 
   # ---- Swap (swapfile inside the encrypted btrfs) ----

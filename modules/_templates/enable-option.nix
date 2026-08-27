@@ -1,5 +1,10 @@
 # 模板：带开关的 NixOS 模块
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 let
   cfg = config.my.example;
 in

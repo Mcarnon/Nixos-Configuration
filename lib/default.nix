@@ -6,7 +6,8 @@
   # - Wires agenix + home-manager exactly once (security: single decryption/activation path)
   # - Performance: avoids per-host boilerplate eval duplication
   mkHost =
-    inputs: {
+    inputs:
+    {
       system,
       hostname,
       hostPath,

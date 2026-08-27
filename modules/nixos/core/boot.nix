@@ -4,7 +4,12 @@
 # hardware-configuration.nix (root is a tmpfs mounted from the initrd).
 # Hibernation resume is host-specific (LUKS mapper + swapfile offset), so it
 # lives in hosts/laptop/hardware-configuration.nix.
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 {
   boot.loader.grub = {
     enable = true;

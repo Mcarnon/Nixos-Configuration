@@ -1,5 +1,10 @@
 # shell tools: starship + direnv + fzf + eza + zoxide
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 {
   programs.starship.enable = true;
 

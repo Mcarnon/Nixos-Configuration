@@ -1,5 +1,10 @@
 # clipboard history for Wayland (niri + wl-clipboard)
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 {
   services.cliphist = {
     enable = true;

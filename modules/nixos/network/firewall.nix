@@ -1,5 +1,10 @@
 # Firewall — security boundary (default-closed) + perf (no conntrack helpers).
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 {
   networking.firewall = {
     enable = true;

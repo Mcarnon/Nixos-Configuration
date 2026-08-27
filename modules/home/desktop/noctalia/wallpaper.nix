@@ -1,6 +1,11 @@
 # Wallpaper: static directory + transitions + scheduled rotation + live video
 # wallpaper via the official `mpvpaper` plugin.
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 {
   programs.noctalia.settings = {
     wallpaper = {
@@ -40,7 +45,7 @@
   };
 
   home.packages = with pkgs; [
-    mpv    # live wallpaper rendering
+    mpv # live wallpaper rendering
     ffmpeg # video frame extraction (live wallpaper color sync)
   ];
 }

@@ -17,9 +17,18 @@
 
     # Launcher prefix triggers (type `/win`, `/wall`, `/session`).
     shell.launcher.providers = {
-      windows = { prefix = "win"; global = false; };
-      session = { prefix = "session"; global = false; };
-      wallpaper = { prefix = "wall"; global = false; };
+      windows = {
+        prefix = "win";
+        global = false;
+      };
+      session = {
+        prefix = "session";
+        global = false;
+      };
+      wallpaper = {
+        prefix = "wall";
+        global = false;
+      };
     };
 
     # Custom templates: render the palette into any app config.

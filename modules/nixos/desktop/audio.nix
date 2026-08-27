@@ -1,5 +1,10 @@
 # Audio: PipeWire (Noctalia's volume OSD / app audio depend on it)
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 {
   security.rtkit.enable = true;
 

@@ -1,5 +1,11 @@
 # User environment (Home Manager) — thin entry (scale: host picks a role).
-{ config, pkgs, inputs, lib, ... }:
+{
+  config,
+  pkgs,
+  inputs,
+  lib,
+  ...
+}:
 {
   imports = [
     ../roles/home/desktop.nix

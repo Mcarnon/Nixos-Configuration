@@ -8,7 +8,12 @@
 # Usage:
 #   sudo snapper -c home list            # list snapshots
 #   sudo snapper -c home create          # manual pre-change snapshot
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 let
   timeline = {
     TIMELINE_CREATE = true;
@@ -27,15 +32,18 @@ in
       home = {
         SUBVOLUME = "/home";
         FSTYPE = "btrfs";
-      } // timeline;
+      }
+      // timeline;
       etc = {
         SUBVOLUME = "/etc";
         FSTYPE = "btrfs";
-      } // timeline;
+      }
+      // timeline;
       var = {
         SUBVOLUME = "/var";
         FSTYPE = "btrfs";
-      } // timeline;
+      }
+      // timeline;
     };
   };
 }

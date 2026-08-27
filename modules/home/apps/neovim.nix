@@ -2,7 +2,12 @@
 # Binary via programs.neovim (HM) — not systemPackages (per previous decision: keep only in home).
 # Config: real dotfiles deployed via xdg.configFile. Edit the files under ./nvim/ (init.lua),
 # HM just drops them to ~/.config/nvim. No nixvim transpilation — you write plain Lua.
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 {
   programs.neovim = {
     enable = true;
