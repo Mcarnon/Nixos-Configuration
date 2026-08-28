@@ -1,14 +1,4 @@
 # Locale / input-method / font framework.
-#
-# This module owns the bits every region shares: the primary locale, the list
-# of generated locales, the Fcitx5 input-method framework, and the base font
-# set. Region profiles (imported below) then add their own locale settings,
-# input engines and font preferences.
-#
-# To add a region:
-#   1. create `locales/<region>.nix` with `options.locales.<region>.enable`,
-#   2. import it below,
-#   3. enable it from the host with `locales.<region>.enable = true`.
 {
   config,
   lib,
@@ -30,10 +20,6 @@ in
     supportedLocales = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       default = [ ];
-      description = ''
-        Extra locales to generate. Region profiles append their own locale
-        here. `en_US.UTF-8/UTF-8` is always added as a base.
-      '';
     };
 
     inputMethod.enable = lib.mkOption {
@@ -50,11 +36,8 @@ in
   config = {
     i18n = {
       defaultLocale = cfg.defaultLocale;
-      # en_US is always generated as a base; regions append via `supportedLocales`.
       supportedLocales = [ "en_US.UTF-8/UTF-8" ] ++ cfg.supportedLocales;
 
-      # Input method framework (one framework for all regions; engines are
-      # added per-region via `i18n.inputMethod.fcitx5.addons`).
       inputMethod = lib.mkIf cfg.inputMethod.enable {
         enable = true;
         type = "fcitx5";
@@ -68,36 +51,35 @@ in
       };
     };
 
-    # Explicit env for apps that don't pick up Wayland IM protocol (foot, some Electron)
+    # IM env vars for apps that don't speak Wayland IM protocol
     environment.variables = lib.mkIf cfg.inputMethod.enable {
-      GTK_IM_MODULE = "fcitx";
-      QT_IM_MODULE = "fcitx";
-      XMODIFIERS = "@im=fcitx";
-      SDL_IM_MODULE = "fcitx";
-      GLFW_IM_MODULE = "ibus"; # fcitx via ibus bridge for some GLFW apps
+      GTK_IM_MODULE  = "fcitx";
+      QT_IM_MODULE   = "fcitx";
+      XMODIFIERS     = "@im=fcitx";
+      SDL_IM_MODULE  = "fcitx";
+      GLFW_IM_MODULE = "ibus";
+      # Rime user data dir (XDG standard: ~/.config/, not ~/.local/share/)
+      RIME_USER_DIR   = "%h/.config/fcitx5/rime";
     };
 
-    # Ensure fcitx5 + Qt/GTK frontends for Wayland candidate window
     services.dbus.packages = lib.mkIf cfg.inputMethod.enable (with pkgs; [ fcitx5 ]);
 
-    # Qt + GTK frontends ensure the candidate window renders on Wayland
     environment.systemPackages = lib.mkIf cfg.inputMethod.enable (
       with pkgs;
       [
         fcitx5-gtk
-        qt6Packages.fcitx5-chinese-addons # 新 nixpkgs 中已从顶层移到 qt6Packages
+        qt6Packages.fcitx5-chinese-addons
         qt6Packages.fcitx5-qt
         qt6Packages.fcitx5-configtool
       ]
     );
 
-    # Auto-start fcitx5 daemon on login (NixOS i18n.inputMethod only sets env, not the service)
-    # NB: NixOS `systemd.user.services` uses wantedBy/after/serviceConfig (not Unit/Service/Install).
+    # fcitx5 is started via niri's startup.kdl (spawn-at-startup "fcitx5").
+    # Keep a disabled systemd service here so `systemctl --user stop fcitx5`
+    # still works and the fcitx5 module can be toggled cleanly.
     systemd.user.services.fcitx5 = lib.mkIf cfg.inputMethod.enable {
       description = "Fcitx5 input method";
-      wantedBy = [ "graphical-session.target" ];
-      wants = [ "graphical-session.target" ];
-      after = [ "graphical-session.target" ];
+      wantedBy = [ ];
       serviceConfig = {
         Type = "simple";
         ExecStart = "${pkgs.fcitx5}/bin/fcitx5";
@@ -105,15 +87,13 @@ in
       };
     };
 
-    # Rime default schema deployed from modules/home/fcitx5.nix (HM module)
-
     fonts = {
       packages = with pkgs; [
         noto-fonts
-        noto-fonts-cjk-sans # Source Han Sans (SC/TC/JP/KR)
-        noto-fonts-cjk-serif # Source Han Serif
+        noto-fonts-cjk-sans
+        noto-fonts-cjk-serif
         noto-fonts-color-emoji
-        nerd-fonts.jetbrains-mono # monospace + icon font
+        nerd-fonts.jetbrains-mono
         nerd-fonts.symbols-only
       ];
       fontconfig = {
