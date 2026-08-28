@@ -12,20 +12,6 @@
 }:
 
 let
-<<<<<<< HEAD
-  # Declarative Rime user-visible config, merged into the shared rime data so it
-  # ships with the build and needs no per-user config to take effect. Rime merges
-  # `default.custom.yaml` from the shared data dir on deploy.
-  rimeSchemaConfig = ./rime/default.custom.yaml;
-
-  # rime-ice presets + our custom schema, packaged as a single shared rime-data
-  # source for fcitx5-rime. Output layout: `share/rime-data/` (same as rime-ice).
-  rimeData = pkgs.runCommand "rime-data-fcitx5" { } ''
-    mkdir -p $out/share/rime-data
-    cp -r ${pkgs.rime-ice}/share/rime-data/* $out/share/rime-data/
-    cp ${rimeSchemaConfig} $out/share/rime-data/default.custom.yaml
-    cp ${./rime/distribution.yaml} $out/share/rime-data/distribution.yaml
-=======
   # rime-ice schema + dicts (the actual input engine data).
   rime-ice-data = pkgs.rime-ice;
 
@@ -168,7 +154,6 @@ ascii_composer:
     Control_L: noop
     Control_R: noop
 YAML
->>>>>>> bd5d73f9d86db0d5a599f579bb2a409c21ba59be
   '';
 in
 {
@@ -195,11 +180,7 @@ in
     # append them to the rimeDataPkgs list.
     i18n.inputMethod.fcitx5.addons = with pkgs; [
       (fcitx5-rime.override {
-<<<<<<< HEAD
-        rimeDataPkgs = [ rimeData ];
-=======
         rimeDataPkgs = [ rime-data-fcitx5 ];
->>>>>>> bd5d73f9d86db0d5a599f579bb2a409c21ba59be
       })
     ];
 

@@ -50,30 +50,12 @@ in
     };
 
     environment.variables = lib.mkIf cfg.inputMethod.enable {
-<<<<<<< HEAD
-      GTK_IM_MODULE = "fcitx";
-      QT_IM_MODULE = "fcitx";
-      XMODIFIERS = "@im=fcitx";
-      SDL_IM_MODULE = "fcitx";
-      GLFW_IM_MODULE = "ibus"; # fcitx via ibus bridge for some GLFW apps
-      # System-wide rime user data dir. fcitx5-rime seeds it from the shared
-      # rime-data (which carries our declarative default.custom.yaml) on first
-      # run, so no per-user config is required.
-      RIME_USER_DIR = "$HOME/.local/share/fcitx5/rime";
-    };
-
-    # Additional fcitx5 wayland configuration
-    environment.sessionVariables = lib.mkIf cfg.inputMethod.enable {
-      QT_QPA_PLATFORM = "wayland";  # Qt wayland platform
-      SDL_VIDEODRIVER = "wayland";  # SDL wayland driver
-=======
       GTK_IM_MODULE  = "fcitx";
       QT_IM_MODULE   = "fcitx";
       XMODIFIERS     = "@im=fcitx";
       SDL_IM_MODULE  = "fcitx";
       GLFW_IM_MODULE = "ibus";
       RIME_USER_DIR   = "%h/.config/fcitx5/rime";
->>>>>>> bd5d73f9d86db0d5a599f579bb2a409c21ba59be
     };
 
     services.dbus.packages = lib.mkIf cfg.inputMethod.enable (with pkgs; [ fcitx5 ]);
@@ -88,25 +70,6 @@ in
       ]
     );
 
-<<<<<<< HEAD
-    # Auto-start fcitx5 daemon on login (NixOS i18n.inputMethod only sets env, not the service)
-    # NB: NixOS `systemd.user.services` uses wantedBy/after/serviceConfig (not Unit/Service/Install).
-    systemd.user.services.fcitx5 = lib.mkIf cfg.inputMethod.enable {
-      description = "Fcitx5 input method";
-      wantedBy = [ "graphical-session.target" ];
-      wants = [ "graphical-session.target" ];
-      after = [ "graphical-session.target" ];
-      serviceConfig = {
-        Type = "simple";
-        ExecStart = "${pkgs.fcitx5}/bin/fcitx5";
-        Restart = "on-failure";
-      };
-    };
-
-    # Rime default schema is baked into the shared rime-data in locales/zh-cn.nix.
-
-=======
->>>>>>> bd5d73f9d86db0d5a599f579bb2a409c21ba59be
     fonts = {
       packages = with pkgs; [
         noto-fonts
