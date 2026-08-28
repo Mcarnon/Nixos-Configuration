@@ -1,0 +1,9 @@
+# Declarative Rime default schema (deployed system-wide via locales/zh-cn.nix).
+# This ships as part of the shared rime data so no per-user config is required.
+patch:
+  menu/page_size: 9
+  ascii_composer/switch_key:
+    Shift_L: inline_ascii
+    Shift_R: commit_text
+  schema_list:
+    - schema: rime_ice

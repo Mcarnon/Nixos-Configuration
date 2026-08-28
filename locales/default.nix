@@ -75,6 +75,10 @@ in
       XMODIFIERS = "@im=fcitx";
       SDL_IM_MODULE = "fcitx";
       GLFW_IM_MODULE = "ibus"; # fcitx via ibus bridge for some GLFW apps
+      # System-wide rime user data dir. fcitx5-rime seeds it from the shared
+      # rime-data (which carries our declarative default.custom.yaml) on first
+      # run, so no per-user config is required.
+      RIME_USER_DIR = "$HOME/.local/share/fcitx5/rime";
     };
 
     # Ensure fcitx5 + Qt/GTK frontends for Wayland candidate window
@@ -105,7 +109,7 @@ in
       };
     };
 
-    # Rime default schema deployed from modules/home/fcitx5.nix (HM module)
+    # Rime default schema is baked into the shared rime-data in locales/zh-cn.nix.
 
     fonts = {
       packages = with pkgs; [

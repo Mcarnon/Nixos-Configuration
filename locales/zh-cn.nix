@@ -5,6 +5,21 @@
   pkgs,
   ...
 }:
+
+let
+  # Declarative Rime user-visible config, merged into the shared rime data so it
+  # ships with the build and needs no per-user config to take effect. Rime merges
+  # `default.custom.yaml` from the shared data dir on deploy.
+  rimeSchemaConfig = ./rime/default.custom.yaml;
+
+  # rime-ice presets + our custom schema, packaged as a single shared rime-data
+  # source for fcitx5-rime. Output layout: `share/rime-data/` (same as rime-ice).
+  rimeData = pkgs.runCommand "rime-data-fcitx5" { } ''
+    mkdir -p $out/share/rime-data
+    cp -r ${pkgs.rime-ice}/share/rime-data/* $out/share/rime-data/
+    cp ${rimeSchemaConfig} $out/share/rime-data/default.custom.yaml
+  '';
+in
 {
   options.locales.zh-cn.enable = lib.mkEnableOption "Chinese (Simplified) locale environment";
 
@@ -26,7 +41,7 @@
     # Rime with Wusong Pinyin; swap for fcitx5-pinyin if you prefer the classic scheme
     i18n.inputMethod.fcitx5.addons = with pkgs; [
       (fcitx5-rime.override {
-        rimeDataPkgs = [ rime-ice ];
+        rimeDataPkgs = [ rimeData ];
       })
     ];
 
