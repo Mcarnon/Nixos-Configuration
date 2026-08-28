@@ -81,6 +81,12 @@ in
       RIME_USER_DIR = "$HOME/.local/share/fcitx5/rime";
     };
 
+    # Additional fcitx5 wayland configuration
+    environment.sessionVariables = lib.mkIf cfg.inputMethod.enable {
+      QT_QPA_PLATFORM = "wayland";  # Qt wayland platform
+      SDL_VIDEODRIVER = "wayland";  # SDL wayland driver
+    };
+
     # Ensure fcitx5 + Qt/GTK frontends for Wayland candidate window
     services.dbus.packages = lib.mkIf cfg.inputMethod.enable (with pkgs; [ fcitx5 ]);
 

@@ -1,0 +1,4 @@
+# Rime distribution info (required for fcitx5-rime to recognize the deployment)
+distribution:
+  name: rime-ice
+  version: "2024.01"

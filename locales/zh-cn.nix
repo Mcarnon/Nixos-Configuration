@@ -18,6 +18,7 @@ let
     mkdir -p $out/share/rime-data
     cp -r ${pkgs.rime-ice}/share/rime-data/* $out/share/rime-data/
     cp ${rimeSchemaConfig} $out/share/rime-data/default.custom.yaml
+    cp ${./rime/distribution.yaml} $out/share/rime-data/distribution.yaml
   '';
 in
 {

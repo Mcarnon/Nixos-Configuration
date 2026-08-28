@@ -21,26 +21,30 @@ locales.zh-cn.enable = true;
 
 换显卡仅改 `hardware.intel.enable -> hardware.nvidia.enable`，换地区加 `locales.ja-jp.enable`。
 
-## 3. 磁盘与硬件
+## 3. 一键安装 (合并版)
 
 ```bash
 # 改目标盘
 $EDITOR hosts/laptop/disko-fs.nix  # device = "/dev/nvme0n1"
 
-# 分区+格式化+挂载（会清盘，输 LUKS 口令）
-sudo nix run github:nix-community/disko/latest -- --mode destroy,format,mount ./hosts/laptop/disko-fs.nix
-
-sudo mkdir -p /mnt/home/mccarnon && sudo cp -r . /mnt/home/mccarnon/Nixos-Configuration
-sudo nixos-generate-config --root /mnt
-# 用 blkid 的真实 UUID 替换 hosts/laptop/hardware-configuration.nix 的 <LUKS-UUID>/<ESP-UUID>
+# 运行合并安装脚本 (包含 disko + 配置生成 + nixos-install)
+chmod +x scripts/install.sh && sudo ./scripts/install.sh
 ```
 
-## 4. 安装/切换
+> 安装脚本会自动:
+> 1. 启用 nix-command 和 flakes
+> 2. 运行 disko 分区格式化
+> 3. 复制仓库到 /mnt/etc/nixos
+> 4. 生成本机配置并移动到 hosts/laptop/
+> 5. 提示编辑 LUKS/ESP UUID
+> 6. 运行 nixos-install
+
+仅需在脚本提示确认时按 y，需要时编辑 UUID。
+
+## 4. 安装后/日常维护
 
 ```bash
-git add -A
-sudo nixos-install --flake .#laptop   # 首次
-# 日常
+cd ~/Nixos-Configuration
 git add -A && sudo nixos-rebuild switch --flake .#laptop
 ```
 
