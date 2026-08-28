@@ -6,25 +6,83 @@ window-rule {
     clip-to-geometry true
 }
 
-// ---- Per-app opacity (pairs with blur: transparency makes blur visible) ----
+// ---- Per-app: terminal + a few apps that draw RGBA / can be made transparent ----
+//
+// IMPORTANT: blur and xray need the window surface itself to be partially
+// transparent. The app must either:
+//   1. draw with an alpha channel (foot RGBA, kitty RGBA, electron --enable-transparent-visuals),
+//   2. or have `opacity` set below 1.0 here so niri multiplies alpha through.
+//
+// Mainstream GTK/Qt file managers (nautilus, nemo, thunar) draw opaque —
+// background-effect won't be visible on their main window. Their *popups*
+// (right-click menu) do use xdg-popup and CAN be blurred via `popups` below.
+
 window-rule {
     match app-id="^foot$"
-    opacity 0.92
+    opacity 0.85
+    background-effect {
+        blur true
+        // xray is auto-enabled when blur is on (cheaper: shared wallpaper blur).
+        // xray only shows the wallpaper, not other windows — that's normal.
+    }
 }
 window-rule {
     match app-id="^zen-beta$"
-    opacity 0.95
+    opacity 0.92
+    background-effect {
+        blur true
+    }
 }
 window-rule {
     match app-id="^obsidian$"
-    opacity 0.93
+    opacity 0.90
+    background-effect {
+        blur true
+    }
 }
 window-rule {
     match app-id=r#"^dev\.zed\.Zed$"#
-    opacity 0.95
+    opacity 0.92
+    background-effect {
+        blur true
+    }
 }
 
-// ---- Floating windows ----
+// ---- Floating windows: blur + dynamic (non-xray) blur behind them ----
+// For floating windows/dialogs (Noctalia settings, pavucontrol, file dialogs)
+// non-xray is more useful because they often sit over OTHER windows, not just
+// wallpaper. Disabled by default per the upstream warning (disappears during
+// animations). Enable per-floating-app if you want it.
+window-rule {
+    match is-floating=true
+    background-effect {
+        blur true
+        // xray false  // ← uncomment to blur other windows (heavier)
+    }
+}
+
+// ---- Popup menus (real xdg-popup) for any app ----
+window-rule {
+    // Nautilus right-click menu: blur + slight transparency for legibility.
+    match app-id="Nautilus"
+    popups {
+        geometry-corner-radius 12
+        background-effect {
+            blur true
+        }
+    }
+}
+// Apply popup blur to all GTK4 / libadwaita apps (Files, Text Editor, ...).
+// They all use xdg-popup, so this is safe and cheap.
+window-rule {
+    popups {
+        background-effect {
+            blur true
+        }
+    }
+}
+
+// ---- Floating window overrides ----
 // Noctalia settings window
 window-rule {
     match app-id=r#"^dev\.noctalia\.Noctalia$"#
@@ -32,13 +90,8 @@ window-rule {
     default-column-width { fixed 1080; }
     default-window-height { fixed 920; }
 }
-// Nautilus
-window-rule {
-    match app-id=r#"^org\.gnome\.Nautilus$"#
-    open-floating true
-    default-column-width { fixed 1200; }
-    default-window-height { fixed 800; }
-}
+// Nautilus main window stays tiled (default); we only blur its popups above.
+// (No `open-floating true` here on purpose.)
 // Volume control (pavucontrol)
 window-rule {
     match app-id="^pavucontrol$"

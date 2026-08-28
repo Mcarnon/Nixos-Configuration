@@ -1,31 +1,33 @@
 // Window blur (niri 26.04+).
-// The compositor re-blurs the live framebuffer every frame, so video,
-// wallpaper transitions, and moving windows all show through in real time.
-// Note: non-xray blur is experimental and is not rendered during window
-// open/close animations.
+//
+// Two blur modes in niri:
+//   1. **xray (default)**: blur the wallpaper once, share among all windows.
+//      Cheap. Only shows the wallpaper, not other windows behind.
+//   2. **non-xray** (set `xray false` per-window): blur everything under
+//      the window including other windows. Heavy. Disappears during
+//      window open/close animations (known limitation).
+//
+// Both modes require the target window to be SEMITRANSPARENT — either the
+// app draws RGBA (foot `background=00000000`, kitty with `background_opacity`,
+// electron `--enable-transparent-visuals`) or niri multiplies its own
+// `opacity` < 1.0 onto the surface.
+//
+// Global blur shader settings:
 blur {
-    passes 3        // keep <= 3 on Intel iGPU for perf/quality balance
+    passes 3        // 1-5; keep <= 3 on Intel iGPU
     offset 3.0
-    noise 0.02
-    saturation 1.5
+    noise 0.02       // tiny dither to hide banding on smooth gradients
+    saturation 1.5   // > 1 boosts colors behind the blur (vivid macOS feel)
 }
 
-// Floating windows / dialogs: live (xray) transparency so they show whatever
-// is behind them in real time. (xray=false would use a static snapshot blur,
-// which is non-real-time and only rendered outside open/close animations.)
+// Popup-menu blur applies to *real* xdg-popup surfaces (Nautilus right-click,
+// GTK4 menus, app tooltips). NOT to sub-surface menus (Firefox, Electron),
+// which look like popups but are emulated inside the window.
 window-rule {
-    match is-floating=true
-    background-effect {
-        xray true
-    }
-}
-
-// Blur popup menus too (e.g. Nautilus context menus).
-window-rule {
-    match app-id="Nautilus"
     popups {
         background-effect {
             blur true
+            xray false
         }
     }
 }

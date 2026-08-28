@@ -50,12 +50,12 @@ in
     };
 
     environment.variables = lib.mkIf cfg.inputMethod.enable {
-      GTK_IM_MODULE  = "fcitx";
-      QT_IM_MODULE   = "fcitx";
-      XMODIFIERS     = "@im=fcitx";
-      SDL_IM_MODULE  = "fcitx";
+      GTK_IM_MODULE = "fcitx";
+      QT_IM_MODULE = "fcitx";
+      XMODIFIERS = "@im=fcitx";
+      SDL_IM_MODULE = "fcitx";
       GLFW_IM_MODULE = "ibus";
-      RIME_USER_DIR   = "%h/.config/fcitx5/rime";
+      RIME_USER_DIR = "%h/.config/fcitx5/rime";
     };
 
     services.dbus.packages = lib.mkIf cfg.inputMethod.enable (with pkgs; [ fcitx5 ]);
@@ -77,6 +77,7 @@ in
         noto-fonts-cjk-serif
         noto-fonts-color-emoji
         nerd-fonts.jetbrains-mono
+        nerd-fonts.cascadia-code
         nerd-fonts.symbols-only
       ];
       fontconfig = {
