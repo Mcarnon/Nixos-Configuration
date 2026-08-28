@@ -48,16 +48,17 @@
     };
   };
 
-  # fcitx5 input method — starts with the graphical session
+  # fcitx5 input method — fallback if niri's spawn-at-startup doesn't run.
+  # Primary startup is via home/niri/startup.kdl (spawn-at-startup "fcitx5"),
+  # which works because niri doesn't auto-activate graphical-session.target.
+  # This service stays dormant (RemainAfterExit=no) unless invoked manually.
   systemd.user.services.fcitx5 = {
-    description = "Fcitx5 input method";
+    description = "Fcitx5 input method (fallback)";
     wantedBy = [ "graphical-session.target" ];
     after = [ "graphical-session.target" ];
     serviceConfig = {
       Type = "simple";
       ExecStart = "${pkgs.fcitx5}/bin/fcitx5";
-      # Restart always so it survives dbus name conflicts (niri may also start
-      # fcitx5 via other means — whichever wins the dbus name keeps running).
       Restart = "always";
       RestartSec = 2;
     };
