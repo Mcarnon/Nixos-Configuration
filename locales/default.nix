@@ -14,7 +14,6 @@ in
     defaultLocale = lib.mkOption {
       type = lib.types.str;
       default = "en_US.UTF-8";
-      description = "Primary locale (LANG).";
     };
 
     supportedLocales = lib.mkOption {
@@ -25,7 +24,6 @@ in
     inputMethod.enable = lib.mkOption {
       type = lib.types.bool;
       default = true;
-      description = "Enable the Fcitx5 input method framework.";
     };
   };
 
@@ -51,14 +49,12 @@ in
       };
     };
 
-    # IM env vars for apps that don't speak Wayland IM protocol
     environment.variables = lib.mkIf cfg.inputMethod.enable {
       GTK_IM_MODULE  = "fcitx";
       QT_IM_MODULE   = "fcitx";
       XMODIFIERS     = "@im=fcitx";
       SDL_IM_MODULE  = "fcitx";
       GLFW_IM_MODULE = "ibus";
-      # Rime user data dir (XDG standard: ~/.config/, not ~/.local/share/)
       RIME_USER_DIR   = "%h/.config/fcitx5/rime";
     };
 
@@ -73,19 +69,6 @@ in
         qt6Packages.fcitx5-configtool
       ]
     );
-
-    # fcitx5 is started via niri's startup.kdl (spawn-at-startup "fcitx5").
-    # Keep a disabled systemd service here so `systemctl --user stop fcitx5`
-    # still works and the fcitx5 module can be toggled cleanly.
-    systemd.user.services.fcitx5 = lib.mkIf cfg.inputMethod.enable {
-      description = "Fcitx5 input method";
-      wantedBy = [ ];
-      serviceConfig = {
-        Type = "simple";
-        ExecStart = "${pkgs.fcitx5}/bin/fcitx5";
-        Restart = "on-failure";
-      };
-    };
 
     fonts = {
       packages = with pkgs; [
