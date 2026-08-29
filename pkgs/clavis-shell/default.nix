@@ -51,10 +51,23 @@ stdenv.mkDerivation {
     "-G Ninja"
     "-DCMAKE_BUILD_TYPE=Release"
     "-DBUILD_TESTING=OFF"
+    "-DCMAKE_INSTALL_PREFIX=${placeholder "out"}"
     "-DCLAVIS_QML_INSTALL_DIR=lib/qt6/qml"
     "-DCLAVIS_CONFIG_INSTALL_DIR=etc/xdg/quickshell/clavis"
     "-DCLAVIS_SYSTEMD_USER_INSTALL_DIR=lib/systemd/user"
   ];
+
+  # The fork installs the QML modules + config via relative DESTINATIONs
+  # (lib/qt6/qml, etc/xdg/...). For whatever reason the generic cmake hook
+  # ends up dumping them under the build tree instead of $out, leaving $out
+  # empty ("failed to produce output path for output 'out'"). Copy the built
+  # tree into $out explicitly so key-cli can find lib/qt6/qml and etc/xdg.
+  installPhase = ''
+    runHook preInstall
+    mkdir -p "$out"
+    cp -r "$NIX_BUILD_TOP/source/build/lib" "$NIX_BUILD_TOP/source/build/etc" "$out/"
+    runHook postInstall
+  '';
 
   meta = with lib; {
     description = "Quickshell desktop shell for niri (Clavis)";
