@@ -2,8 +2,8 @@
 //
 // Strategy: dynamic blur (see blur.kdl) + per-app `opacity` on this
 // layout's transparent background (config.kdl `background-color
-// "transparent"`). blur.kdl is included BEFORE this file, so only the
-// per-app rules that differ from the global 0.9/0.85 baseline live here.
+// "transparent"`). Only the per-app rules that differ from the global
+// xray-blur baseline in blur.kdl live here.
 
 // ---- All windows: rounded corners, no CSD ----
 window-rule {

@@ -1,14 +1,10 @@
 // Startup commands for niri session.
-// Clavis (the Quickshell desktop shell) is NOT started here — it runs as a
-// user systemd service (`clavis-shell.service`, see
-// modules/home/desktop/clavis/default.nix) under graphical-session.target,
-// so it survives shell crashes and restarts on failure. The clipboard watcher
-// (`clavis-clipboard.service`) is likewise a systemd service (key clipboard watch).
-// fcitx5 is also a systemd service (see modules/nixos/desktop/niri.nix) — the
-// systemd service and this spawn race to own the DBus name, and the winner runs.
-//
-// systemd --user is started by the wayland-session script (greetd env), so
-// polkit/fcitx5/clavis services are available.
+// Clavis (the Quickshell desktop shell) runs as a user systemd service
+// (`clavis-shell.service`, see modules/home/desktop/clavis/default.nix),
+// and fcitx5 as another (`systemd.user.services.fcitx5` in
+// modules/nixos/desktop/niri.nix) — both under graphical-session.target,
+// so nothing desktop-shell-related is spawned here.
+// systemd --user is started by the wayland-session script (greetd env).
 
 // XWayland-on-demand for legacy X11 apps (QQ, WeChat, older electron apps).
 // niri 25.08+ auto-spawns this on demand, but starting it explicitly is safer.

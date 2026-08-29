@@ -17,14 +17,9 @@
     xwayland-satellite # X11 support (started by spawn-at-startup)
     networkmanagerapplet # nm-applet tray icon
 
-    # -- Clipboard manager (started by spawn-at-startup) --
-    cliphist
-    wl-clipboard
-
-    # -- Screenshot tools (niri has built-in, but for annotation) --
-    grim # screenshot cli
-    slurp # region select
-    satty # annotation tool
+    # -- Screenshot annotation (grim/slurp/wl-clipboard/cliphist live in
+    #    ./media.nix — they're the media/clipboard domain) --
+    satty # screenshot annotation tool
 
     # -- Users specific --
     zed-editor # development tool
@@ -69,6 +64,7 @@
     };
   };
 
-  # cliphist config: max 100 entries, deduplicate, image previews
-  programs.clipman.enable = false;  # we use cliphist instead
+  # Clipboard history is handled by Clavis (`key clipboard watch`, see
+  # modules/home/desktop/clavis/default.nix) with cliphist as its backend
+  # (installed in ./media.nix). No clipman here.
 }

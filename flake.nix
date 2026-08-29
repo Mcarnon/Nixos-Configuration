@@ -40,7 +40,7 @@
       flake = false;
     };
 
-    # age-encrypted secrets (see modules/secrets.nix)
+    # age-encrypted secrets (see modules/nixos/security/secrets.nix)
     agenix.url = "github:ryantm/agenix";
 
     # Zen Browser (firefox fork)

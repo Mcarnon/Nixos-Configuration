@@ -43,7 +43,8 @@
   # nh: friendlier nixos-rebuild wrapper (`nh os switch`, `nh os boot`, ...).
   programs.nh = {
     enable = true;
-    # Where this flake lives on the machine (matches sync.sh's REMOTE_DIR).
+    # Path to your local checkout on THIS machine (used by `nh os switch`).
+    # Note: sync.sh's REMOTE_DIR is the *remote* path and is unrelated.
     flake = "/home/mccarnon/loliconOS"; # TODO: adjust to your local checkout path
     # nh.clean left off — `nix.gc` above already handles store cleanup.
   };

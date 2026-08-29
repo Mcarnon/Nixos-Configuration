@@ -19,5 +19,5 @@
     };
   };
 
-  # Firewall is in ../security/firewall.nix (kept separate for security audit).
+  # Firewall is in ./firewall.nix (kept separate for security audit).
 }
