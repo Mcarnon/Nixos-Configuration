@@ -4,7 +4,7 @@
   perSystem =
     { pkgs, system, ... }:
     let
-      miyuTest = pkgs.callPackage ../checks/miyu.nix { };
+      miyuTest = pkgs.callPackage ../checks/miyu.nix { inherit inputs; };
     in
     {
       checks = {
