@@ -1,4 +1,4 @@
-// niri main config - laptop + Noctalia desktop shell
+// niri main config - laptop + Clavis (Quickshell) desktop shell
 // Sub-configs are split via include into *.kdl files in the same directory.
 
 // Ask apps to omit client-side decorations; niri draws border/focus ring.
@@ -9,8 +9,8 @@ input {
         xkb {
             layout "us"
         }
-        repeat-delay 300
-        repeat-rate 40
+        repeat-delay 250
+        repeat-rate 35
     }
 
     touchpad {
@@ -39,6 +39,11 @@ environment {
     XCURSOR_THEME "volantes_cursors"
     XCURSOR_SIZE "24"
     QT_QPA_PLATFORM "wayland"
+    // Locale (locale) + input method + QT theme for niri-spawned processes.
+    // System-wide equivalents live in hosts/laptop/default.nix + locales/.
+    LANGUAGE "zh_CN:en"
+    XMODIFIERS "@im=fcitx"
+    QT_QPA_PLATFORMTHEME "gtk3"
 }
 
 hotkey-overlay {
@@ -48,12 +53,13 @@ hotkey-overlay {
 
 include "niri-hardware.kdl"
 include "startup.kdl"
+include "blur.kdl" // global opacity/blur baseline — before windowrule.kdl so per-app rules win
 include "windowrule.kdl"
 include "binds.kdl"
-include "blur.kdl"
 
 layout {
     gaps 8
+    background-color "transparent" // see-through to wallpaper (required for blur to show)
 
     preset-column-widths {
         proportion 0.5
@@ -78,30 +84,30 @@ layout {
     }
 }
 
+// Animation: all-spring (SHORiN pattern) for cohesive feel.
 animations {
+    slowdown 0.98
+
     window-open {
-        duration-ms 200
-        curve "ease-out-expo"
+        spring damping-ratio=1.0 stiffness=1000 epsilon=0.0001
     }
     window-close {
-        duration-ms 150
-        curve "ease-out-cubic"
+        spring damping-ratio=0.8 stiffness=400 epsilon=0.0001
     }
-    // Keep these three in sync for coherent motion (niri docs recommendation).
     window-movement {
-        spring damping-ratio=0.8 stiffness=800 epsilon=0.0001
+        spring damping-ratio=1.0 stiffness=800 epsilon=0.0001
     }
     horizontal-view-movement {
-        spring damping-ratio=0.8 stiffness=800 epsilon=0.0001
+        spring damping-ratio=0.84 stiffness=400 epsilon=0.0001
     }
     window-resize {
-        spring damping-ratio=0.8 stiffness=800 epsilon=0.0001
+        spring damping-ratio=0.9 stiffness=500 epsilon=0.0001
     }
     workspace-switch {
-        spring damping-ratio=1.0 stiffness=900 epsilon=0.0001
+        spring damping-ratio=0.82 stiffness=400 epsilon=0.0001
     }
     overview-open-close {
-        spring damping-ratio=1.0 stiffness=800 epsilon=0.0001
+        spring damping-ratio=1.0 stiffness=900 epsilon=0.0001
     }
 }
 

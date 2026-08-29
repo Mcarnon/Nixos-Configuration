@@ -77,7 +77,7 @@ in
         noto-fonts-cjk-serif
         noto-fonts-color-emoji
         nerd-fonts.jetbrains-mono
-        nerd-fonts.cascadia-code
+        nerd-fonts.caskaydia-cove
         nerd-fonts.symbols-only
       ];
       fontconfig = {

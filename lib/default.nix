@@ -21,7 +21,7 @@
       };
       modules = [
         # Global overlay + nixpkgs hardening (single audit surface)
-        { nixpkgs.overlays = [ (import ../pkgs/default.nix) ]; }
+        { nixpkgs.overlays = [ (import ../pkgs/default.nix inputs) ]; }
         inputs.agenix.nixosModules.default
         inputs.home-manager.nixosModules.home-manager
         hostPath

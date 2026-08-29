@@ -1,17 +1,13 @@
 {
-  description = "NixOS + Home Manager: niri + Noctalia on an Intel laptop";
+  description = "NixOS + Home Manager: niri + Clavis (Quickshell) on an Intel laptop";
 
-  # Binary caches: Noctalia + CN mirrors (priority=5 means prefer mirrors
+  # Binary caches: CN mirrors (priority=5 means prefer mirrors
   # over the default cache.nixos.org priority 40).
   nixConfig = {
     extra-substituters = [
-      "https://noctalia.cachix.org"
       "https://mirrors.ustc.edu.cn/nix-channels/store?priority=5"
       "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store?priority=5"
       "https://mirror.sjtu.edu.cn/nix-channels/store?priority=5"
-    ];
-    extra-trusted-public-keys = [
-      "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4="
     ];
   };
 
@@ -27,8 +23,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Pin the `cachix` branch: always points to the latest CI-prebuilt commit.
-    noctalia.url = "github:noctalia-dev/noctalia/cachix";
+    # ── Clavis Shell (Quickshell desktop shell for niri) + companions ──
+    # Pin to a commit with `nix flake lock --update-input <name>` once verified.
+    "clavis-shell".url = "github:StatIndet/quickshell";
+    "key-cli".url = "github:StatIndet/key-cli/d512bc1e3607c52c5e1fb4477b9c7f31d9216760";
+    "keytop".url = "github:StatIndet/keytop/8c2f998d4644403026b7e1f81780d75aa717742d";
 
     # age-encrypted secrets (see modules/secrets.nix)
     agenix.url = "github:ryantm/agenix";

@@ -32,10 +32,24 @@
     };
   };
 
+  # Wayland session entry point for greetd.
+  # Starts systemd --user (if not already running) before launching niri,
+  # so that user systemd services (fcitx5, polkit agent, etc.) can start.
+  # This is the key fix: greetd sessions don't auto-spawn systemd --user.
+  environment.etc."wayland-session".source = pkgs.writeShellScript "init-wayland-session" ''
+    # Ensure systemd --user is running (greetd doesn't auto-start it)
+    if ! pgrep -x systemd >/dev/null 2>&1; then
+      systemctl --user start &
+      sleep 2
+    fi
+    # Launch niri (replacing the shell)
+    exec /run/current-system/sw/bin/niri-session
+  '';
+
   # polkit authentication agent
   security.polkit.enable = true;
   systemd.user.services.polkit-gnome-authentication-agent-1 = {
-    description = "polkit-gnome-authentication-agent-1";
+    description = "polkit-gnome authentication agent";
     wantedBy = [ "graphical-session.target" ];
     wants = [ "graphical-session.target" ];
     after = [ "graphical-session.target" ];
@@ -48,13 +62,14 @@
     };
   };
 
-  # fcitx5 input method — fallback if niri's spawn-at-startup doesn't run.
-  # Primary startup is via home/niri/startup.kdl (spawn-at-startup "fcitx5"),
-  # which works because niri doesn't auto-activate graphical-session.target.
-  # This service stays dormant (RemainAfterExit=no) unless invoked manually.
+  # fcitx5 input method daemon.
+  # Started as a systemd user service so it survives crashes and shares the
+  # user's DBus session. Requires systemd --user to be running (see
+  # environment.etc."wayland-session" above).
   systemd.user.services.fcitx5 = {
-    description = "Fcitx5 input method (fallback)";
+    description = "Fcitx5 input method";
     wantedBy = [ "graphical-session.target" ];
+    wants = [ "graphical-session.target" ];
     after = [ "graphical-session.target" ];
     serviceConfig = {
       Type = "simple";

@@ -1,4 +1,4 @@
-# Audio: PipeWire (Noctalia's volume OSD / app audio depend on it)
+# Audio: PipeWire (Clavis' volume OSD / app audio depend on it)
 {
   config,
   pkgs,

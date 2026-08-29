@@ -1,33 +1,31 @@
 // Window blur (niri 26.04+).
 //
-// Two blur modes in niri:
-//   1. **xray (default)**: blur the wallpaper once, share among all windows.
-//      Cheap. Only shows the wallpaper, not other windows behind.
-//   2. **non-xray** (set `xray false` per-window): blur everything under
-//      the window including other windows. Heavy. Disappears during
-//      window open/close animations (known limitation).
+// Dynamic mode (xray false): every window blurs whatever is behind it each
+// frame — wallpaper AND other windows show through the glass. Heavier than
+// the old xray-static mode, and the blur briefly disappears during
+// open/close animations (niri limitation). Look ported from NyxNiri
+// (ech678/NyxNiri, configs/niri/effects_normal.kdl).
 //
-// Both modes require the target window to be SEMITRANSPARENT — either the
-// app draws RGBA (foot `background=00000000`, kitty with `background_opacity`,
-// electron `--enable-transparent-visuals`) or niri multiplies its own
-// `opacity` < 1.0 onto the surface.
-//
-// Global blur shader settings:
+// This file is included BEFORE windowrule.kdl on purpose: it sets the
+// global opacity baseline (all 0.9, unfocused 0.85), and the per-app
+// `opacity` rules in windowrule.kdl override it for specific apps.
 blur {
-    passes 3        // 1-5; keep <= 3 on Intel iGPU
-    offset 3.0
-    noise 0.02       // tiny dither to hide banding on smooth gradients
-    saturation 1.5   // > 1 boosts colors behind the blur (vivid macOS feel)
+    passes 3
+    offset 2.3
+    noise 0.001
+    saturation 2
 }
 
-// Popup-menu blur applies to *real* xdg-popup surfaces (Nautilus right-click,
-// GTK4 menus, app tooltips). NOT to sub-surface menus (Firefox, Electron),
-// which look like popups but are emulated inside the window.
 window-rule {
-    popups {
-        background-effect {
-            blur true
-            xray false
-        }
+    opacity 0.9
+    background-effect {
+        blur true
+        xray false
     }
+}
+
+// Unfocused windows dim slightly for depth under the glass.
+window-rule {
+    match is-focused=false
+    opacity 0.85
 }

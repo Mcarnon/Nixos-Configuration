@@ -1,105 +1,72 @@
 // Window & layer rules
+//
+// Strategy: dynamic blur (see blur.kdl) + per-app `opacity` on this
+// layout's transparent background (config.kdl `background-color
+// "transparent"`). blur.kdl is included BEFORE this file, so only the
+// per-app rules that differ from the global 0.9/0.85 baseline live here.
 
-// Rounded corners for all windows.
+// ---- All windows: rounded corners, no CSD ----
 window-rule {
     geometry-corner-radius 12
     clip-to-geometry true
 }
 
-// ---- Per-app: terminal + a few apps that draw RGBA / can be made transparent ----
-//
-// IMPORTANT: blur and xray need the window surface itself to be partially
-// transparent. The app must either:
-//   1. draw with an alpha channel (foot RGBA, kitty RGBA, electron --enable-transparent-visuals),
-//   2. or have `opacity` set below 1.0 here so niri multiplies alpha through.
-//
-// Mainstream GTK/Qt file managers (nautilus, nemo, thunar) draw opaque —
-// background-effect won't be visible on their main window. Their *popups*
-// (right-click menu) do use xdg-popup and CAN be blurred via `popups` below.
-
+// ---- Per-app opacity (see-through but legible) ----
 window-rule {
     match app-id="^foot$"
-    opacity 0.85
-    background-effect {
-        blur true
-        // xray is auto-enabled when blur is on (cheaper: shared wallpaper blur).
-        // xray only shows the wallpaper, not other windows — that's normal.
-    }
+    opacity 0.92
 }
 window-rule {
     match app-id="^zen-beta$"
-    opacity 0.92
-    background-effect {
-        blur true
-    }
+    opacity 0.95
 }
 window-rule {
     match app-id="^obsidian$"
-    opacity 0.90
-    background-effect {
-        blur true
-    }
+    opacity 0.93
 }
 window-rule {
     match app-id=r#"^dev\.zed\.Zed$"#
-    opacity 0.92
-    background-effect {
-        blur true
-    }
+    opacity 0.95
 }
-
-// ---- Floating windows: blur + dynamic (non-xray) blur behind them ----
-// For floating windows/dialogs (Noctalia settings, pavucontrol, file dialogs)
-// non-xray is more useful because they often sit over OTHER windows, not just
-// wallpaper. Disabled by default per the upstream warning (disappears during
-// animations). Enable per-floating-app if you want it.
 window-rule {
-    match is-floating=true
-    background-effect {
-        blur true
-        // xray false  // ← uncomment to blur other windows (heavier)
-    }
+    match app-id="^code$"
+    opacity 0.94
 }
-
-// ---- Popup menus (real xdg-popup) for any app ----
 window-rule {
-    // Nautilus right-click menu: blur + slight transparency for legibility.
-    match app-id="Nautilus"
-    popups {
-        geometry-corner-radius 12
-        background-effect {
-            blur true
-        }
-    }
+    match app-id="^brave-browser$"
+    opacity 1.0
+    geometry-corner-radius 10
+    clip-to-geometry true
 }
-// Apply popup blur to all GTK4 / libadwaita apps (Files, Text Editor, ...).
-// They all use xdg-popup, so this is safe and cheap.
 window-rule {
-    popups {
-        background-effect {
-            blur true
-        }
-    }
-}
-
-// ---- Floating window overrides ----
-// Noctalia settings window
-window-rule {
-    match app-id=r#"^dev\.noctalia\.Noctalia$"#
+    match app-id="^spotify$"
     open-floating true
-    default-column-width { fixed 1080; }
-    default-window-height { fixed 920; }
+    default-column-width { fixed 1200; }
+    default-window-height { fixed 800; }
+    opacity 0.92
 }
-// Nautilus main window stays tiled (default); we only blur its popups above.
-// (No `open-floating true` here on purpose.)
-// Volume control (pavucontrol)
+
+// ---- Floating windows (overrides) ----
 window-rule {
     match app-id="^pavucontrol$"
     open-floating true
     default-column-width { fixed 800; }
     default-window-height { fixed 600; }
 }
-// Picture-in-Picture: floating, bottom-right
+window-rule {
+    match app-id="^nm-connection-editor$"
+    open-floating true
+}
+window-rule {
+    match app-id="^(Thunar|thunar|org\.gnome\.Nautilus)$"
+    open-floating true
+    default-column-width { fixed 1400; }
+    default-window-height { fixed 900; }
+}
+window-rule {
+    match app-id="^(imv|mpv)$"
+    open-floating true
+}
 window-rule {
     match title="^Picture-in-Picture$"
     open-floating true
@@ -107,24 +74,45 @@ window-rule {
     default-window-height { fixed 270; }
     default-floating-position x=32 y=32 relative-to="bottom-right"
 }
-// Open/Save file dialogs
 window-rule {
     match title="^(Open|Save) File.*$"
     open-floating true
 }
-// OBS: needs a min width with server-side decorations
 window-rule {
     match app-id=r#"^com\.obsproject\.Studio$"#
     min-width 876
 }
 
-// Allow Noctalia notification actions and window activation
+// ---- Chinese-app rules (SHORiN battle-tested) ----
+// Chat / QQ / WeChat popups (title-based) open as floating dialogs.
+window-rule {
+    match title="^(群聊的聊天记录|聊天记录|群相册|日历|重命名|另存为)$"
+    open-floating true
+}
+// Image / video viewers must stay opaque (transparent would garble the
+// picture) and float so they appear on top of the workspace.
+window-rule {
+    match title="^(图片查看器|画中画|图片和视频|视频播放器)$"
+    open-floating true
+    opacity 1.0
+}
+window-rule {
+    match app-id="^(mpv|celluloid)$"
+    opacity 1.0
+}
+
+// ---- Layer rules ----
+// Allow Clavis notification actions and window activation
 debug {
     honor-xdg-activation-with-invalid-serial
 }
 
-// Put the Noctalia wallpaper layer behind the niri overview
+// Clavis draws its wallpaper / desktop cards / bars as Quickshell layer
+// surfaces. Their namespaces come from the shell's QML, not from niri; if the
+// wallpaper ever shows above windows, add `place-within-backdrop` rules here
+// matching the Clavis layer namespaces.
+// Block notifications from screen sharing (privacy)
 layer-rule {
-    match namespace="^noctalia-backdrop"
-    place-within-backdrop true
+    match namespace="^notification$"
+    block-out-from "screencast"
 }

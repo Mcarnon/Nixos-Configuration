@@ -12,9 +12,9 @@ modules/
     i18n/ -> ../../locales                        # 垫片，canonical 在 locales/
   home/
     shell/{fish.nix,tools.nix}
-    desktop/{niri.nix,appearance.nix,noctalia/}   # noctalia 按域拆子模块
+    desktop/{niri.nix,appearance.nix,clavis/}       # clavis 按域拆子模块
     apps/{cli,gui,media,network,ai,neovim}.nix
-    services/{miyu.nix,cliphist.nix}
+    services/{miyu.nix}
   _templates/                                     # 新模块脚手架
 locales/{default.nix,zh-cn.nix}                   # locale/输入法/字体框架（canonical）
 roles/nixos/{base.nix,desktop.nix}                # 主机组合

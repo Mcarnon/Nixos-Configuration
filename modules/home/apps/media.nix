@@ -5,9 +5,9 @@
     grim # screenshot
     slurp # region select for screenshots
     wl-clipboard # Wayland clipboard (wl-copy / wl-paste)
-    pamixer # volume control (fallback; Noctalia has its own OSD)
+    pamixer # volume control (bound to XF86 keys in home/niri/binds.kdl)
     playerctl # MPRIS media keys (bound in home/niri/binds.kdl)
-    brightnessctl # brightness CLI (backup; Noctalia has its own backend)
-    cliphist # clipboard history store (service in ../services/cliphist.nix)
+    brightnessctl # brightness CLI (bound to XF86 keys in home/niri/binds.kdl)
+    cliphist # clipboard history store (used by key-cli's clipboard backend)
   ];
 }

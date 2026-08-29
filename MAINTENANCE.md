@@ -8,11 +8,11 @@ How to keep this NixOS system up to date and how the repo is organised.
 |------|----------------|
 | `flake.nix` + `flake-parts/` | Standardized entry (flake-parts perSystem memoization, `nix flake check`); `hosts.nix`/`packages.nix`/`checks.nix` |
 | `lib/` | Helpers (`mkHost`, hardware helpers) — cross-host reuse |
-| `pkgs/` + `pkgs/default.nix` | Overlay (`overlays.default` = `{miyu}`) — single audit surface for custom binaries |
+| `pkgs/` + `pkgs/default.nix` | Overlay (`overlays.default` = `{miyu, clavisShell, keyCli, keytop}`) — single audit surface for custom binaries |
 | `roles/nixos/` + `roles/home/` | Host/user composition (base/desktop) |
 | `hosts/laptop/` | **Machine-specific** (hardware-configuration/disko-fs/niri-hardware + `default.nix` which picks `roles/nixos/desktop` + `hardware.intel.enable`) |
 | `modules/nixos/` | Reusable system modules: `core/` (boot/nix/shell/persist/kernel/cli/diagnostics), `desktop/` (niri/greetd/audio), `hardware/` (intel/nvidia/power/disko), `network/` (manager/openssh/firewall), `security/` (secrets/hardening/sops), `i18n/` -> `locales/` |
-| `modules/home/` | Reusable HM modules: `shell/` (fish/tools), `desktop/` (niri/noctalia/appearance), `apps/` (cli/gui/media/network/ai), `services/` (miyu/cliphist) |
+| `modules/home/` | Reusable HM modules: `shell/` (fish/tools), `desktop/` (niri/clavis/appearance), `apps/` (cli/gui/media/network/ai), `services/` (miyu) |
 | `modules/_templates/` | 新模块脚手架 |
 | `locales/` | Locale / input-method / fonts (canonical，`modules/nixos/i18n` 垫片) |
 | `home/` | Per-user HM entry — `home/files/miyu.fish` + `home/niri/*.kdl` |
@@ -110,7 +110,7 @@ laptop and re-apply it after a push — or commit the real UUIDs into the repo.
 
 ## Performance & security baselines
 
-- **Performance**: `flake-parts` perSystem caching, `nix.settings` (`max-jobs auto`, `cores 0`, `auto-optimise-store`, `keep-derivations false`), `nix.gc` weekly, `zramSwap` zstd 25%, `boot.kernel.sysctl` BBR/fq + `vm.swappiness 10`, `services.resolved` cache, CN mirror substituters with `noctalia.cachix.org` priority.
+- **Performance**: `flake-parts` perSystem caching, `nix.settings` (`max-jobs auto`, `cores 0`, `auto-optimise-store`, `keep-derivations false`), `nix.gc` weekly, `zramSwap` zstd 25%, `boot.kernel.sysctl` BBR/fq + `vm.swappiness 10`, `services.resolved` cache, CN mirror substituters.
 - **Security**: `networking.firewall` closed (only 22), `services.openssh` `PermitRootLogin no` (flip `PasswordAuthentication` to `false` after agenix), `age` via `agenix` (tmpfs `/run/agenix.d`), `LUKS` (`/dev/mapper/cryptroot`), `security.sudo.execWheelOnly`, `boot.kernel.sysctl` (`kptr_restrict`, `ptrace_scope`), `nix.settings.trusted-users = [ root @wheel ]`, `nix.channel.enable = false`.
 - **CI**: `nix flake check` runs `checks/miyu.nix` VM smoke + `nix fmt --check`; add more VM tests under `checks/` and wire in `flake-parts/checks.nix`.
 

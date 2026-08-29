@@ -1,4 +1,4 @@
-# Nix / store settings: flakes, store optimise, GC, and the Noctalia cache.
+# Nix / store settings: flakes, store optimise, GC, and CN mirror caches.
 # Performance: fewer evals (flake-parts), binary caches, auto-optimise; Security:
 # trusted-users, keep-derivations minimal, GC.
 {
@@ -26,11 +26,7 @@
         "@wheel"
       ];
       allowed-users = [ "@wheel" ];
-      # Binary caches (Noctalia + CN mirrors already in flake.nix nixConfig for `nix` CLI)
-      extra-substituters = [ "https://noctalia.cachix.org" ];
-      extra-trusted-public-keys = [
-        "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4="
-      ];
+      # Binary caches (CN mirrors already in flake.nix nixConfig for `nix` CLI)
       # Performance: use all cores, keep going on failures (CI-friendly)
       max-jobs = "auto";
       cores = 0;
