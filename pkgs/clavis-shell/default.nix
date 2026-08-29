@@ -7,6 +7,7 @@
   cmake,
   ninja,
   pkg-config,
+  patchelf,
   qt6,
   qt6Packages,
   pipewire,
@@ -24,6 +25,7 @@ stdenv.mkDerivation {
     cmake
     ninja
     pkg-config
+    patchelf
   ];
 
   buildInputs = [
@@ -58,6 +60,13 @@ stdenv.mkDerivation {
     "-DCMAKE_BUILD_TYPE=Release"
     "-DBUILD_TESTING=OFF"
     "-DCMAKE_INSTALL_PREFIX=${placeholder "out"}"
+    # Qt 的 qt_add_qml_module() 生成的 *plugin.so 在链接时会把 CMAKE_BINARY_DIR
+    # (/build/source/build) 写进 RPATH，Nix 的硬化扫描会因 "forbidden reference
+    # to /build/" 拒绝。这里让安装后的库用 $ORIGIN 作为 RPATH（plugin.so 与其
+    # 主库 .so 安装在同一目录），并阻止 build 目录进入 RPATH。
+    "-DCMAKE_BUILD_WITH_INSTALL_RPATH=ON"
+    "-DCMAKE_INSTALL_RPATH=\$ORIGIN"
+    "-DCMAKE_INSTALL_RPATH_USE_LINK_PATH=OFF"
     "-DCLAVIS_QML_INSTALL_DIR=${placeholder "out"}/lib/qt6/qml"
     "-DCLAVIS_CONFIG_INSTALL_DIR=${placeholder "out"}/etc/xdg/quickshell/clavis"
     "-DCLAVIS_SYSTEMD_USER_INSTALL_DIR=${placeholder "out"}/lib/systemd/user"
@@ -69,6 +78,17 @@ stdenv.mkDerivation {
     mkdir -p $out
     cmake --install .
     runHook postInstall
+  '';
+
+  # 兜底：把任何残留的 /build/ 从 RPATH 中清掉（Qt plugin .so 与其主库同目录，
+  # $ORIGIN 即可解析），否则 fixupPhase 的硬化扫描会再次拒绝。
+  postFixup = ''
+    for so in $(find "$out" -name '*.so'); do
+      rpath="$(patchelf --print-rpath "$so" 2>/dev/null || true)"
+      if echo "$rpath" | grep -q '/build/'; then
+        patchelf --set-rpath '$ORIGIN' "$so"
+      fi
+    done
   '';
 
   meta = with lib; {
