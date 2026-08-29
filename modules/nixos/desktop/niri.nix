@@ -28,21 +28,27 @@ let
   # ReGreet/Greetd launches the full session (niri + Clavis) instead of a bare
   # niri. Everything else from the package (binaries, niri.service, portals)
   # is preserved via the symlink join.
-  niriWithClavisSession = pkgs.symlinkJoin {
-    name = "niri-with-clavis-session";
-    paths = [ pkgs.niri ];
-    postBuild = ''
-      rm -f "$out/share/wayland-sessions/niri.desktop"
-      cat > "$out/share/wayland-sessions/niri.desktop" <<EOF
-      [Desktop Entry]
-      Name=Niri
-      Comment=niri + Clavis Shell (Quickshell)
-      Exec=${clavisSessionScript}/bin/clavis-session
-      Type=Application
-      DesktopNames=niri
-      EOF
-    '';
-  };
+  niriWithClavisSession =
+    (pkgs.symlinkJoin {
+      name = "niri-with-clavis-session";
+      paths = [ pkgs.niri ];
+      postBuild = ''
+        rm -f "$out/share/wayland-sessions/niri.desktop"
+        cat > "$out/share/wayland-sessions/niri.desktop" <<EOF
+        [Desktop Entry]
+        Name=Niri
+        Comment=niri + Clavis Shell (Quickshell)
+        Exec=${clavisSessionScript}/bin/clavis-session
+        Type=Application
+        DesktopNames=niri
+        EOF
+      '';
+    })
+    // {
+      # The display-manager's `sessionPackages` type requires this metadata;
+      # symlinkJoin drops it, so re-attach it from the underlying niri package.
+      providedSessions = pkgs.niri.providedSessions or [ "niri" ];
+    };
 in
 {
   programs.niri = {
