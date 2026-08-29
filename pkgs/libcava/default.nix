@@ -51,7 +51,7 @@ stdenv.mkDerivation {
   # target is needed (and buildable without extra audio-input deps).
   buildPhase = ''
     runHook preBuild
-    cmake --build build --target cavacore
+    cmake --build . --target cavacore
     runHook postBuild
   '';
 
