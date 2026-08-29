@@ -23,7 +23,7 @@
 
     # -- Users specific --
     zed-editor # development tool
-    obsidian # note-taking
+    # obsidian
     obs-studio # screen recording
     splayer # netease cloud music player
     hmcl # minecraft launcher

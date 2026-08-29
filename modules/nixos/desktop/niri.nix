@@ -5,8 +5,50 @@
   lib,
   ...
 }:
+let
+  # Wayland session entry point (replaces niri-session).
+  #
+  # niri-session only activates graphical-session.target when it launches
+  # niri.service itself. But under greetd/PAM the session already runs inside a
+  # systemd --user manager, so niri-session takes its "already managed" shortcut
+  # and execs `niri --session` directly — leaving graphical-session.target
+  # inactive, which means Clavis (WantedBy=graphical-session.target) never
+  # starts. Starting niri.service explicitly fixes this: niri.service is
+  # BindsTo=graphical-session.target, so the target is activated and pulls in
+  # the Clavis shell + companions. `systemctl --wait` keeps this process alive
+  # until logout so greetd tracks the session correctly.
+  clavisSessionScript = pkgs.writeShellScript "clavis-session" ''
+    systemctl --user reset-failed || true
+    systemctl --user import-environment || true
+    dbus-update-activation-environment --all 2>/dev/null || true
+    exec systemctl --user start --wait niri.service
+  '';
+
+  # niri package whose shipped wayland-session .desktop is overridden so
+  # ReGreet/Greetd launches the full session (niri + Clavis) instead of a bare
+  # niri. Everything else from the package (binaries, niri.service, portals)
+  # is preserved via the symlink join.
+  niriWithClavisSession = pkgs.symlinkJoin {
+    name = "niri-with-clavis-session";
+    paths = [ pkgs.niri ];
+    postBuild = ''
+      rm -f "$out/share/wayland-sessions/niri.desktop"
+      cat > "$out/share/wayland-sessions/niri.desktop" <<EOF
+      [Desktop Entry]
+      Name=Niri
+      Comment=niri + Clavis Shell (Quickshell)
+      Exec=${clavisSessionScript}/bin/clavis-session
+      Type=Application
+      DesktopNames=niri
+      EOF
+    '';
+  };
+in
 {
-  programs.niri.enable = true;
+  programs.niri = {
+    enable = true;
+    package = niriWithClavisSession;
+  };
 
   # xdg-desktop-portal routing
   xdg.portal = {
@@ -32,20 +74,6 @@
     };
   };
 
-  # Wayland session entry point for greetd.
-  # Starts systemd --user (if not already running) before launching niri,
-  # so that user systemd services (fcitx5, polkit agent, etc.) can start.
-  # This is the key fix: greetd sessions don't auto-spawn systemd --user.
-  environment.etc."wayland-session".source = pkgs.writeShellScript "init-wayland-session" ''
-    # Ensure systemd --user is running (greetd doesn't auto-start it)
-    if ! pgrep -x systemd >/dev/null 2>&1; then
-      systemctl --user start &
-      sleep 2
-    fi
-    # Launch niri (replacing the shell)
-    exec /run/current-system/sw/bin/niri-session
-  '';
-
   # polkit authentication agent
   security.polkit.enable = true;
   systemd.user.services.polkit-gnome-authentication-agent-1 = {
@@ -64,8 +92,8 @@
 
   # fcitx5 input method daemon.
   # Started as a systemd user service so it survives crashes and shares the
-  # user's DBus session. Requires systemd --user to be running (see
-  # environment.etc."wayland-session" above).
+  # user's DBus session. Pulled in by graphical-session.target (activated by
+  # the clavis-session Wayland session entry point above).
   systemd.user.services.fcitx5 = {
     description = "Fcitx5 input method";
     wantedBy = [ "graphical-session.target" ];
