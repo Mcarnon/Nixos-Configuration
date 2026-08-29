@@ -19,6 +19,8 @@ stdenv.mkDerivation {
     cmake
     ninja
     pkg-config
+    # Qt app: wrap the binary so it finds the Qt plugins at runtime.
+    qt6.wrapQtAppsHook
   ];
 
   buildInputs = [

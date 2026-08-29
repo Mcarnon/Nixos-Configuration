@@ -37,6 +37,11 @@ stdenv.mkDerivation {
     cava
   ];
 
+  # QML library modules + config only — no installable app binary to wrap.
+  # Without this, qtbase's setup hook fails the build with
+  # "depends on qtbase, but no wrapping behavior was specified".
+  dontWrapQtApps = true;
+
   # autoPatchelfHook rewrites the native .so plugins' rpath to the Qt / pipewire
   # / cava store paths so they load at runtime.
   runtimeDependencies = [
