@@ -1,7 +1,8 @@
 # perSystem packages & formatter (performance: perSystem eval is cached once per system).
+{ inputs, ... }:
 {
   perSystem =
-    { inputs, system, ... }:
+    { system, ... }:
     let
       # Apply the repo overlay so the custom packages are buildable via `nix build`.
       pkgs = import inputs.nixpkgs {

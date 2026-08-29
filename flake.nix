@@ -66,7 +66,7 @@
 
       flake = {
         # Single audit surface for custom packages (security: `git grep pkgs.miyu` traces all consumers).
-        overlays.default = import ./pkgs/default.nix;
+        overlays.default = import ./pkgs/default.nix inputs;
       };
     };
 }

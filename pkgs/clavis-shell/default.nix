@@ -28,7 +28,10 @@ stdenv.mkDerivation {
   ];
 
   buildInputs = [
-    qt6.full
+    qt6.qtbase
+    qt6.qtdeclarative
+    qt6.qtshadertools
+    qt6.qttools
     qt6Packages.qtkeychain
     pipewire
     cava
