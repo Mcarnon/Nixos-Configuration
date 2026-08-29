@@ -1,6 +1,7 @@
 # keytop — standalone system monitor TUI (Clavis companion).
 {
   stdenv,
+  lib,
   cmake,
   ninja,
   pkg-config,
@@ -31,7 +32,7 @@ stdenv.mkDerivation {
     "-DBUILD_TESTING=OFF"
   ];
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "Standalone system monitor TUI (Clavis companion)";
     homepage = "https://github.com/StatIndet/keytop";
     license = licenses.gpl3Only;

@@ -24,10 +24,21 @@
     };
 
     # ── Clavis Shell (Quickshell desktop shell for niri) + companions ──
+    # These repos are plain source trees (no flake.nix), so `flake = false`
+    # fetches them as source paths consumed by pkgs/{clavis-shell,key-cli,keytop}.
     # Pin to a commit with `nix flake lock --update-input <name>` once verified.
-    "clavis-shell".url = "github:StatIndet/quickshell";
-    "key-cli".url = "github:StatIndet/key-cli/d512bc1e3607c52c5e1fb4477b9c7f31d9216760";
-    "keytop".url = "github:StatIndet/keytop/8c2f998d4644403026b7e1f81780d75aa717742d";
+    "clavis-shell" = {
+      url = "github:StatIndet/quickshell";
+      flake = false;
+    };
+    "key-cli" = {
+      url = "github:StatIndet/key-cli/d512bc1e3607c52c5e1fb4477b9c7f31d9216760";
+      flake = false;
+    };
+    "keytop" = {
+      url = "github:StatIndet/keytop/8c2f998d4644403026b7e1f81780d75aa717742d";
+      flake = false;
+    };
 
     # age-encrypted secrets (see modules/secrets.nix)
     agenix.url = "github:ryantm/agenix";

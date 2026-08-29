@@ -5,10 +5,7 @@
 # launched by greetd here, not as a `niri.service` unit, so we can't use the
 # upstream `WantedBy=niri.service`).
 {
-  config,
   pkgs,
-  lib,
-  inputs,
   ...
 }:
 {

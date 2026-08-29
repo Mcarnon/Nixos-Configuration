@@ -11,11 +11,11 @@ in
   miyu = prev.callPackage ./miyu { };
 
   clavisShell = prev.callPackage ./clavis-shell {
-    inherit (inputs) "clavis-shell";
+    src = inputs."clavis-shell";
   };
 
   keyCli = prev.callPackage ./key-cli {
-    inherit (inputs) "key-cli";
+    src = inputs."key-cli";
     clavisShell = final.clavisShell;
     quickshell = final.quickshell;
     matugen = final.matugen;
@@ -28,6 +28,6 @@ in
   };
 
   keytop = prev.callPackage ./keytop {
-    inherit (inputs) "keytop";
+    src = inputs."keytop";
   };
 }

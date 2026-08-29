@@ -3,6 +3,7 @@
 # tree / config. The `key` launcher (from key-cli) runs `qs -c clavis`.
 {
   stdenv,
+  lib,
   cmake,
   ninja,
   autoPatchelfHook,
@@ -50,7 +51,7 @@ stdenv.mkDerivation {
     "-DCLAVIS_SYSTEMD_USER_INSTALL_DIR=lib/systemd/user"
   ];
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "Quickshell desktop shell for niri (Clavis)";
     homepage = "https://github.com/StatIndet/quickshell";
     license = licenses.gpl3Only;
