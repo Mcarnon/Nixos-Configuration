@@ -62,18 +62,22 @@ stdenv.mkDerivation {
     install -Dm644 build/libcavacore.a $out/lib/libcavacore.a
 
     mkdir -p $out/lib/pkgconfig
-    cat > $out/lib/pkgconfig/libcava.pc << EOF
-    prefix=$out
-    libdir=\${prefix}/lib
-    includedir=\${prefix}/include
+    # Quoted heredoc so bash doesn't touch the ${...} pkg-config variables;
+    # @out@ / @version@ are substituted below (and ''${ is the Nix-escaped
+    # literal `${`).
+    cat > $out/lib/pkgconfig/libcava.pc << 'EOF'
+    prefix=@out@
+    libdir=''${prefix}/lib
+    includedir=''${prefix}/include
 
     Name: libcava
     Description: cava audio analysis library (cavacore)
-    Version: ${version}
+    Version: @version@
     Requires: fftw3
-    Libs: -L\${libdir} -lcavacore
-    Cflags: -I\${includedir}
+    Libs: -L''${libdir} -lcavacore
+    Cflags: -I''${includedir}
     EOF
+    sed -e "s|@out@|$out|g" -e "s|@version@|${version}|g" -i $out/lib/pkgconfig/libcava.pc
     # Clavis falls back to the `cava` module name; ship both.
     sed 's/^Name: libcava/Name: cava/' $out/lib/pkgconfig/libcava.pc > $out/lib/pkgconfig/cava.pc
 
