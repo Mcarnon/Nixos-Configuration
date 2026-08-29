@@ -58,8 +58,10 @@ stdenv.mkDerivation {
   installPhase = ''
     runHook preInstall
 
-    install -Dm644 cavacore.h $out/include/cavacore.h
-    install -Dm644 build/libcavacore.a $out/lib/libcavacore.a
+    # installPhase runs with cwd = the cmake build dir; reach into $src for
+    # the original source tree, and into the build dir for the archive.
+    install -Dm644 $src/cavacore.h $out/include/cavacore.h
+    install -Dm644 libcavacore.a $out/lib/libcavacore.a
 
     mkdir -p $out/lib/pkgconfig
     # Quoted heredoc so bash leaves the pkg-config variable expansions alone;
