@@ -11,7 +11,8 @@
   qt6,
   qt6Packages,
   pipewire,
-  cava,
+  libcava,
+  fftw,
   src,
 }:
 stdenv.mkDerivation {
@@ -34,7 +35,8 @@ stdenv.mkDerivation {
     qt6.qttools
     qt6Packages.qtkeychain
     pipewire
-    cava
+    libcava # provides libcava.pc / cava.pc for the CMake pkg_check_modules
+    fftw # required by libcava.pc's `Requires: fftw3`
   ];
 
   # QML library modules + config only — no installable app binary to wrap.
@@ -43,12 +45,13 @@ stdenv.mkDerivation {
   dontWrapQtApps = true;
 
   # autoPatchelfHook rewrites the native .so plugins' rpath to the Qt / pipewire
-  # / cava store paths so they load at runtime.
+  # / fftw store paths so they load at runtime. (The cava plugin statically
+  # links libcavacore; its only runtime dep is fftw.)
   runtimeDependencies = [
     qt6.qtbase
     qt6Packages.qtkeychain
     pipewire
-    cava
+    fftw
   ];
 
   cmakeFlags = [

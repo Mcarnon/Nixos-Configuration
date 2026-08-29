@@ -10,6 +10,9 @@ in
 {
   miyu = prev.callPackage ./miyu { };
 
+  # cava's analysis core as a library (Clavis links it via pkg-config).
+  libcava = prev.callPackage ./libcava { };
+
   clavisShell = prev.callPackage ./clavis-shell {
     src = inputs."clavis-shell";
   };
