@@ -6,7 +6,6 @@
   lib,
   cmake,
   ninja,
-  autoPatchelfHook,
   pkg-config,
   qt6,
   qt6Packages,
@@ -24,7 +23,6 @@ stdenv.mkDerivation {
   nativeBuildInputs = [
     cmake
     ninja
-    autoPatchelfHook
     pkg-config
   ];
 
@@ -43,16 +41,6 @@ stdenv.mkDerivation {
   # Without this, qtbase's setup hook fails the build with
   # "depends on qtbase, but no wrapping behavior was specified".
   dontWrapQtApps = true;
-
-  # autoPatchelfHook rewrites the native .so plugins' rpath to the Qt / pipewire
-  # / fftw store paths so they load at runtime. (The cava plugin statically
-  # links libcavacore; its only runtime dep is fftw.)
-  runtimeDependencies = [
-    qt6.qtbase
-    qt6Packages.qtkeychain
-    pipewire
-    fftw
-  ];
 
   cmakeFlags = [
     "-G Ninja"
