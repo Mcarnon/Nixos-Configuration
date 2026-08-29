@@ -24,11 +24,11 @@
     "clavis-shell": {
       "flake": false,
       "locked": {
-        "lastModified": 1788003749,
-        "narHash": "sha256-neN7Kc48vsOaCfNlyXMrwI0j+3aoasDkA6irf0zZxZ4=",
+        "lastModified": 1788014829,
+        "narHash": "sha256-1J/rBgioPL8raxDBIS6HVdTYWV+6W/opVKDw/cEaT8o=",
         "owner": "StatIndet",
         "repo": "quickshell",
-        "rev": "176ddcf3671d0ebb279749c88d2cf04af3b54858",
+        "rev": "3898afcffa8ba5a8ded9430454a7068751d6b8c6",
         "type": "github"
       },
       "original": {

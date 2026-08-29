@@ -47,15 +47,29 @@ stdenv.mkDerivation {
   # isn't a build input, so keep them out of the sandbox build.
   doCheck = false;
 
+  # NOTE: 上游 core/CMakeLists.txt 的 install() DESTINATION 都是相对路径
+  # (CLAVIS_*_INSTALL_DIR)。在 Nix sandbox 下若 CMAKE_INSTALL_PREFIX 未正确
+  # 生效，这些相对路径会被解析到 CMAKE_BINARY_DIR (/build/source/build)，导致
+  # 没有任何文件装进 $out，fixupPhase 的 `find $out` 就报
+  # "No such file or directory"。因此这里用绝对 $out 路径作为 DESTINATION，
+  # 保证安装一定落到 $out。
   cmakeFlags = [
     "-G Ninja"
     "-DCMAKE_BUILD_TYPE=Release"
     "-DBUILD_TESTING=OFF"
     "-DCMAKE_INSTALL_PREFIX=${placeholder "out"}"
-    "-DCLAVIS_QML_INSTALL_DIR=lib/qt6/qml"
-    "-DCLAVIS_CONFIG_INSTALL_DIR=etc/xdg/quickshell/clavis"
-    "-DCLAVIS_SYSTEMD_USER_INSTALL_DIR=lib/systemd/user"
+    "-DCLAVIS_QML_INSTALL_DIR=${placeholder "out"}/lib/qt6/qml"
+    "-DCLAVIS_CONFIG_INSTALL_DIR=${placeholder "out"}/etc/xdg/quickshell/clavis"
+    "-DCLAVIS_SYSTEMD_USER_INSTALL_DIR=${placeholder "out"}/lib/systemd/user"
   ];
+
+  # 保证 $out 一定存在（哪怕某个 install 规则落空），fixupPhase 才能通过。
+  installPhase = ''
+    runHook preInstall
+    mkdir -p $out
+    cmake --install .
+    runHook postInstall
+  '';
 
   meta = with lib; {
     description = "Quickshell desktop shell for niri (Clavis)";
