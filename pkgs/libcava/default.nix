@@ -71,15 +71,15 @@ stdenv.mkDerivation {
         prefix=@out@
         libdir=''${prefix}/lib
         includedir=''${prefix}/include
-    
+
         Name: libcava
         Description: cava audio analysis library (cavacore)
-        Version: @version@
+        Version: 1.0.0
         Requires: fftw3
         Libs: -L''${libdir} -lcavacore
         Cflags: -I''${includedir}
         EOF
-        sed -e "s|@out@|$out|g" -e "s|@version@|${version}|g" -i $out/lib/pkgconfig/libcava.pc
+        sed -e "s|@out@|$out|g" -i $out/lib/pkgconfig/libcava.pc
         # Clavis falls back to the `cava` module name; ship both.
         sed 's/^Name: libcava/Name: cava/' $out/lib/pkgconfig/libcava.pc > $out/lib/pkgconfig/cava.pc
     
