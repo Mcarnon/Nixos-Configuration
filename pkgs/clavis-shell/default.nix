@@ -42,13 +42,18 @@ stdenv.mkDerivation {
   # "depends on qtbase, but no wrapping behavior was specified".
   dontWrapQtApps = true;
 
+  # The fork's core/CMakeLists.txt includes CTest and adds a `tests/`
+  # subdirectory; the QML tests need the quickshell engine at runtime, which
+  # isn't a build input, so keep them out of the sandbox build.
+  doCheck = false;
+
   cmakeFlags = [
     "-G Ninja"
     "-DCMAKE_BUILD_TYPE=Release"
+    "-DBUILD_TESTING=OFF"
     "-DCLAVIS_QML_INSTALL_DIR=lib/qt6/qml"
     "-DCLAVIS_CONFIG_INSTALL_DIR=etc/xdg/quickshell/clavis"
     "-DCLAVIS_SYSTEMD_USER_INSTALL_DIR=lib/systemd/user"
-    "-DCMAKE_PREFIX_PATH=$out"
   ];
 
   meta = with lib; {
