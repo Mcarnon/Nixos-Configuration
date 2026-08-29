@@ -37,16 +37,18 @@ python3Packages.buildPythonApplication {
   # `key` execs `qs` and needs Clavis' QML modules + config on the search path.
   postFixup = ''
     wrapProgram "$out/bin/key" \
-      --prefix PATH : "${lib.makeBinPath [
-        quickshell
-        matugen
-        cliphist
-        wl-clipboard
-        gpu-screen-recorder
-        ffmpeg
-        slurp
-        pipewire
-      ]}" \
+      --prefix PATH : "${
+        lib.makeBinPath [
+          quickshell
+          matugen
+          cliphist
+          wl-clipboard
+          gpu-screen-recorder
+          ffmpeg
+          slurp
+          pipewire
+        ]
+      }" \
       --prefix QML_IMPORT_PATH : "${clavisShell}/lib/qt6/qml" \
       --prefix XDG_CONFIG_DIRS : "${clavisShell}/etc/xdg"
   '';
