@@ -60,6 +60,7 @@ stdenv.mkDerivation {
     "-DCLAVIS_QML_INSTALL_DIR=lib/qt6/qml"
     "-DCLAVIS_CONFIG_INSTALL_DIR=etc/xdg/quickshell/clavis"
     "-DCLAVIS_SYSTEMD_USER_INSTALL_DIR=lib/systemd/user"
+    "-DCMAKE_PREFIX_PATH=$out"
   ];
 
   meta = with lib; {

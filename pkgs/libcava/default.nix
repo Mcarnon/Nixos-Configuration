@@ -60,6 +60,11 @@ stdenv.mkDerivation {
 
     # installPhase runs with cwd = the cmake build dir; reach into $src for
     # the original source tree, and into the build dir for the archive.
+    # Header goes into $out/include/cava/ (not $out/include/) so that
+    # `#include <cava/cavacore.h>` (as used by Clavis' Cava plugin) resolves
+    # correctly when consumers pass the -I flag from our pkg-config file.
+    install -Dm644 $src/cavacore.h $out/include/cava/cavacore.h
+    # Also keep the flat layout for consumers that include <cavacore.h>.
     install -Dm644 $src/cavacore.h $out/include/cavacore.h
     install -Dm644 libcavacore.a $out/lib/libcavacore.a
 
