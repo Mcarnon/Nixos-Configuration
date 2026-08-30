@@ -1,5 +1,5 @@
 {
-  description = "NixOS + Home Manager: niri + Clavis (Quickshell) on an Intel laptop";
+  description = "NixOS + Home Manager: niri + Waybar/Fuzzel (SHORiN-style) on an Intel laptop";
 
   # Binary caches: CN mirrors (priority=5 means prefer mirrors
   # over the default cache.nixos.org priority 40).
@@ -21,23 +21,6 @@
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    # ── Clavis Shell (Quickshell desktop shell for niri) + companions ──
-    # These repos are plain source trees (no flake.nix), so `flake = false`
-    # fetches them as source paths consumed by pkgs/{clavis-shell,key-cli,keytop}.
-    # Pin to a commit with `nix flake lock --update-input <name>` once verified.
-    "clavis-shell" = {
-      url = "github:StatIndet/quickshell";
-      flake = false;
-    };
-    "key-cli" = {
-      url = "github:StatIndet/key-cli/d512bc1e3607c52c5e1fb4477b9c7f31d9216760";
-      flake = false;
-    };
-    "keytop" = {
-      url = "github:StatIndet/keytop/8c2f998d4644403026b7e1f81780d75aa717742d";
-      flake = false;
     };
 
     # age-encrypted secrets (see modules/nixos/security/secrets.nix)

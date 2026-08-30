@@ -1,4 +1,4 @@
-# Audio: PipeWire (Clavis' volume OSD / app audio depend on it)
+# Audio: PipeWire (waybar's volume module / app audio depend on it)
 {
   config,
   pkgs,

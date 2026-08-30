@@ -7,6 +7,7 @@
     lazygit # git TUI
     btop # resource monitor (replaces htop for daily use)
     fastfetch # system info banner
+    jq # JSON processing (used by home/files/f.fish waifu fetcher)
     tree # directory tree
   ];
 }

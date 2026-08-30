@@ -64,7 +64,7 @@
     };
   };
 
-  # Clipboard history is handled by Clavis (`key clipboard watch`, see
-  # modules/home/desktop/clavis/default.nix) with cliphist as its backend
-  # (installed in ./media.nix). No clipman here.
+  # Clipboard history is a fuzzel picker (Mod+V in home/niri/binds.kdl):
+  # cliphist list | fuzzel --dmenu | cliphist decode | wl-copy.
+  # cliphist/wl-clipboard themselves live in ./media.nix.
 }

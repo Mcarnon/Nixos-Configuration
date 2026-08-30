@@ -1,4 +1,4 @@
-// niri main config - laptop + Clavis (Quickshell) desktop shell
+// niri main config - laptop + SHORiN-style desktop (waybar + fuzzel)
 // Sub-configs are split via include into *.kdl files in the same directory.
 
 // Ask apps to omit client-side decorations; niri draws border/focus ring.

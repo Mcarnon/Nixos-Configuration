@@ -8,6 +8,6 @@
     pamixer # volume control (bound to XF86 keys in home/niri/binds.kdl)
     playerctl # MPRIS media keys (bound in home/niri/binds.kdl)
     brightnessctl # brightness CLI (bound to XF86 keys in home/niri/binds.kdl)
-    cliphist # clipboard history store (used by key-cli's clipboard backend)
+    cliphist # clipboard history store (picked via fuzzel, bound to Mod+V)
   ];
 }

@@ -13,7 +13,7 @@ let
   # systemd --user manager, so niri-session takes its "already managed" shortcut
   # and execs `niri --session` directly — leaving graphical-session.target
   # inactive, which means every user service `WantedBy=graphical-session.target`
-  # (fcitx5, polkit, the future desktop shell) never starts. Starting niri.service
+  # (fcitx5, polkit, waybar) never starts. Starting niri.service
   # explicitly fixes this: it BindsTo=graphical-session.target, so the target is
   # activated and pulls in all the user services. `systemctl --wait` keeps this
   # process alive until logout so greetd tracks the session correctly.

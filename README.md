@@ -8,7 +8,7 @@
 - **LUKS** full-disk encryption (single passphrase, encrypted swap) + hardware HAL (`hardware.intel.enable`)
 - **agenix** secrets management (age-encrypted, decrypt only on the target host)
 - **roles/** host composition (base/desktop) — cross-host reuse without double-eval
-- **niri** scrollable-tiling Wayland compositor + **Clavis** desktop shell (Quickshell)
+- **niri** scrollable-tiling Wayland compositor + **SHORiN-style desktop**: Waybar status bar, Fuzzel launcher, hyprlock lock screen
 - **Intel Iris Xe** graphics acceleration (VA-API) via `modules/hardware/intel.nix`
 - **Chinese environment** (locale + fonts + Fcitx5 input method)
 - **Miyu** terminal AI assistant via overlay `pkgs.miyu` + `home/modules/miyu.nix`
@@ -43,8 +43,8 @@ git add -A && sudo nixos-rebuild switch --flake .#laptop
 │   │   ├── security/{hardening.nix,secrets.nix,sops.nix}
 │   │   └── i18n/ -> ../../locales                    # locale框架垫片
 │   ├── home/
-│   │   ├── shell/{fish.nix,tools.nix}
-│   │   ├── desktop/{niri.nix,appearance.nix,clavis/} # clavis按域拆子模块
+│   │   ├── shell/{fish.nix,tools.nix} # fish 含 SHORiN 风格函数（y/cat/ls/lt/la/sl/f）
+│   │   ├── desktop/{niri.nix,appearance.nix,waybar/,fuzzel.nix,lock.nix}
 │   │   ├── apps/{cli,gui,media,network,ai,neovim}.nix
 │   │   └── services/{miyu,cliphist}.nix
 │   └── _templates/{enable-option.nix,nested-import.nix,example-simple.nix}
@@ -53,7 +53,7 @@ git add -A && sudo nixos-rebuild switch --flake .#laptop
 │   └── home/{common.nix,desktop.nix}
 ├── hosts/laptop/{default.nix,hardware-configuration.nix,disko-fs.nix,niri-hardware.kdl}
 ├── locales/{default.nix,zh-cn.nix}                   # locale/输入法/字体框架（canonical）
-├── home/{default.nix,files/miyu.fish,niri/*.kdl}
+├── home/{default.nix,files/{miyu.fish,f.fish,fwatch.fish},niri/*.kdl,hyprlock.conf}
 ├── wallpapers/                                       # 登录界面背景
 ├── docs/{QUICK_START,STRUCTURE,MIGRATION,DESKTOP,FAQ}.md
 ├── checks/miyu.nix  .github/workflows/ci.yml  scripts/sync.sh
@@ -178,17 +178,17 @@ Reinstalling later is the same flow — disko's `destroy` step handles the wipe.
 | `modules/nixos/network/openssh.nix` | remote IP / user |
 | `modules/nixos/network/firewall.nix` | `allowedTCPPorts` (default only 22) |
 | `modules/nixos/security/hardening.nix` | `boot.kernel.sysctl` BBR/fq, `zramSwap` |
-| `modules/home/desktop/clavis/default.nix` | Clavis shell + clipboard services |
+| `modules/home/desktop/waybar/default.nix` | Waybar 状态栏 + 壁纸脚本（SHORiN 风格） |
 | `modules/home/services/miyu.nix` | Miyu TUI (`miyu config`); no prefill needed |
 | `locales/zh-cn.nix` | input method (e.g. Rime) |
 
 ## Notes & optional enhancements
 
-- **Clavis binary cache**: `flake.nix:nixConfig` + `modules/nixos/core/nix.nix` via Cachix (add `clavis` cachix once set up).
 - **impermanence**: btrfs 子卷直接持久化，需更激进可用 `nix-community/impermanence`。
 - **polkit auth agent**: `polkit_gnome` 在 `modules/nixos/desktop/niri.nix` 以 `graphical-session` 服务运行。
 - **Miyu**: `pkgs.miyu` overlay + `modules/home/services/miyu.nix` 的 `fish/conf.d/zz-miyu.fish` + `home.activation.miyuInit`；`miyu config` 配置。
 - **Performance**: `flake-parts` perSystem 缓存，`nix.gc` weekly，`zramSwap` zstd，`BBR/fq`，`services.resolved` 缓存。
 - **Security**: `agenix` `/run/agenix.d` tmpfs，`LUKS`，`networking.firewall` 默认关，`PermitRootLogin no`。
 - **XWayland**: off by default; configure `xwayland-satellite` per the niri docs if you need X11 apps.
-- **Lock screen**: Clavis has a built-in lock screen bound to `Super+Alt+L` (`key ipc call lock open`); lid-close suspend is handled by logind.
+- **Lock screen**: hyprlock bound to `Super+Alt+L`; suspend combo `Mod+Alt+P` 先锁后挂。
+- **Wallpaper**: 把图片丢进 `~/Pictures/wallpaper/`，`Mod+F10` 或 waybar 壁纸按钮随机切换（awww）。

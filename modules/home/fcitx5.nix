@@ -13,8 +13,8 @@
 }:
 
 {
-  # classicui: vertical candidate list (default theme — Clavis/Matugen does not
-  # generate fcitx5 themes, so we use the stock theme here).
+  # classicui: vertical candidate list (default theme — no runtime theme
+  # generator here, so we use the stock theme).
   xdg.configFile."fcitx5/conf/classicui.conf".text = ''
     # 垂直候选列表
     Vertical Candidate List=True

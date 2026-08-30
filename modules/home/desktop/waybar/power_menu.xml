@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<menu>
+  <item label="⏻ 关机" action="shutdown" />
+  <item label="⟳ 重启" action="reboot" />
+  <item label="⏾ 挂起" action="suspend" />
+  <item label="⏼ 休眠" action="hibernate" />
+  <item label="⏃ 锁定" action="lock" />
+</menu>
