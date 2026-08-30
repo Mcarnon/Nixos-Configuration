@@ -93,15 +93,4 @@
     "render"
     "seat" # without this cage cannot reach the seatd socket
   ];
-
-  # greetd core: must enable the daemon and define the session command
-  services.greetd = {
-    enable = true;
-    settings = {
-      default_session = {
-        # Launch the niri session wrapper (activates graphical-session.target)
-        command = "${pkgs.niri}/bin/niri-session";
-      };
-    };
-  };
 }

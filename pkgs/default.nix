@@ -13,10 +13,6 @@ in
   # cava's analysis core as a library (Clavis links it via pkg-config).
   libcava = prev.callPackage ./libcava { };
 
-  quickshell = prev.callPackage ./quickshell {
-    src = inputs."clavis-shell";
-  };
-
   clavisShell = prev.callPackage ./clavis-shell {
     src = inputs."clavis-shell";
   };
