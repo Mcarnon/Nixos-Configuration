@@ -18,11 +18,25 @@ let
   # BindsTo=graphical-session.target, so the target is activated and pulls in
   # all the user services. `systemctl --wait` keeps this process alive until
   # logout so the display manager tracks the session correctly.
-  niriSessionWrapperScript = pkgs.writeShellScript "niri-session-wrapper" ''
-    systemctl --user reset-failed || true
-    systemctl --user import-environment || true
+  niriSessionWrapperScript = pkgs.writeShellScriptBin "niri-session-wrapper" ''
+    # 确保 user systemd 会话可用（ly 经 pam_systemd 通常会设置，这里兜底）
+    # 注意：bash 变量只用 $VAR 形式；带花括号的展开会与 Nix 字符串插值冲突。
+    if [ -z "$XDG_RUNTIME_DIR" ]; then
+      export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+    fi
+    mkdir -p "$XDG_RUNTIME_DIR" 2>/dev/null || true
+    chmod 700 "$XDG_RUNTIME_DIR" 2>/dev/null || true
+
+    systemctl --user reset-failed 2>/dev/null || true
+    systemctl --user import-environment 2>/dev/null || true
     dbus-update-activation-environment --all 2>/dev/null || true
-    exec systemctl --user start --wait niri.service
+
+    # 启动失败时把原因打出来，方便 journalctl 定位
+    if ! systemctl --user start --wait niri.service; then
+      echo "niri.service failed to start:" >&2
+      systemctl --user status niri.service --no-pager 2>&1 | tail -30 >&2
+      exit 1
+    fi
   '';
 
   # niri package whose shipped wayland-session .desktop is overridden so
@@ -32,7 +46,9 @@ let
   niriWithSessionWrapper =
     (pkgs.symlinkJoin {
       name = "niri-with-session-wrapper";
-      paths = [ pkgs.niri ];
+      # 关键：wrapper 脚本本身必须作为 path 装进最终包，否则 .desktop
+      # 引用的 bin/niri-session-wrapper 不存在，会话启动即失败（登录循环）。
+      paths = [ pkgs.niri niriSessionWrapperScript ];
       postBuild = ''
         rm -f "$out/share/wayland-sessions/niri.desktop"
         cat > "$out/share/wayland-sessions/niri.desktop" <<EOF
