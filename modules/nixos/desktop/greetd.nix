@@ -11,10 +11,13 @@
   ...
 }:
 {
-  # seatd provides the seat abstraction greetd / cage / niri need to open
-  # the GPU + input devices. Without it greetd fails with
+  # seatd provides the DRM / input seat abstraction that cage (the greeter)
+  # and niri both need. Without it the session aborts with
   #   "could not connect to socket /run/seatd.sock: No such file or directory"
-  # and bounces the user back to the login screen.
+  #   "Backend 'seatd' failed to open seat, skipping"
+  # and greetd bounces the user back to the login screen. The seatd socket is
+  # owned by the `seat` group, so both the session user and the greeter user
+  # must be members (session user already is; greeter added below).
   services.seatd.enable = true;
 
   services.displayManager.regreet = {
@@ -88,5 +91,6 @@
     "video"
     "input"
     "render"
+    "seat" # without this cage cannot reach the seatd socket
   ];
 }

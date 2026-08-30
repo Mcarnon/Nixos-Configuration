@@ -44,6 +44,8 @@ in
       "input"
       "render"
       "dialout"
+      "seat"
+      "seatd"
     ];
     shell = pkgs.fish; # enabled in modules/shell.nix, configured in home/shell.nix
     # First-login password placeholder (plaintext lands in the Nix store —
