@@ -1,0 +1,27 @@
+# 统一 LF 行尾：CRLF 会原样进入 Nix 字符串/脚本，导致 bash 语法错误
+# （脚本里的行尾 \r 会破坏 if/then/fi 的解析）。
+* text=auto
+
+*.nix text eol=lf
+*.sh text eol=lf
+*.fish text eol=lf
+*.kdl text eol=lf
+*.py text eol=lf
+*.json text eol=lf
+*.jsonc text eol=lf
+*.css text eol=lf
+*.toml text eol=lf
+*.conf text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.md text eol=lf
+*.lock text eol=lf
+
+# 二进制/字体等保持原样
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.mp4 binary
+*.oga binary
+*.zst binary
