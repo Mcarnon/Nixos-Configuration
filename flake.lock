@@ -21,22 +21,6 @@
         "type": "github"
       }
     },
-    "clavis-shell": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1788014829,
-        "narHash": "sha256-1J/rBgioPL8raxDBIS6HVdTYWV+6W/opVKDw/cEaT8o=",
-        "owner": "StatIndet",
-        "repo": "quickshell",
-        "rev": "3898afcffa8ba5a8ded9430454a7068751d6b8c6",
-        "type": "github"
-      },
-      "original": {
-        "owner": "StatIndet",
-        "repo": "quickshell",
-        "type": "github"
-      }
-    },
     "darwin": {
       "inputs": {
         "nixpkgs": [
@@ -118,40 +102,6 @@
         "type": "github"
       }
     },
-    "key-cli": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1786538561,
-        "narHash": "sha256-AyuMIjp4U6EwBKd7ZrDx0KJvJQDl5LXrQhLGULQ91Bw=",
-        "owner": "StatIndet",
-        "repo": "key-cli",
-        "rev": "d512bc1e3607c52c5e1fb4477b9c7f31d9216760",
-        "type": "github"
-      },
-      "original": {
-        "owner": "StatIndet",
-        "repo": "key-cli",
-        "rev": "d512bc1e3607c52c5e1fb4477b9c7f31d9216760",
-        "type": "github"
-      }
-    },
-    "keytop": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1787967154,
-        "narHash": "sha256-p15BuzkX/7rMsMEHVRiqbVJ381gotKqJ/E3lZjftrUo=",
-        "owner": "StatIndet",
-        "repo": "keytop",
-        "rev": "8c2f998d4644403026b7e1f81780d75aa717742d",
-        "type": "github"
-      },
-      "original": {
-        "owner": "StatIndet",
-        "repo": "keytop",
-        "rev": "8c2f998d4644403026b7e1f81780d75aa717742d",
-        "type": "github"
-      }
-    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1754028485,
@@ -185,11 +135,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1787736819,
-        "narHash": "sha256-cV5xEJJK3BvhU8rEd4mC9UsmDi5qscv/kzGPhBRC5WA=",
+        "lastModified": 1787900134,
+        "narHash": "sha256-VYXO0XZlgj06dxJZRhrD3WoSsvq/c7+/Akyoa22pefw=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "9fbb54b33e91ee4ca368e35a78e0613c720600b3",
+        "rev": "83199d0d373dd3ac2b9a1996b1d0263f76ab7a4c",
         "type": "github"
       },
       "original": {
@@ -202,11 +152,8 @@
     "root": {
       "inputs": {
         "agenix": "agenix",
-        "clavis-shell": "clavis-shell",
         "flake-parts": "flake-parts",
         "home-manager": "home-manager_2",
-        "key-cli": "key-cli",
-        "keytop": "keytop",
         "nixpkgs": "nixpkgs_2",
         "systems": "systems_2",
         "zen-browser": "zen-browser"
@@ -252,11 +199,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1787937002,
-        "narHash": "sha256-Gxk6hObCh1ZQPNXQ6EfLMKwFz9PFKKSDTva3ntUsdvU=",
+        "lastModified": 1788042348,
+        "narHash": "sha256-0elxLaDKy+Eg0iH7B9YT7N2vXpMNahkYrMmzRBihl9Q=",
         "owner": "0xc000022070",
         "repo": "zen-browser-flake",
-        "rev": "382e4f584c03b750d35849faff70ac1aa44fd6cf",
+        "rev": "7e5eae4a0ec7d29b83858ba5f54e156a19bbffbf",
         "type": "github"
       },
       "original": {

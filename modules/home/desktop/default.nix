@@ -1,7 +1,7 @@
 {
   imports = [
     ./niri.nix
-    ./clavis
+    ./quickshell
     ./appearance.nix
   ];
 }

@@ -22,11 +22,11 @@
     satty # screenshot annotation tool
 
     # -- Users specific --
-    zed-editor # development tool
-    # obsidian
-    obs-studio # screen recording
-    splayer # netease cloud music player
-    hmcl # minecraft launcher
+    # zed-editor # development tool
+    # obsidian # note taking
+    # obs-studio # screen recording
+    # splayer # netease cloud music player
+    # hmcl # minecraft launcher
 
   ];
 
