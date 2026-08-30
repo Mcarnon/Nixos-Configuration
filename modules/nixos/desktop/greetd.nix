@@ -11,6 +11,12 @@
   ...
 }:
 {
+  # seatd provides the seat abstraction greetd / cage / niri need to open
+  # the GPU + input devices. Without it greetd fails with
+  #   "could not connect to socket /run/seatd.sock: No such file or directory"
+  # and bounces the user back to the login screen.
+  services.seatd.enable = true;
+
   services.displayManager.regreet = {
     enable = true;
 
