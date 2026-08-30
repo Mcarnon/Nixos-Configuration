@@ -64,7 +64,7 @@ let
         shift
     done
 
-    if [[ "${LANG}" == zh_* ]]; then
+    if [[ "\${LANG}" == zh_* ]]; then
         STR_HELP="用法: niri-force-kill-window [选项]
 
 通过鼠标点击，使用 SIGKILL 强制结束无响应的窗口。
@@ -132,7 +132,7 @@ Options:
 
     pid=$(grep -oP 'PID:\s*\K\d+' <<< "$output")
     app_id=$(grep -oP 'App ID:\s*"\K[^"]+' <<< "$output")
-    app_name="${app_id:-$STR_UNKNOWN_APP}"
+    app_name="\${app_id:-$STR_UNKNOWN_APP}"
 
     if [[ -z "$pid" ]]; then exit 0; fi
     if [[ ! -f "/proc/$pid/comm" ]]; then
@@ -141,7 +141,7 @@ Options:
     fi
 
     process_name=$(<"/proc/$pid/comm")
-    process_name_lower="${process_name,,}"
+    process_name_lower="\${process_name,,}"
 
     if [[ "$process_name_lower" == *"xwayland"* ]]; then
         proto_str="XWayland"
@@ -165,9 +165,9 @@ Options:
             stat_file="/proc/$current/stat"
             if [[ ! -r "$stat_file" ]]; then break; fi
             stat_content=$(<"$stat_file")
-            pname="${stat_content#*(}"
-            pname="${pname%)*}"
-            rest="${stat_content##*) }"
+            pname="\${stat_content#*(}"
+            pname="\${pname%)*}"
+            rest="\${stat_content##*) }"
             read -r _ ppid _ <<< "$rest"
             if [[ -z "$ppid" || "$ppid" == "1" || "$ppid" == "0" ]]; then break; fi
             if [[ "$pname" =~ ^(systemd|niri|bash|zsh|fish|tmux|screen|xwayland.*|sshd|login|init|sway|hyprland)$ ]]; then
@@ -216,8 +216,6 @@ in
     "niri/rule.kdl".source = ../../../home/niri/rule.kdl;
     "niri/layout.kdl".source = ../../../home/niri/layout.kdl;
     "niri/niri-hardware.kdl".source = hostPath + "/niri-hardware.kdl";
-    "niri/hyprlock.conf".source = ../../../home/niri/hyprlock.conf;
-    "niri/hyprlock-colors.conf".source = ../../../home/niri/hyprlock-colors.conf;
 
     # Pure helper scripts (bind to ~/.config/niri/scripts/... as in Shorin's config)
     "niri/scripts/niri-binds" = {

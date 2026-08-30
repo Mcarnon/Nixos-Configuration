@@ -47,5 +47,8 @@
     "xfce4/xfconf/xfce-perchannel-xml/thunar-volman.xml".source =
       ../../../home/files/thunar/thunar-volman.xml;
     "mimeapps.list".source = ../../../home/files/mimeapps.list;
+    # wlogout 电源菜单（niri 适配布局，Mod+Shift+Ctrl+Q）
+    "wlogout/layout".source = ../../../home/files/wlogout-layout.json;
+    "wlogout/style.css".source = ../../../home/files/wlogout-style.css;
   };
 }
