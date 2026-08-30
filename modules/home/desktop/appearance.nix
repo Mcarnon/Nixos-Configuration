@@ -14,7 +14,7 @@
   home.pointerCursor = {
     enable = true;
     name = "breeze_cursors"; # XCursor 主题名（下划线）
-    package = pkgs.plasma5Packages.breeze; # nixpkgs 属性名
+    package = pkgs.kdePackages.breeze; # nixpkgs 属性名（Plasma 6 后为 kdePackages）
     size = 30;
   };
 

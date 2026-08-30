@@ -12,7 +12,7 @@
 
     # -- 终端 / 字体 --
     foot # Wayland 终端（foot.ini 见下方 xdg.configFile）
-    maple-mono # Maple Mono NF（foot/fuzzel/hyprlock 主字体）
+    maple-mono.NF-CN # Maple Mono NF（含中文字形；foot/fuzzel/hyprlock 主字体）
     adwaita-fonts # Adwaita Sans（mako 通知字体 / fontconfig 回退）
 
     # -- 文件管理器 --
