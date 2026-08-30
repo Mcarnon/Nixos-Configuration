@@ -24,11 +24,11 @@
     "clavis-shell": {
       "flake": false,
       "locked": {
-        "lastModified": 1788067505,
-        "narHash": "sha256-OyFmennuHGykUAe2R5rP+2geZ8zEbsbVlV7lnkePB7k=",
+        "lastModified": 1788085324,
+        "narHash": "sha256-Z7wBSyoJ3lEIDXhzLmjyWZCio6Ogks43cbngRTUcMik=",
         "owner": "StatIndet",
         "repo": "quickshell",
-        "rev": "b39e92c8bd0e4013048cb154671a09885c0257f0",
+        "rev": "8b42dff6b1d6971da11ea4b526e2b0889ab8cae8",
         "type": "github"
       },
       "original": {
@@ -252,11 +252,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788042348,
-        "narHash": "sha256-0elxLaDKy+Eg0iH7B9YT7N2vXpMNahkYrMmzRBihl9Q=",
+        "lastModified": 1788076699,
+        "narHash": "sha256-7/xv7BWHPqFZOdJJJkXoNnGDG/lznobSpwLtj2fr73A=",
         "owner": "0xc000022070",
         "repo": "zen-browser-flake",
-        "rev": "7e5eae4a0ec7d29b83858ba5f54e156a19bbffbf",
+        "rev": "8d0d0f036b0104699e60ec0d549d36a24d6e8637",
         "type": "github"
       },
       "original": {
