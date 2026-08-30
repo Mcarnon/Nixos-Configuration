@@ -1,0 +1,51 @@
+layout {
+
+    // 工作区背景颜色（透明 = 露出壁纸）
+    //background-color "transparent"
+
+    // 窗口间距
+    gaps 12
+
+    center-focused-column "never"
+
+    // 预设窗口宽度（Mod+R 切换）
+    preset-column-widths {
+        proportion 0.33333
+        proportion 0.5
+        proportion 0.66667
+    }
+
+    // 新窗口默认宽度
+    default-column-width { proportion 0.5; }
+
+    // 聚焦窗口边框（颜色在下方 focus-ring 里配置）
+    focus-ring {
+        width 3
+    }
+
+    // 窗口边框（默认关闭，用 focus-ring 即可）
+    border {
+        off
+        width 4
+        active-color "#ffc87f"
+        inactive-color "#505050"
+        urgent-color "#9b0000"
+    }
+
+    // 窗口阴影
+    shadow {
+        on
+        softness 20
+        spread 2
+        offset x=-4 y=-4
+        color "rgba(0, 0, 0, 0.7)"
+    }
+
+    // 窗口距离屏幕边缘的距离
+    struts {
+        //left 64
+        //right 64
+        //top 64
+        //bottom 64
+    }
+}

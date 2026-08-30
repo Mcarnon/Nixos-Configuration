@@ -1,6 +1,6 @@
-# Lock screen — hyprlock (SHORiN's minimal-niri lockscreen; standalone, works
-# on niri). Config lives at home/hyprlock.conf, deployed below. Bound to
-# Super+Alt+L and the suspend combo in home/niri/binds.kdl.
+# Lock screen — hyprlock，SHORiN minimal-niri 原版配置 + Matugen 生成色板
+# （hyprlock-colors.conf 已硬编码，无运行时依赖）。
+# 键位：Mod+Alt+L；休眠组合 Mod+Alt+P（先锁后挂，见 binds.kdl）。
 {
   config,
   pkgs,
@@ -10,5 +10,8 @@
 {
   home.packages = [ pkgs.hyprlock ];
 
-  xdg.configFile."hypr/hyprlock.conf".source = ../../../home/hyprlock.conf;
+  xdg.configFile = {
+    "niri/hyprlock.conf".source = ../../../home/niri/hyprlock.conf;
+    "niri/hyprlock-colors.conf".source = ../../../home/niri/hyprlock-colors.conf;
+  };
 }

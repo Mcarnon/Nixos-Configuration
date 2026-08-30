@@ -6,8 +6,13 @@
     yazi # TUI file manager
     lazygit # git TUI
     btop # resource monitor (replaces htop for daily use)
-    fastfetch # system info banner
+    fastfetch # system info banner (config: home/files/fastfetch.jsonc)
     jq # JSON processing (used by home/files/f.fish waifu fetcher)
+    imagemagick # magick — Thunar uca 的图片转 png 动作依赖
+    python3 # Thunar uca 的“粘贴为链接”等动作依赖
     tree # directory tree
   ];
+
+  # fastfetch 主题（SHORiN 原版，见 home/files/fastfetch.jsonc）
+  xdg.configFile."fastfetch/config.jsonc".source = ../../../home/files/fastfetch.jsonc;
 }

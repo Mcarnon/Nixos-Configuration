@@ -1,13 +1,72 @@
-// niri main config - laptop + SHORiN-style desktop (waybar + fuzzel)
-// Sub-configs are split via include into *.kdl files in the same directory.
+// ============================================================================
+// niri config — SHORiN minimal-niri 移植版（shorin-arch-setup）
+// 25.11 起 niri 支持配置拆分：binds=快捷键, rule=窗口/layer 规则,
+// niri-hardware.kdl = 本机显示器（由 host 提供，对应原版的 output.kdl）。
+// 已按 NixOS 适配：polkit/fcitx5/waybar/mako 由 systemd 用户服务管理，
+// 不再在此 spawn；去掉 Arch 专属项（linuxqq-clipsync、swayidle）。
+// ============================================================================
+include "binds.kdl"
+include "rule.kdl"
+include "layout.kdl"
+include "niri-hardware.kdl"
 
-// Ask apps to omit client-side decorations; niri draws border/focus ring.
-prefer-no-csd
+// 截图保存位置
+screenshot-path "~/Pictures/Screenshots/Niri-screenshots/%Y-%m-%d %H-%M-%S.png"
 
+// ---- 环境变量 ----
+environment {
+    LANGUAGE "zh_CN:en"
+    LANG "zh_CN.UTF-8"
+    LC_CTYPE "en_US.UTF-8" // 解决漏字问题（可能影响部分 X11 应用中文输入）
+    // 输入法环境变量
+    XMODIFIERS "@im=fcitx"
+    QT_IM_MODULES "wayland;fcitx"
+    // qt 主题
+    QT_QPA_PLATFORMTHEME "gtk3"
+    QT_QPA_PLATFORMTHEME_QT6 "gtk3"
+    // GTK 软件使用的渲染器（Intel 单显卡可留，无害）
+    GSK_RENDERER "gl"
+    // 默认文本编辑器
+    EDITOR "vim"
+}
+
+// ---- 光标 ----
+cursor {
+    xcursor-theme "breeze_cursors"
+    xcursor-size 30
+    hide-after-inactive-ms 15000
+}
+
+// ---- 带缩略图的 alt+tab 切换窗口 ----
+recent-windows {
+    debounce-ms 750
+    open-delay-ms 150
+
+    highlight {
+        active-color "#999999ff"
+        urgent-color "#ff9999ff"
+        padding 30
+        corner-radius 12
+    }
+
+    previews {
+        max-height 480
+        max-scale 0.2
+    }
+
+    binds {
+        Mod+Tab         { next-window scope="workspace"; }
+        Mod+Shift+Tab   { previous-window scope="workspace"; }
+        Mod+grave       { next-window     filter="app-id"; }
+        Mod+Shift+grave { previous-window filter="app-id"; }
+    }
+}
+
+// ---- 输入设备 ----
 input {
     keyboard {
         xkb {
-            layout "us"
+            // 布局在 hosts 里配置（locales 框架），这里保持默认
         }
         repeat-delay 250
         repeat-rate 35
@@ -16,99 +75,45 @@ input {
     touchpad {
         tap
         natural-scroll
-        accel-profile "adaptive"
-        accel-speed 0.2
-        scroll-factor 0.8
     }
 
-    // Mouse-over focus (limit scroll to avoid jumping the view).
-    focus-follows-mouse max-scroll-amount="10%"
+    mouse {
+        accel-speed -0.15
+        accel-profile "flat"
+    }
+
+    trackpoint {
+    }
 }
 
-cursor {
-    xcursor-theme "volantes_cursors"
-    xcursor-size 24
-    hide-when-typing
-    hide-after-inactive-ms 3000
+// ---- Overview ----
+overview {
+    workspace-shadow {
+    }
+    zoom 0.5
 }
 
-// Applies to niri-spawned processes only (system-wide vars live in the host).
-environment {
-    XDG_CURRENT_DESKTOP "niri"
-    XDG_SESSION_DESKTOP "niri"
-    XCURSOR_THEME "volantes_cursors"
-    XCURSOR_SIZE "24"
-    QT_QPA_PLATFORM "wayland"
-    // Locale (locale) + input method + QT theme for niri-spawned processes.
-    // System-wide equivalents live in hosts/laptop/default.nix + locales/.
-    LANGUAGE "zh_CN:en"
-    XMODIFIERS "@im=fcitx"
-    QT_QPA_PLATFORMTHEME "gtk3"
-}
+// ---- 启动项（常驻服务：polkit/fcitx5/waybar/mako 走 systemd 用户服务）----
+// 屏幕分享/录屏环境
+spawn-sh-at-startup "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=niri"
+spawn-sh-at-startup "systemctl --user set-environment XDG_SESSION_CLASS=user"
+// foot server（Mod+T 等用 footclient 连接）
+spawn-at-startup "foot" "-s"
+// 剪贴板守护（Wayland 侧存入 cliphist）
+spawn-at-startup "wl-paste" "--watch" "cliphist" "store"
+// 护眼模式（wlsunset，经纬度在 scripts/toggle-wlsunset 里改）
+spawn-at-startup "~/.config/niri/scripts/toggle-wlsunset"
+// 截图音效守护（binds 里按 Print 会 SIGUSR1 上膛）
+spawn-at-startup "screenshot-sound"
+// 允许 root 通过用户的 xwayland 打开窗口
+spawn-at-startup "xhost" "+si:localuser:root"
+// 音量/亮度 OSD（swayosd-client 的上层服务）
+spawn-at-startup "swayosd-server"
 
+// 取消启动时的快捷键教程弹窗
 hotkey-overlay {
     skip-at-startup
-    hide-not-bound
 }
 
-include "niri-hardware.kdl"
-include "startup.kdl"
-include "blur.kdl" // global opacity/blur baseline — before windowrule.kdl so per-app rules win
-include "windowrule.kdl"
-include "binds.kdl"
-
-layout {
-    gaps 8
-    background-color "transparent" // see-through to wallpaper (required for blur to show)
-
-    preset-column-widths {
-        proportion 0.5
-        proportion 0.75
-        proportion 1.0
-    }
-
-    // Gradient focus ring.
-    focus-ring {
-        width 2
-        active-gradient from="#7fc8ff" to="#223366" angle=210 relative-to="workspace-view"
-        inactive-color "#505050"
-    }
-
-    // Soft window shadow.
-    shadow {
-        on
-        softness 30
-        spread 5
-        offset x=0 y=8
-        color "#00000060"
-    }
-}
-
-// Animation: all-spring (SHORiN pattern) for cohesive feel.
-animations {
-    slowdown 0.98
-
-    window-open {
-        spring damping-ratio=1.0 stiffness=1000 epsilon=0.0001
-    }
-    window-close {
-        spring damping-ratio=0.8 stiffness=400 epsilon=0.0001
-    }
-    window-movement {
-        spring damping-ratio=1.0 stiffness=800 epsilon=0.0001
-    }
-    horizontal-view-movement {
-        spring damping-ratio=0.84 stiffness=400 epsilon=0.0001
-    }
-    window-resize {
-        spring damping-ratio=0.9 stiffness=500 epsilon=0.0001
-    }
-    workspace-switch {
-        spring damping-ratio=0.82 stiffness=400 epsilon=0.0001
-    }
-    overview-open-close {
-        spring damping-ratio=1.0 stiffness=900 epsilon=0.0001
-    }
-}
-
-screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
+// 隐藏窗口标题栏（无 CSD）
+prefer-no-csd

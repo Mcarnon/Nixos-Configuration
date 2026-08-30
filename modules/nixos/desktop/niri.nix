@@ -1,4 +1,4 @@
-# niri compositor (greetd lives in ./greetd.nix)
+# niri compositor (login manager lives in ./ly.nix)
 {
   config,
   pkgs,
@@ -9,14 +9,15 @@ let
   # Wayland session entry point (replaces the default niri-session).
   #
   # niri-session only activates graphical-session.target when it launches
-  # niri.service itself. But under greetd/PAM the session already runs inside a
-  # systemd --user manager, so niri-session takes its "already managed" shortcut
-  # and execs `niri --session` directly — leaving graphical-session.target
-  # inactive, which means every user service `WantedBy=graphical-session.target`
-  # (fcitx5, polkit, waybar) never starts. Starting niri.service
-  # explicitly fixes this: it BindsTo=graphical-session.target, so the target is
-  # activated and pulls in all the user services. `systemctl --wait` keeps this
-  # process alive until logout so greetd tracks the session correctly.
+  # niri.service itself. But under ly (a display manager) the session already
+  # runs inside a systemd --user manager, so niri-session takes its "already
+  # managed" shortcut and execs `niri --session` directly — leaving
+  # graphical-session.target inactive, which means every user service
+  # `WantedBy=graphical-session.target` (fcitx5, polkit, waybar, mako) never
+  # starts. Starting niri.service explicitly fixes this: it
+  # BindsTo=graphical-session.target, so the target is activated and pulls in
+  # all the user services. `systemctl --wait` keeps this process alive until
+  # logout so the display manager tracks the session correctly.
   niriSessionWrapperScript = pkgs.writeShellScript "niri-session-wrapper" ''
     systemctl --user reset-failed || true
     systemctl --user import-environment || true
@@ -25,7 +26,7 @@ let
   '';
 
   # niri package whose shipped wayland-session .desktop is overridden so
-  # ReGreet/Greetd launches the wrapper (which activates graphical-session.target)
+  # ly launches the wrapper (which activates graphical-session.target)
   # instead of the bare `niri-session` (which doesn't). Everything else from the
   # niri package (binaries, niri.service, portals) is preserved via symlinkJoin.
   niriWithSessionWrapper =
@@ -56,7 +57,8 @@ in
     package = niriWithSessionWrapper;
   };
 
-  # xdg-desktop-portal routing
+  # xdg-desktop-portal routing（对齐 SHORiN 的 niri-portals.conf：
+  # 默认 gnome;gtk，文件选择走 gtk，录屏/截图走 gnome，密钥走 gnome-keyring）
   xdg.portal = {
     enable = lib.mkDefault true;
     extraPortals = with pkgs; [
@@ -64,11 +66,12 @@ in
       xdg-desktop-portal-gtk
     ];
     config.niri = {
-      default = [
-        "gnome"
-        "gtk"
-      ];
+      default = [ "gnome" "gtk" ];
+      "org.freedesktop.impl.portal.Access" = [ "gtk" ];
+      "org.freedesktop.impl.portal.Notification" = [ "gtk" ];
       "org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
+      "org.freedesktop.impl.portal.ScreenCast" = [ "gnome" ];
+      "org.freedesktop.impl.portal.Screenshot" = [ "gnome" ];
     };
   };
 

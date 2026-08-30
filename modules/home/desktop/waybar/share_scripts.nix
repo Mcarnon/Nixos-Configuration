@@ -1,14 +1,12 @@
-# Waybar-side helper scripts, vendored from Sakurafall-arch/nixos-configuration
-# (themselves derived from SHORiN's shorin-arch-setup). Each becomes a real
-# package on PATH so waybar/niri binds can call them by name.
+# Waybar-side helper scripts — wallpaper switching via awww.
+# Ported from Sakurafall-arch/nixos-configuration（思路同 SHORiN）。
 #
-# Wallpaper source convention: drop images into ~/Pictures/wallpaper/ — the
-# scripts pick a random one and hand it to awww (Wayland wallpaper daemon).
+# Wallpaper source convention（同 Shorin 使用文档）: ~/Pictures/Wallpapers/
 { pkgs, ... }:
 {
   wallpaper_random = pkgs.writeShellScriptBin "wallpaper_random" ''
     killall dynamic_wallpaper 2>/dev/null || true
-    IMG=$(find "$HOME/Pictures/wallpaper" -name "*.png" -o -name "*.jpg" 2>/dev/null | shuf -n1)
+    IMG=$(find "$HOME/Pictures/Wallpapers" -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" 2>/dev/null | shuf -n1)
     if [ -n "$IMG" ]; then
       ${pkgs.awww}/bin/awww img "$IMG" --transition-type random
     fi
@@ -16,7 +14,7 @@
 
   dynamic_wallpaper = pkgs.writeShellScriptBin "dynamic_wallpaper" ''
     while true; do
-      IMG=$(find "$HOME/Pictures/wallpaper" -name "*.png" -o -name "*.jpg" 2>/dev/null | shuf -n1)
+      IMG=$(find "$HOME/Pictures/Wallpapers" -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" 2>/dev/null | shuf -n1)
       if [ -n "$IMG" ]; then
         ${pkgs.awww}/bin/awww img "$IMG" --transition-type random
       fi
@@ -26,7 +24,7 @@
 
   default_wall = pkgs.writeShellScriptBin "default_wall" ''
     killall dynamic_wallpaper 2>/dev/null || true
-    IMG=$(find "$HOME/Pictures/wallpaper" -name "*.png" -o -name "*.jpg" 2>/dev/null | head -1)
+    IMG=$(find "$HOME/Pictures/Wallpapers" -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" 2>/dev/null | head -1)
     if [ -n "$IMG" ]; then
       ${pkgs.awww}/bin/awww img "$IMG" --transition-type random
     fi

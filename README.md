@@ -8,7 +8,7 @@
 - **LUKS** full-disk encryption (single passphrase, encrypted swap) + hardware HAL (`hardware.intel.enable`)
 - **agenix** secrets management (age-encrypted, decrypt only on the target host)
 - **roles/** host composition (base/desktop) — cross-host reuse without double-eval
-- **niri** scrollable-tiling Wayland compositor + **SHORiN-style desktop**: Waybar status bar, Fuzzel launcher, hyprlock lock screen
+- **niri** scrollable-tiling Wayland compositor + **SHORiN minimal-niri 桌面**：ly 登录 + Waybar + Fuzzel + Mako + hyprlock + Thunar
 - **Intel Iris Xe** graphics acceleration (VA-API) via `modules/hardware/intel.nix`
 - **Chinese environment** (locale + fonts + Fcitx5 input method)
 - **Miyu** terminal AI assistant via overlay `pkgs.miyu` + `home/modules/miyu.nix`
@@ -37,14 +37,14 @@ git add -A && sudo nixos-rebuild switch --flake .#laptop
 ├── modules/
 │   ├── nixos/
 │   │   ├── core/{boot.nix,nix.nix,shell.nix,persist.nix,kernel.nix,cli.nix,diagnostics.nix}
-│   │   ├── desktop/{niri.nix,greetd.nix,audio.nix}   # niri拆greetd, pipewire->audio
+│   │   ├── desktop/{niri.nix,ly.nix,audio.nix}   # niri拆ly(登录), pipewire->audio
 │   │   ├── hardware/{intel.nix,nvidia.nix,power.nix,disko.nix}
 │   │   ├── network/{manager.nix,openssh.nix,firewall.nix}
 │   │   ├── security/{hardening.nix,secrets.nix,sops.nix}
 │   │   └── i18n/ -> ../../locales                    # locale框架垫片
 │   ├── home/
 │   │   ├── shell/{fish.nix,tools.nix} # fish 含 SHORiN 风格函数（y/cat/ls/lt/la/sl/f）
-│   │   ├── desktop/{niri.nix,appearance.nix,waybar/,fuzzel.nix,lock.nix}
+│   │   ├── desktop/{niri.nix,appearance.nix,waybar/,fuzzel.nix,lock.nix,mako.nix}
 │   │   ├── apps/{cli,gui,media,network,ai,neovim}.nix
 │   │   └── services/{miyu,cliphist}.nix
 │   └── _templates/{enable-option.nix,nested-import.nix,example-simple.nix}
@@ -53,7 +53,7 @@ git add -A && sudo nixos-rebuild switch --flake .#laptop
 │   └── home/{common.nix,desktop.nix}
 ├── hosts/laptop/{default.nix,hardware-configuration.nix,disko-fs.nix,niri-hardware.kdl}
 ├── locales/{default.nix,zh-cn.nix}                   # locale/输入法/字体框架（canonical）
-├── home/{default.nix,files/{miyu.fish,f.fish,fwatch.fish},niri/*.kdl,hyprlock.conf}
+├── home/{default.nix,files/{miyu.fish,f.fish,fwatch.fish,foot.ini,...},niri/{*.kdl,hyprlock*,scripts/}}
 ├── wallpapers/                                       # 登录界面背景
 ├── docs/{QUICK_START,STRUCTURE,MIGRATION,DESKTOP,FAQ}.md
 ├── checks/miyu.nix  .github/workflows/ci.yml  scripts/sync.sh
@@ -161,7 +161,7 @@ to erase the disk completely first, e.g. for an SSD reinstall:
    git add -A
    sudo nixos-install --flake .#laptop
    ```
-8. Reboot and log in via greetd into niri (enter the LUKS passphrase at boot).
+8. Reboot and log in via **ly** into niri (enter the LUKS passphrase at boot).
    The repo now lives at `~/Nixos-Configuration`; see
    [MAINTENANCE.md](MAINTENANCE.md) for everything after that.
 
@@ -178,7 +178,8 @@ Reinstalling later is the same flow — disko's `destroy` step handles the wipe.
 | `modules/nixos/network/openssh.nix` | remote IP / user |
 | `modules/nixos/network/firewall.nix` | `allowedTCPPorts` (default only 22) |
 | `modules/nixos/security/hardening.nix` | `boot.kernel.sysctl` BBR/fq, `zramSwap` |
-| `modules/home/desktop/waybar/default.nix` | Waybar 状态栏 + 壁纸脚本（SHORiN 风格） |
+| `modules/home/desktop/waybar/default.nix` | Waybar（SHORiN 原版配置）+ 壁纸脚本 |
+| `modules/nixos/desktop/ly.nix` | 登录界面（ly，TUI 显示管理器） |
 | `modules/home/services/miyu.nix` | Miyu TUI (`miyu config`); no prefill needed |
 | `locales/zh-cn.nix` | input method (e.g. Rime) |
 
@@ -190,5 +191,6 @@ Reinstalling later is the same flow — disko's `destroy` step handles the wipe.
 - **Performance**: `flake-parts` perSystem 缓存，`nix.gc` weekly，`zramSwap` zstd，`BBR/fq`，`services.resolved` 缓存。
 - **Security**: `agenix` `/run/agenix.d` tmpfs，`LUKS`，`networking.firewall` 默认关，`PermitRootLogin no`。
 - **XWayland**: off by default; configure `xwayland-satellite` per the niri docs if you need X11 apps.
-- **Lock screen**: hyprlock bound to `Super+Alt+L`; suspend combo `Mod+Alt+P` 先锁后挂。
-- **Wallpaper**: 把图片丢进 `~/Pictures/wallpaper/`，`Mod+F10` 或 waybar 壁纸按钮随机切换（awww）。
+- **Lock screen**: hyprlock bound to `Mod+Alt+L`; suspend combo `Mod+Alt+P` 先锁后挂。
+- **Wallpaper**: 图片丢进 `~/Pictures/Wallpapers/`，`Mod+F10` 随机切换（awww）。
+- **键位教程**: `Mod+Shift+Slash`（niri-binds 脚本，从 binds.kdl 实时提取）。

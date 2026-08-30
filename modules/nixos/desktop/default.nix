@@ -1,7 +1,7 @@
 {
   imports = [
     ./niri.nix
-    ./greetd.nix
+    ./ly.nix
     ./audio.nix
   ];
 }

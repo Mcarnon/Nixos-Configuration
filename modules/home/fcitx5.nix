@@ -41,7 +41,7 @@
     # 深色主题
     DarkTheme=default-dark
     # 跟随系统浅色/深色设置
-    UseDarkTheme=False
+    UseDarkTheme=True
     # 当被主题和桌面支持时使用系统的重点色
     UseAccentColor=True
     # 在 X11 上针对不同屏幕使用单独的 DPI

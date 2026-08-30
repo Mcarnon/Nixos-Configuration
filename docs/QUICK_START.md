@@ -9,7 +9,7 @@ git clone <your-repo> Nixos-Configuration && cd Nixos-Configuration
 ## 2. 选角色
 
 - 仅命令行：`roles/nixos/base.nix` + `roles/home/common.nix`
-- 桌面（niri+Waybar+Fuzzel）：`roles/nixos/desktop.nix` + `roles/home/desktop.nix`（默认 `hosts/laptop` 即此）
+- 桌面（niri + SHORiN minimal-niri：ly 登录/waybar/fuzzel/mako/hyprlock）：`roles/nixos/desktop.nix` + `roles/home/desktop.nix`（默认 `hosts/laptop` 即此）
 
 在 `hosts/laptop/default.nix` 中已配好：
 

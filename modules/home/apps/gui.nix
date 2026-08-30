@@ -1,4 +1,6 @@
-# GUI / desktop applications.
+# GUI / desktop applications — SHORiN minimal-niri 风格：
+# Thunar 主文件管理器（Mod+E），nautilus 保留（Mod+Alt+E / portal 文件选择）。
+# foot 终端、satty 截图标注、imv 图片查看（mimeapps 默认）都是 Shorin 同款。
 {
   config,
   pkgs,
@@ -8,63 +10,42 @@
 {
   home.packages = with pkgs; [
 
-    # -- Essentials --
-    foot # Wayland terminal emulator
-    nautilus # file manager (niri's portal file picker also depends on it)
-    gvfs # trash backend + remote/removable mounts support for nautilus
+    # -- 终端 / 字体 --
+    foot # Wayland 终端（foot.ini 见下方 xdg.configFile）
+    maple-mono # Maple Mono NF（foot/fuzzel/hyprlock 主字体）
+    adwaita-fonts # Adwaita Sans（mako 通知字体 / fontconfig 回退）
+
+    # -- 文件管理器 --
+    thunar # 主文件管理器（Mod+E）
+    thunar-volman # 移动设备自动挂载
+    ffmpegthumbnailer # 视频缩略图
+    gvfs # 回收站 + 远程/可移动挂载（thunar/nautilus 共用）
+    nautilus # 备用文件管理器（Mod+Alt+E）
+    imv # 图片查看器（mimeapps 默认）
+
+    # -- 桌面组件 --
+    satty # 截图标注工具（Mod+Shift+S）
+    mako # 通知守护（配置在 modules/home/desktop/mako.nix）
+    wlogout # 电源菜单（Mod+Shift+Ctrl+Q）
+
+    # -- 浏览器 / 工具 --
     inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default # browser
     xdg-utils # xdg-open & friends
     xwayland-satellite # X11 support (started by spawn-at-startup)
     networkmanagerapplet # nm-applet tray icon
 
-    # -- Screenshot annotation (grim/slurp/wl-clipboard/cliphist live in
-    #    ./media.nix — they're the media/clipboard domain) --
-    satty # screenshot annotation tool
-
-    # -- Users specific --
-    # zed-editor # development tool
-    # obsidian # note taking
-    # obs-studio # screen recording
-    # splayer # netease cloud music player
-    # hmcl # minecraft launcher
-
   ];
 
-  # foot terminal: transparent background so niri's layout-transparent
-  # background shows through. The 8-digit `background = "00000000"` makes
-  # foot draw with RGBA alpha. Pair with `opacity` in windowrule.kdl.
-  programs.foot = {
-    enable = true;
-    settings = {
-      main = {
-        font = "JetBrainsMono Nerd Font:size=11";
-        pad = "4x4 center";
-        initial-window-size-pixels = "900 600";
-      };
-      colors = {
-        background = "00000000";
-        foreground = "cdd6f4";
-        regular0 = "1e1e2e";
-        regular1 = "f38ba8";
-        regular2 = "a6e3a1";
-        regular3 = "f9e2af";
-        regular4 = "89b4fa";
-        regular5 = "f5c2e7";
-        regular6 = "94e2d5";
-        regular7 = "cdd6f4";
-        bright0 = "45475a";
-        bright1 = "f38ba8";
-        bright2 = "a6e3a1";
-        bright3 = "f9e2af";
-        bright4 = "89b4fa";
-        bright5 = "f5c2e7";
-        bright6 = "94e2d5";
-        bright7 = "ffffff";
-      };
-    };
+  # 应用配置文件（raw 部署，Shorin 原版或裁剪版）
+  xdg.configFile = {
+    "foot/foot.ini".source = ../../../home/files/foot.ini;
+    "satty/config.toml".source = ../../../home/files/satty.toml;
+    "Thunar/uca.xml".source = ../../../home/files/thunar/uca.xml;
+    "Thunar/accels.scm".source = ../../../home/files/thunar/accels.scm;
+    "xfce4/xfconf/xfce-perchannel-xml/thunar.xml".source =
+      ../../../home/files/thunar/thunar.xml;
+    "xfce4/xfconf/xfce-perchannel-xml/thunar-volman.xml".source =
+      ../../../home/files/thunar/thunar-volman.xml;
+    "mimeapps.list".source = ../../../home/files/mimeapps.list;
   };
-
-  # Clipboard history is a fuzzel picker (Mod+V in home/niri/binds.kdl):
-  # cliphist list | fuzzel --dmenu | cliphist decode | wl-copy.
-  # cliphist/wl-clipboard themselves live in ./media.nix.
 }

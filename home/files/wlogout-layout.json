@@ -1,0 +1,40 @@
+{
+	"layout": [
+		{
+			"type": "box",
+			"halign": "center",
+			"valign": "center",
+			"spacing": 8,
+			"children": [
+				{
+					"type": "button",
+					"id": "lock",
+					"action": "hyprlock",
+					"text": "󰌾",
+					"tooltip": "Lock"
+				},
+				{
+					"type": "button",
+					"id": "logout",
+					"action": "niri msg action quit",
+					"text": "󰍃",
+					"tooltip": "Logout"
+				},
+				{
+					"type": "button",
+					"id": "reboot",
+					"action": "systemctl reboot",
+					"text": "󰜉",
+					"tooltip": "Reboot"
+				},
+				{
+					"type": "button",
+					"id": "shutdown",
+					"action": "systemctl poweroff",
+					"text": "󰐥",
+					"tooltip": "Shutdown"
+				}
+			]
+		}
+	]
+}

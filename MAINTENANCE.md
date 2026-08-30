@@ -11,11 +11,11 @@ How to keep this NixOS system up to date and how the repo is organised.
 | `pkgs/` + `pkgs/default.nix` | Overlay (`overlays.default` = `{miyu}`) — single audit surface for custom binaries |
 | `roles/nixos/` + `roles/home/` | Host/user composition (base/desktop) |
 | `hosts/laptop/` | **Machine-specific** (hardware-configuration/disko-fs/niri-hardware + `default.nix` which picks `roles/nixos/desktop` + `hardware.intel.enable`) |
-| `modules/nixos/` | Reusable system modules: `core/` (boot/nix/shell/persist/kernel/cli/diagnostics), `desktop/` (niri/greetd/audio), `hardware/` (intel/nvidia/power/disko), `network/` (manager/openssh/firewall), `security/` (secrets/hardening/sops), `i18n/` -> `locales/` |
-| `modules/home/` | Reusable HM modules: `shell/` (fish/tools, SHORiN 风格函数), `desktop/` (niri/waybar/fuzzel/lock/appearance), `apps/` (cli/gui/media/network/ai), `services/` (miyu) |
+| `modules/nixos/` | Reusable system modules: `core/` (boot/nix/shell/persist/kernel/cli/diagnostics), `desktop/` (niri/ly/audio), `hardware/` (intel/nvidia/power/disko), `network/` (manager/openssh/firewall), `security/` (secrets/hardening/sops), `i18n/` -> `locales/` |
+| `modules/home/` | Reusable HM modules: `shell/` (fish/tools, SHORiN 风格函数), `desktop/` (niri/waybar/fuzzel/lock/mako/appearance), `apps/` (cli/gui/media/network/ai), `services/` (miyu) |
 | `modules/_templates/` | 新模块脚手架 |
 | `locales/` | Locale / input-method / fonts (canonical，`modules/nixos/i18n` 垫片) |
-| `home/` | Per-user HM entry — `home/files/{miyu.fish,f.fish,fwatch.fish}` + `home/niri/*.kdl` + `home/hyprlock.conf` |
+| `home/` | Per-user HM entry — `home/files/*` (miyu/f/fwatch/foot/fuzzel/...) + `home/niri/*` (kdl + hyprlock + scripts) |
 | `docs/` | `QUICK_START.md` / `STRUCTURE.md` / `MIGRATION.md` |
 | `checks/` | NixOS VM tests (e.g. `miyu.nix`) wired as `perSystem.checks` |
 | `.github/workflows/ci.yml` | `nix flake check` + `nix fmt --check` |
