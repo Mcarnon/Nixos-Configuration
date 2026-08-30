@@ -31,6 +31,11 @@ in
     "waybar/style.css".source = ./style.css;
   };
 
+  # 默认壁纸（Shorin 原图）：部署到 ~/Pictures/Wallpapers/，
+  # niri config.kdl 启动时用 awww 设置；放自己的图后可 Mod+F10 随机切换。
+  home.file."Pictures/Wallpapers/wallhaven-d88d53.png".source =
+    ../../../../wallpapers/wallhaven-d88d53.png;
+
   systemd.user.services.waybar = {
     Unit = {
       Description = "Waybar status bar";

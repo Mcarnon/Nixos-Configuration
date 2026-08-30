@@ -103,6 +103,8 @@ spawn-at-startup "foot" "-s"
 spawn-at-startup "wl-paste" "--watch" "cliphist" "store"
 // 护眼模式（wlsunset，经纬度在 scripts/toggle-wlsunset 里改）
 spawn-at-startup "~/.config/niri/scripts/toggle-wlsunset"
+// 默认壁纸（Shorin 原图，由 HM 部署到 ~/Pictures/Wallpapers/）
+spawn-sh-at-startup "awww img ~/Pictures/Wallpapers/wallhaven-d88d53.png --transition-type none"
 // 截图音效守护（binds 里按 Print 会 SIGUSR1 上膛）
 spawn-at-startup "screenshot-sound"
 // 允许 root 通过用户的 xwayland 打开窗口

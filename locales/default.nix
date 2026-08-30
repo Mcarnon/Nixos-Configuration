@@ -55,7 +55,9 @@ in
       XMODIFIERS = "@im=fcitx";
       SDL_IM_MODULE = "fcitx";
       GLFW_IM_MODULE = "ibus";
-      RIME_USER_DIR = "%h/.config/fcitx5/rime";
+      # RIME_USER_DIR 由 home-manager 设置（modules/home/fcitx5.nix，
+      # $HOME 形式）；这里不再设 %h 版本（environment.variables 不展开 %h，
+      # 字面值会污染 rime 的用户目录查找）。
     };
 
     services.dbus.packages = lib.mkIf cfg.inputMethod.enable (with pkgs; [ fcitx5 ]);

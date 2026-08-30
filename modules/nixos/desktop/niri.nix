@@ -119,6 +119,11 @@ in
   # Started as a systemd user service so it survives crashes and shares the
   # user's DBus session. Pulled in by graphical-session.target (activated by
   # the niri-session-wrapper Wayland session entry point above).
+  #
+  # ExecStart uses the NixOS-wrapped package (i18n.inputMethod.package =
+  # fcitx5-with-addons), NOT the bare fcitx5 — otherwise addon engines like
+  # fcitx5-rime never load (rime silently missing until a manual `fcitx5 -r`
+  # from a shell that has the wrapped binary on PATH).
   systemd.user.services.fcitx5 = {
     description = "Fcitx5 input method";
     wantedBy = [ "graphical-session.target" ];
@@ -126,7 +131,7 @@ in
     after = [ "graphical-session.target" ];
     serviceConfig = {
       Type = "simple";
-      ExecStart = "${pkgs.fcitx5}/bin/fcitx5";
+      ExecStart = "${config.i18n.inputMethod.package}/bin/fcitx5";
       Restart = "always";
       RestartSec = 2;
     };
