@@ -15,7 +15,12 @@ stdenv.mkDerivation {
   version = "0.1.0";
   inherit src;
 
-  nativeBuildInputs = [ cmake ninja pkg-config ];
+  nativeBuildInputs = [
+    cmake
+    ninja
+    pkg-config
+    qt6.wrapQtAppsHook # qs is an executable; wrap so it finds its Qt plugins/libs
+  ];
   buildInputs = [
     qt6.qtbase
     qt6.qtdeclarative
