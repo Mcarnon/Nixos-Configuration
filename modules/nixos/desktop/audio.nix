@@ -1,4 +1,4 @@
-# Audio: PipeWire (waybar's volume module / app audio depend on it)
+# Audio: PipeWire（Clavis 音量/媒体面板、应用音频都依赖它）
 {
   config,
   pkgs,

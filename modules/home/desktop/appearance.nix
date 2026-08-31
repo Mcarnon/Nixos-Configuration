@@ -1,10 +1,6 @@
-# Desktop look & feel — SHORiN minimal-niri 风格：
-#   * 光标 breeze_cursors（同 niri config.kdl 的 cursor 配置）
-#   * GTK 主题 adw-gtk3（深色，flatpak override 同款）
-#   * 图标 Papirus-Dark（Shorin 未指定，沿用仓库原有）
-#   * gtk-im-module=fcitx（gtk2/3/4 输入法桥接，走 gtk.extraConfig 避免
-#     与 HM gtk 模块写同一 settings.ini 冲突）
-#   * fontconfig 用户级微调（抗锯齿/hinting + monospace 优先 Maple Mono NF）
+# Desktop look & feel: cursor theme + GTK icons/dark mode + 输入法桥接。
+# Shell 颜色由 Clavis/Matugen 运行时生成到 ~/.config/clavis；
+# 这里只管外壳之外的 GTK 外观与输入法。
 {
   config,
   pkgs,
@@ -12,34 +8,38 @@
   ...
 }:
 {
+  # Wayland 光标：niri 的 `cursor {}` 块（home/niri/config.kdl）为 niri 启动的
+  # 进程设置 XCURSOR_THEME/SIZE；gsettings 覆盖 GTK 应用。
   home.pointerCursor = {
     enable = true;
-    name = "breeze_cursors"; # XCursor 主题名（下划线）
-    package = pkgs.kdePackages.breeze; # nixpkgs 属性名（Plasma 6 后为 kdePackages）
-    size = 30;
+    name = "volantes_cursors"; # XCursor 主题名（下划线）
+    package = pkgs.volantes-cursors; # nixpkgs 属性名（连字符）
+    size = 24;
   };
 
   gtk = {
     enable = true;
     theme = {
-      name = "adw-gtk3-dark";
+      name = "adw-gtk3-dark"; # M3 风格兜底（Clavis 设置中心不生成 GTK 主题）
       package = pkgs.adw-gtk3;
     };
     iconTheme = {
       name = "Papirus-Dark";
       package = pkgs.papirus-icon-theme;
     };
-
-    # 输入法桥接：GTK2/3/4 一律走 fcitx
-    gtk2.extraConfig = "gtk-im-module=\"fcitx\"";
     gtk3.extraConfig = {
+      gtk-application-prefer-dark-theme = 1;
       gtk-im-module = "fcitx";
     };
+
+    # 输入法桥接：GTK2/4 走 fcitx（走 extraConfig 避免与 HM gtk 模块
+    # 写同一 settings.ini 冲突）
+    gtk2.extraConfig = "gtk-im-module=\"fcitx\"";
     gtk4.extraConfig = {
       gtk-im-module = "fcitx";
     };
   };
 
-  # fontconfig 用户级微调（monospace 优先 Maple Mono NF）
+  # fontconfig 用户级微调（抗锯齿/hinting + monospace 优先 Maple Mono NF）
   xdg.configFile."fontconfig/fonts.conf".source = ../../../home/files/fonts.conf;
 }

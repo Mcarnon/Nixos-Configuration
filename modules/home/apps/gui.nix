@@ -1,6 +1,6 @@
-# GUI / desktop applications — SHORiN minimal-niri 风格：
-# Thunar 主文件管理器（Mod+E），nautilus 保留（Mod+Alt+E / portal 文件选择）。
-# foot 终端、satty 截图标注、imv 图片查看（mimeapps 默认）都是 Shorin 同款。
+# GUI / desktop applications — 基础桌面工具：
+# foot 终端、satty 截图标注、imv 图片查看（mimeapps 默认）。
+# 通知/电源菜单由 Clavis 提供（不再需要 mako/wlogout）。
 {
   config,
   pkgs,
@@ -12,8 +12,8 @@
 
     # -- 终端 / 字体 --
     foot # Wayland 终端（foot.ini 见下方 xdg.configFile）
-    maple-mono.NF-CN # Maple Mono NF（含中文字形；foot/fuzzel/hyprlock 主字体）
-    adwaita-fonts # Adwaita Sans（mako 通知字体 / fontconfig 回退）
+    maple-mono.NF-CN # Maple Mono NF（含中文字形；foot/Clavis 主字体）
+    adwaita-fonts # Adwaita Sans（fontconfig 回退）
 
     # -- 文件管理器 --
     thunar # 主文件管理器（Mod+E）
@@ -23,10 +23,8 @@
     nautilus # 备用文件管理器（Mod+Alt+E）
     imv # 图片查看器（mimeapps 默认）
 
-    # -- 桌面组件 --
+    # -- 桌面工具 --
     satty # 截图标注工具（Mod+Shift+S）
-    mako # 通知守护（配置在 modules/home/desktop/mako.nix）
-    wlogout # 电源菜单（Mod+Shift+Ctrl+Q）
 
     # -- 浏览器 / 工具 --
     inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default # browser
@@ -47,8 +45,5 @@
     "xfce4/xfconf/xfce-perchannel-xml/thunar-volman.xml".source =
       ../../../home/files/thunar/thunar-volman.xml;
     "mimeapps.list".source = ../../../home/files/mimeapps.list;
-    # wlogout 电源菜单（niri 适配布局，Mod+Shift+Ctrl+Q）
-    "wlogout/layout".source = ../../../home/files/wlogout-layout.json;
-    "wlogout/style.css".source = ../../../home/files/wlogout-style.css;
   };
 }

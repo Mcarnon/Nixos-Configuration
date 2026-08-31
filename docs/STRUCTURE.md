@@ -12,7 +12,7 @@ modules/
     i18n/ -> ../../locales                        # 垫片，canonical 在 locales/
   home/
     shell/{fish.nix,tools.nix}
-    desktop/{niri.nix,appearance.nix,waybar/,fuzzel.nix,lock.nix,mako.nix} # SHORiN minimal-niri 风格
+    desktop/{niri.nix,appearance.nix,clavis/} # Clavis（Quickshell 桌面壳）
     apps/{cli,gui,media,network,ai,neovim}.nix
     services/{miyu.nix}
   _templates/                                     # 新模块脚手架
@@ -20,7 +20,7 @@ locales/{default.nix,zh-cn.nix}                   # locale/输入法/字体框�
 roles/nixos/{base.nix,desktop.nix}                # 主机组合
 roles/home/{common.nix,desktop.nix}               # 用户组合
 hosts/laptop/{default.nix,hardware-configuration.nix,disko-fs.nix,niri-hardware.kdl}
-home/{default.nix,files/{miyu.fish,f.fish,fwatch.fish,foot.ini,...},niri/{*.kdl,hyprlock*,scripts/}} / wallpapers/ / docs/ / checks/ / scripts/ / .github/
+home/{default.nix,files/{miyu.fish,f.fish,fwatch.fish,foot.ini,...},niri/{config,binds,blur,startup,windowrule}.kdl} / wallpapers/ / docs/ / checks/ / scripts/ / .github/
 ```
 
 **原则**：`hosts` 只放身份+硬件+选 `roles`；`modules` 按域可复用；`roles` 做组合。

@@ -12,7 +12,7 @@
     in
     {
       packages = {
-        inherit (pkgs) miyu;
+        inherit (pkgs) miyu libcava clavisShell keyCli keytop;
       };
       formatter = pkgs.nixfmt;
     };

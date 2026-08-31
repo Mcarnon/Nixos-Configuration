@@ -1,10 +1,7 @@
 {
   imports = [
     ./niri.nix
-    ./waybar
-    ./fuzzel.nix
-    ./lock.nix
-    ./mako.nix
+    ./clavis
     ./appearance.nix
   ];
 }

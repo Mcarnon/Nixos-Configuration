@@ -13,11 +13,11 @@ let
   # runs inside a systemd --user manager, so niri-session takes its "already
   # managed" shortcut and execs `niri --session` directly — leaving
   # graphical-session.target inactive, which means every user service
-  # `WantedBy=graphical-session.target` (fcitx5, polkit, waybar, mako) never
-  # starts. Starting niri.service explicitly fixes this: it
-  # BindsTo=graphical-session.target, so the target is activated and pulls in
-  # all the user services. `systemctl --wait` keeps this process alive until
-  # logout so the display manager tracks the session correctly.
+  # `WantedBy=graphical-session.target`（Clavis, fcitx5, polkit）永远
+  # 不会启动。显式启动 niri.service 可修复此问题：它
+  # BindsTo=graphical-session.target，目标被激活后会把
+  # 所有用户服务一并拉起。`systemctl --wait` 让本进程存活到
+  # 注销，显示管理器才能正确跟踪会话。
   niriSessionWrapperScript = pkgs.writeShellScriptBin "niri-session-wrapper" ''
     # 确保 user systemd 会话可用（ly 经 pam_systemd 通常会设置，这里兜底）
     # 注意：bash 变量只用 $VAR 形式；带花括号的展开会与 Nix 字符串插值冲突。

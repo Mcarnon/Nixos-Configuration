@@ -1,0 +1,18 @@
+// Startup commands for niri session.
+// Clavis (the Quickshell desktop shell) normally runs as a user systemd
+// service (`clavis-shell.service`, see modules/home/desktop/clavis/default.nix)
+// under graphical-session.target, and fcitx5 as another
+// (`systemd.user.services.fcitx5` in modules/nixos/desktop/niri.nix).
+// As a belt-and-braces fallback we ALSO spawn it here — `key shell` accepts
+// `--no-duplicate` so it won't double-start if the systemd service is up.
+
+// XWayland-on-demand for legacy X11 apps (QQ, WeChat, older electron apps).
+// niri 25.08+ auto-spawns this on demand, but starting it explicitly is safer.
+spawn-at-startup "xwayland-satellite"
+
+// Network manager tray applet.
+spawn-at-startup "nm-applet" "--indicator"
+
+// Clavis desktop shell — graceful fallback if the systemd user service did
+// not come up (greetd/niri sessions can race graphical-session.target).
+spawn-at-startup "key" "shell" "--no-duplicate"

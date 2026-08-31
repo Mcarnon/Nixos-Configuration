@@ -10,7 +10,7 @@
   hardware.bluetooth.enable = true;
   hardware.bluetooth.powerOnBoot = true;
 
-  # Power & hardware abstraction (waybar's battery module depends on these)
+  # Power & hardware abstraction（Clavis 电池/电源面板依赖这些）
   services.upower.enable = true;
   services.power-profiles-daemon.enable = true;
 
