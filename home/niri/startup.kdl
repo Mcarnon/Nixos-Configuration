@@ -1,7 +1,7 @@
 // Startup commands for niri session.
-// Clavis (the Quickshell desktop shell) normally runs as a user systemd
-// service (`clavis-shell.service`, see modules/home/desktop/clavis/default.nix)
-// under graphical-session.target, and fcitx5 as another
+// Clavis (the Quickshell desktop shell) runs as a user systemd service
+// (`clavis-shell.service`, see modules/home/desktop/clavis/default.nix)
+// under niri.service, and fcitx5 as another
 // (`systemd.user.services.fcitx5` in modules/nixos/desktop/niri.nix).
 // As a belt-and-braces fallback we ALSO spawn it here — `key shell` accepts
 // `--no-duplicate` so it won't double-start if the systemd service is up.

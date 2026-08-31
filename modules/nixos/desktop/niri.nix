@@ -73,6 +73,14 @@ in
     package = niriWithSessionWrapper;
   };
 
+  # Clavis 全家桶（声明式编译进系统，登录前就绪；home.packages 里也装，
+  # 同一 store 路径去重）。keytop/key 工具 root 会话同样可用。
+  environment.systemPackages = with pkgs; [
+    clavisShell
+    keyCli
+    keytop
+  ];
+
   # xdg-desktop-portal routing（对齐 SHORiN 的 niri-portals.conf：
   # 默认 gnome;gtk，文件选择走 gtk，录屏/截图走 gnome，密钥走 gnome-keyring）
   xdg.portal = {
