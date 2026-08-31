@@ -6,6 +6,14 @@
 // As a belt-and-braces fallback we ALSO spawn it here — `key shell` accepts
 // `--no-duplicate` so it won't double-start if the systemd service is up.
 
+// 环境传播（关键）：niri 自己设置 WAYLAND_DISPLAY，但 systemd 用户服务
+// （clavis-shell 等）的环境来自 systemd user manager，拿不到。不传播的话
+// Qt 应用找不到 wayland socket，会退回 xcb 并直接崩溃（clavis 启动即崩，
+// 桌面只剩灰屏）。必须在 niri 启动后立刻把 WAYLAND_DISPLAY 写进
+// systemd 用户环境，clavis-shell 的下一次自动重启就能连上。
+spawn-sh-at-startup "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=niri"
+spawn-sh-at-startup "systemctl --user set-environment WAYLAND_DISPLAY=$WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=niri"
+
 // XWayland-on-demand for legacy X11 apps (QQ, WeChat, older electron apps).
 // niri 25.08+ auto-spawns this on demand, but starting it explicitly is safer.
 spawn-at-startup "xwayland-satellite"

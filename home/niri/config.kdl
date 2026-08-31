@@ -1,7 +1,7 @@
 // niri main config - laptop + Clavis (Quickshell) desktop shell
 // Sub-configs are split via include into *.kdl files in the same directory.
 
-// Ask apps to omit client-side decorations; niri draws border/focus ring.
+// Hide window title bars (no CSD).
 prefer-no-csd
 
 input {
@@ -59,6 +59,11 @@ hotkey-overlay {
     skip-at-startup
     hide-not-bound
 }
+
+// 把 niri 启动后设置的 WAYLAND_DISPLAY/XDG_SESSION_TYPE 导入到用户 systemd 环境
+// （关键：clavis / fcitx5 / polkit 都是 systemd user 服务，niri 不会自动
+// 把会话变量透传过去，不补这一行 clavis 启动会找不到 wayland 而崩）
+spawn-sh-at-startup "systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_RUNTIME_DIR"
 
 include "niri-hardware.kdl"
 include "startup.kdl"
