@@ -1,15 +1,16 @@
 # Clavis Shell — Quickshell desktop shell for niri（开箱即用：M3 主题 + 壁纸）。
 #
-# 三个关键点让"裸 clavis"变成"完整外观"：
+# 关键点让“裸 clavis”变成“完整外观”：
 #   1. matugen —— Clavis 的 M3 色板生成是运行时硬依赖（ThemeService 调
 #      scripts/theme/generate_matugen_colors.sh，脚本第一件事就检查 matugen）
 #   2. ~/.config/clavis/config.json —— PersonalizationConfig 的持久文件
-#      （Paths.configHome = ~/.config/clavis，可被 CLAVIS_CONFIG_HOME 覆盖）。
-#      预置默认壁纸 + dark + scheme-tonal-spot，clavis 一启动就带着完整
-#      主题渲染；否则默认 wallpaperPath 为空，状态栏/锁屏都是"素颜"。
-#   3. ExecStartPre 兜底 —— 首次启动若 colors.json 还没生成（理论上
-#      WallpaperService 会在设置壁纸后自动调 ThemeService 生成，这里保底），
-#      直接用默认壁纸跑一遍 matugen 生成脚本。
+#      （Paths.configHome = ~/.config/clavis）。预置默认壁纸 + dark +
+#      scheme-tonal-spot；clavis 启动时据此渲染壁纸。
+#   3. startup.kdl 里 `key ipc call wallpaper set <壁纸>` —— clavis 自己
+#      不会在启动时生成主题（WallpaperService 只在 setWallpaper 时触发
+#      ThemeService.generateFromWallpaper），所以登录后异步 IPC 触发一次：
+#      设壁纸 → 生成 M3 色板 → reload 颜色，全程走 clavis 内部流程。
+#      不用 ExecStartPre（会阻塞服务启动，登录后长时间无组件）。
 {
   config,
   pkgs,
@@ -19,17 +20,6 @@
 let
   # 壁纸（默认部署位置）
   wallpaperPath = "${config.home.homeDirectory}/Pictures/Wallpapers/wallhaven-d88d53.png";
-
-  # 首次启动兜底：colors.json 不存在时用默认壁纸生成 M3 色板。
-  # 生成后不再重复跑（幂等），用户之后换壁纸由 Clavis 自己重新生成。
-  themeBootstrap = pkgs.writeShellScriptBin "clavis-theme-bootstrap" ''
-    colors="$HOME/.local/share/clavis/profiles/default/generated/clavis/colors.json"
-    if [ ! -f "$colors" ]; then
-      bash "$HOME/.config/quickshell/clavis/scripts/theme/generate_matugen_colors.sh" \
-        --image "$HOME/Pictures/Wallpapers/wallhaven-d88d53.png" \
-        --mode dark --scheme scheme-tonal-spot >/dev/null 2>&1 || true
-    fi
-  '';
 in
 {
   home.packages = [
@@ -43,10 +33,11 @@ in
   home.file."Pictures/Wallpapers/wallhaven-d88d53.png".source =
     ../../../../wallpapers/wallhaven-d88d53.png;
 
-  # PersonalizationConfig 持久文件（~/.config/clavis/config.json）。
+  # PersonalizationConfig 持久文件（~/.config/clavis/config.json，注意路径
+  # 带前导点：home.file 的键是相对 $HOME 的路径）。
   # force = true：声明式外观优先 —— rebuild 会重置为这里的内容；设置中心里
   # 的修改在下次 rebuild 前一直生效。
-  home.file."config/clavis/config.json" = {
+  home.file.".config/clavis/config.json" = {
     text = builtins.toJSON {
       wallpaper = {
         folder = "${config.home.homeDirectory}/Pictures/Wallpapers";
@@ -124,7 +115,6 @@ in
     };
     Service = {
       Type = "simple";
-      ExecStartPre = "${themeBootstrap}/bin/clavis-theme-bootstrap";
       ExecStart = "${pkgs.keyCli}/bin/key shell --foreground --no-duplicate";
       Restart = "on-failure";
       RestartSec = 2;

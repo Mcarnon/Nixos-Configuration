@@ -16,3 +16,9 @@ spawn-at-startup "nm-applet" "--indicator"
 // Clavis desktop shell — graceful fallback if the systemd user service did
 // not come up (greetd/niri sessions can race graphical-session.target).
 spawn-at-startup "key" "shell" "--no-duplicate"
+
+// Clavis 开机壁纸/主题：等 IPC ready 后异步设置一次默认壁纸，触发
+// ThemeService 生成 M3 色板（setWallpaper → generateFromWallpaper）。
+// clavis 启动时不会自己生成主题，必须靠这次触发；失败无害，可手动
+// `key ipc call wallpaper set ~/Pictures/Wallpapers/wallhaven-d88d53.png` 补。
+spawn-sh-at-startup "i=0; while [ $i -lt 15 ]; do key ipc show >/dev/null 2>&1 && break; sleep 1; i=$((i+1)); done; key ipc call wallpaper set $HOME/Pictures/Wallpapers/wallhaven-d88d53.png"
