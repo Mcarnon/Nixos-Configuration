@@ -1,5 +1,5 @@
 {
-  description = "NixOS + Home Manager: niri + Clavis (Quickshell) on an Intel laptop";
+  description = "NixOS + Home Manager: niri + Noctalia (Quickshell) on an Intel laptop";
 
   # Binary caches: CN mirrors (priority=5 means prefer mirrors
   # over the default cache.nixos.org priority 40).
@@ -21,23 +21,6 @@
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    # ── Clavis Shell (Quickshell desktop shell for niri) + companions ──
-    # xy1092 镜像（上游 StatIndet/quickshell 的公开快照，见各仓库 UPSTREAM.md）。
-    # 这些仓库是纯源码树（无 flake.nix），flake = false 取为 source 路径，
-    # 由 pkgs/{clavis-shell,key-cli,keytop} 消费。
-    "clavis-shell" = {
-      url = "github:xy1092/clavis-shell";
-      flake = false;
-    };
-    "key-cli" = {
-      url = "github:xy1092/key-cli";
-      flake = false;
-    };
-    "keytop" = {
-      url = "github:xy1092/keytop";
-      flake = false;
     };
 
     # age-encrypted secrets (see modules/nixos/security/secrets.nix)

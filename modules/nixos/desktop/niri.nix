@@ -13,7 +13,7 @@ let
   # runs inside a systemd --user manager, so niri-session takes its "already
   # managed" shortcut and execs `niri --session` directly — leaving
   # graphical-session.target inactive, which means every user service
-  # `WantedBy=graphical-session.target`（Clavis, fcitx5, polkit）永远
+  # `WantedBy=graphical-session.target`（noctalia, fcitx5, polkit）永远
   # 不会启动。显式启动 niri.service 可修复此问题：它
   # BindsTo=graphical-session.target，目标被激活后会把
   # 所有用户服务一并拉起。`systemctl --wait` 让本进程存活到
@@ -73,15 +73,13 @@ in
     package = niriWithSessionWrapper;
   };
 
-  # Clavis 全家桶（声明式编译进系统，登录前就绪；home.packages 里也装，
-  # 同一 store 路径去重）。keytop/key 工具 root 会话同样可用。
+  # Noctalia 及其 IPC 引擎（qs）进系统 PATH，方便 niri 快捷键和脚本调用。
   environment.systemPackages = with pkgs; [
-    clavisShell
-    keyCli
-    keytop
+    noctalia-shell
+    noctalia-qs
   ];
 
-  # Clavis / 终端 / 中文 UI 所需的字体。
+  # Noctalia / 终端 / 中文 UI 所需的字体。
   fonts.packages = with pkgs; [
     adwaita-fonts
     lxgw-wenkai
@@ -108,6 +106,9 @@ in
       "org.freedesktop.impl.portal.Screenshot" = [ "gnome" ];
     };
   };
+
+  # Noctalia / GTK 主题切换依赖 gsettings 写 dconf。
+  programs.dconf.enable = true;
 
   # Fix graphical-session.target so systemd user services can use it
   systemd.user.targets.graphical-session = {

@@ -1,4 +1,4 @@
-# Audio: PipeWire（Clavis 音量/媒体面板、应用音频都依赖它）
+# Audio: PipeWire（Noctalia 音量/媒体面板、应用音频都依赖它）
 {
   config,
   pkgs,

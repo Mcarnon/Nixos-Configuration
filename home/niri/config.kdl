@@ -1,4 +1,4 @@
-// niri main config - laptop + Clavis (Quickshell) desktop shell
+// niri main config - laptop + Noctalia (Quickshell) desktop shell
 // Sub-configs are split via include into *.kdl files in the same directory.
 
 // Hide window title bars (no CSD).
@@ -61,15 +61,15 @@ hotkey-overlay {
 }
 
 // 把 niri 启动后设置的 WAYLAND_DISPLAY/XDG_SESSION_TYPE 导入到用户 systemd 环境
-// （关键：clavis / fcitx5 / polkit 都是 systemd user 服务，niri 不会自动
-// 把会话变量透传过去，不补这一行 clavis 启动会找不到 wayland 而崩）
+// （关键：noctalia / fcitx5 / polkit 都是 systemd user 服务，niri 不会自动
+// 把会话变量透传过去，不补这一行 noctalia 启动会找不到 wayland 而崩）
 spawn-sh-at-startup "systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_RUNTIME_DIR"
 
 include "niri-hardware.kdl"
 include "startup.kdl"
 include "blur.kdl" // global opacity/blur baseline — before windowrule.kdl so per-app rules win
-include optional=true "clavis/cursor.kdl" // Clavis 生成的光标配置
-include optional=true "clavis/effects.kdl" // Clavis 生成的模糊/透明 layer 规则
+include "noctalia-static.kdl" // SHORiN 默认 niri 配色（会被 noctalia 生成的动态配色覆盖）
+include optional=true "noctalia.kdl" // noctalia 模板按壁纸生成的 niri 配色
 include "windowrule.kdl"
 include "binds.kdl"
 

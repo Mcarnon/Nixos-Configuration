@@ -1,6 +1,6 @@
 # Desktop look & feel: cursor theme + GTK icons/dark mode + 输入法桥接。
-# Shell 颜色由 Clavis/Matugen 运行时生成到 ~/.config/clavis；
-# 这里只管外壳之外的 GTK 外观与输入法。
+# Noctalia 会按壁纸生成 ~/.config/gtk-{3,4}.0/noctalia.css；这里负责把生成的
+# CSS import 进来，并保留光标/图标/字体等基础外观。
 {
   config,
   pkgs,
@@ -20,9 +20,16 @@
   gtk = {
     enable = true;
     theme = {
-      name = "adw-gtk3-dark"; # M3 风格兜底（Clavis 设置中心不生成 GTK 主题）
+      name = "adw-gtk3-dark"; # M3 风格兜底
       package = pkgs.adw-gtk3;
     };
+    gtk3.extraCss = ''
+      @import url("noctalia.css");
+    '';
+    gtk4.extraCss = ''
+      @import url("noctalia.css");
+    '';
+
     iconTheme = {
       name = "Papirus-Dark";
       package = pkgs.papirus-icon-theme;

@@ -1,6 +1,6 @@
 # GUI / desktop applications — 基础桌面工具：
 # foot 终端、satty 截图标注、imv 图片查看（mimeapps 默认）。
-# 通知/电源菜单由 Clavis 提供（不再需要 mako/wlogout）。
+# 通知/电源菜单由 Noctalia 提供（不再需要 mako/wlogout）。
 {
   config,
   pkgs,
@@ -12,7 +12,7 @@
 
     # -- 终端 / 字体 --
     foot # Wayland 终端（foot.ini 见下方 xdg.configFile）
-    maple-mono.NF-CN # Maple Mono NF（含中文字形；foot/Clavis 主字体）
+    maple-mono.NF-CN # Maple Mono NF（含中文字形；foot/Noctalia 主字体）
     adwaita-fonts # Adwaita Sans（fontconfig 回退）
 
     # -- 文件管理器 --

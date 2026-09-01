@@ -2,7 +2,7 @@
 #
 # 终端风 TUI 登录，极轻量；会话从 /run/current-system/sw/share/wayland-sessions
 # 读取（niri 的 .desktop 在 modules/nixos/desktop/niri.nix 里换成了 wrapper，
-# 以保证 graphical-session.target 被激活，Clavis/polkit/fcitx5 才会拉起）。
+# 以保证 graphical-session.target 被激活，noctalia/polkit/fcitx5 才会拉起）。
 #
 # 配色为 Material 3 风格深色（ly 颜色格式 0x00RRGGBB/ARGB）。
 {

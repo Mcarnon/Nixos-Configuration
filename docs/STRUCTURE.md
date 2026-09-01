@@ -12,7 +12,7 @@ modules/
     i18n/ -> ../../locales                        # 垫片，canonical 在 locales/
   home/
     shell/{fish.nix,tools.nix}
-    desktop/{niri.nix,appearance.nix,clavis/} # Clavis（Quickshell 桌面壳）
+    desktop/{niri.nix,appearance.nix,noctalia/} # Noctalia（Quickshell 桌面壳）
     apps/{cli,gui,media,network,ai,neovim}.nix
     services/{miyu.nix}
   _templates/                                     # 新模块脚手架

@@ -102,15 +102,17 @@ window-rule {
 }
 
 // ---- Layer rules ----
-// Allow Clavis notification actions and window activation
+// Allow Noctalia notification actions and window activation
 debug {
     honor-xdg-activation-with-invalid-serial
 }
 
-// Clavis draws its wallpaper / desktop cards / bars as Quickshell layer
-// surfaces. Their namespaces come from the shell's QML, not from niri; if the
-// wallpaper ever shows above windows, add `place-within-backdrop` rules here
-// matching the Clavis layer namespaces.
+// Noctalia overview 壁纸需要画在 backdrop 层，否则可能遮住窗口。
+layer-rule {
+    match namespace="^noctalia-overview*"
+    place-within-backdrop true
+}
+
 // Block notifications from screen sharing (privacy)
 layer-rule {
     match namespace="^notification$"

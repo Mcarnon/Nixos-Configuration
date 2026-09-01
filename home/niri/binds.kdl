@@ -1,15 +1,15 @@
 // Keybindings
 binds {
-    // ---- Clavis shell (key ipc call) ----
-    Mod+Space hotkey-overlay-title="App launcher" { spawn-sh "key ipc call spotlight toggle"; }
-    Mod+S hotkey-overlay-title="Control center" { spawn-sh "key ipc call control-center toggle"; }
-    Mod+Comma { spawn-sh "key ipc call control-center open"; }
+    // ---- Noctalia shell (qs -c noctalia-shell ipc call) ----
+    Mod+Space hotkey-overlay-title="App launcher" { spawn-sh "qs -c noctalia-shell ipc call launcher toggle"; }
+    Mod+S hotkey-overlay-title="Control center" { spawn-sh "qs -c noctalia-shell ipc call controlCenter toggle"; }
+    Mod+Comma { spawn-sh "qs -c noctalia-shell ipc call controlCenter toggle"; }
     Alt+Tab { toggle-overview; }
-    Mod+W hotkey-overlay-title="Wallpaper picker" { spawn-sh "key ipc call spotlight openMode wallpaper"; }
-    Mod+V hotkey-overlay-title="Clipboard history" { spawn-sh "key ipc call spotlight openMode clipboard"; }
-    Mod+Shift+B { spawn-sh "key ipc call keystone dashboard"; }
+    Mod+W hotkey-overlay-title="Wallpaper picker" { spawn-sh "qs -c noctalia-shell ipc call wallpaper toggle"; }
+    Mod+V hotkey-overlay-title="Clipboard history" { spawn-sh "qs -c noctalia-shell ipc call launcher clipboard"; }
+    Mod+Shift+B hotkey-overlay-title="Toggle bar" { spawn-sh "qs -c noctalia-shell ipc call bar toggle"; }
 
-    // ---- Volume / brightness (pamixer / brightnessctl; Clavis shows the level in the bar) ----
+    // ---- Volume / brightness (pamixer / brightnessctl; Noctalia shows the level in the bar) ----
     XF86AudioRaiseVolume allow-when-locked=true { spawn "pamixer" "-i" "5"; }
     XF86AudioLowerVolume allow-when-locked=true { spawn "pamixer" "-d" "5"; }
     XF86AudioMute allow-when-locked=true { spawn "pamixer" "-t"; }
@@ -86,11 +86,11 @@ binds {
     Alt+Print { screenshot-window write-to-disk=false; }
 
     // ---- Lock / quit ----
-    Super+Alt+L { spawn-sh "key ipc call lock open"; }
+    Super+Alt+L { spawn-sh "qs -c noctalia-shell ipc call lockScreen lock"; }
     Mod+Shift+E { quit; }
     Mod+Shift+P { power-off-monitors; }
     // Suspend combo: turn off monitors, lock, then suspend (shorin pattern).
-    Mod+Alt+P hotkey-overlay-title="Suspend" { spawn-sh "niri msg action power-off-monitors && key ipc call lock open && systemctl suspend"; }
+    Mod+Alt+P hotkey-overlay-title="Suspend" { spawn-sh "niri msg action power-off-monitors && qs -c noctalia-shell ipc call lockScreen lock && systemctl suspend"; }
 
     // ---- Power user picks (shorin-derived, non-conflicting) ----
     // Drop-down floating terminal (uses kitty class; falls back to foot if
@@ -98,9 +98,9 @@ binds {
     Mod+Slash hotkey-overlay-title="Quick terminal" { spawn-sh "kitty --class quickterminal 2>/dev/null || foot --class quickterminal"; }
     // Force-kill a stuck window (sends SIGTERM via niri IPC then escalates).
     Alt+F4 hotkey-overlay-title="Force kill window" { spawn-sh "niri msg action close-window --id $(niri msg --json focused-window | python3 -c 'import json,sys;print(json.load(sys.stdin)[\"id\"])')"; }
-    // Random wallpaper (Clavis wallpaper IPC).
-    Mod+F10 hotkey-overlay-title="Random wallpaper" { spawn-sh "key ipc call wallpaper random"; }
-    // Screenshot → edit (opens satty with the last screenshot from clipboard).
+    // Random wallpaper (Noctalia wallpaper IPC).
+    Mod+F10 hotkey-overlay-title="Random wallpaper" { spawn-sh "qs -c noctalia-shell ipc call wallpaper random"; }
+    // Screenshot -> edit (opens satty with the last screenshot from clipboard).
     Mod+Shift+S hotkey-overlay-title="Edit last screenshot" { spawn-sh "wl-paste | satty -f -"; }
     // Wheel scroll to change workspace (cooldown prevents runaway).
     Mod+Shift+WheelScrollDown cooldown-ms=150 { focus-workspace-down; }
