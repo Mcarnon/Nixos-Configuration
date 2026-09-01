@@ -21,6 +21,8 @@ in
     src = inputs."key-cli";
     clavisShell = final.clavisShell;
     quickshell = final.quickshell;
+    qt5compat = final.qt6.qt5compat; # Qt5Compat.GraphicalEffects（clavis QML 大量使用）
+    qtlottie = final.qt6.qtlottie; # Qt.labs.lottieqt（天气动画）
     matugen = final.matugen;
     cliphist = final.cliphist;
     wl-clipboard = final.wl-clipboard;
