@@ -68,7 +68,7 @@
       ModifierOnlyKeyTimeout=250
 
       [Hotkey/TriggerKeys]
-      0=Super+space
+      0=Control+space
       1=Zenkaku_Hankaku
       2=Hangul
 
@@ -82,10 +82,10 @@
       0=Shift_L
 
       [Hotkey/EnumerateGroupForwardKeys]
-      0=Super+space
+      0=Control+space
 
       [Hotkey/EnumerateGroupBackwardKeys]
-      0=Shift+Super+space
+      0=Shift+Control+space
 
       [Hotkey/PrevPage]
       0=Up

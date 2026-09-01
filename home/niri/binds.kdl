@@ -4,17 +4,19 @@ binds {
     Mod+Space hotkey-overlay-title="App launcher" { spawn-sh "qs -c noctalia-shell ipc call launcher toggle"; }
     Mod+S hotkey-overlay-title="Control center" { spawn-sh "qs -c noctalia-shell ipc call controlCenter toggle"; }
     Mod+Comma { spawn-sh "qs -c noctalia-shell ipc call controlCenter toggle"; }
-    Alt+Tab { toggle-overview; }
+    Alt+Tab hotkey-overlay-title="Switch windows" { spawn-sh "qs -c noctalia-shell ipc call launcher windows"; }
+    Mod+F2 hotkey-overlay-title="Settings" { spawn-sh "qs -c noctalia-shell ipc call settings toggle"; }
     Mod+W hotkey-overlay-title="Wallpaper picker" { spawn-sh "qs -c noctalia-shell ipc call wallpaper toggle"; }
     Mod+V hotkey-overlay-title="Clipboard history" { spawn-sh "qs -c noctalia-shell ipc call launcher clipboard"; }
     Mod+Shift+B hotkey-overlay-title="Toggle bar" { spawn-sh "qs -c noctalia-shell ipc call bar toggle"; }
 
-    // ---- Volume / brightness (pamixer / brightnessctl; Noctalia shows the level in the bar) ----
-    XF86AudioRaiseVolume allow-when-locked=true { spawn "pamixer" "-i" "5"; }
-    XF86AudioLowerVolume allow-when-locked=true { spawn "pamixer" "-d" "5"; }
-    XF86AudioMute allow-when-locked=true { spawn "pamixer" "-t"; }
-    XF86MonBrightnessUp allow-when-locked=true { spawn "brightnessctl" "set" "+5%"; }
-    XF86MonBrightnessDown allow-when-locked=true { spawn "brightnessctl" "set" "5%-"; }
+    // ---- Volume / brightness (via Noctalia IPC so the OSD + bar update) ----
+    XF86AudioRaiseVolume allow-when-locked=true { spawn-sh "qs -c noctalia-shell ipc call volume increase"; }
+    XF86AudioLowerVolume allow-when-locked=true { spawn-sh "qs -c noctalia-shell ipc call volume decrease"; }
+    XF86AudioMute allow-when-locked=true { spawn-sh "qs -c noctalia-shell ipc call volume muteOutput"; }
+    XF86MonBrightnessUp allow-when-locked=true { spawn-sh "qs -c noctalia-shell ipc call brightness increase"; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn-sh "qs -c noctalia-shell ipc call brightness decrease"; }
+    XF86AudioMicMute allow-when-locked=true { spawn-sh "qs -c noctalia-shell ipc call volume muteInput"; }
 
     // ---- Media (MPRIS, needs playerctl) ----
     Mod+P { spawn "playerctl" "play-pause"; }
@@ -25,7 +27,7 @@ binds {
 
     // ---- Launch / help ----
     Mod+Return hotkey-overlay-title="Terminal" { spawn "foot"; }
-    Mod+E hotkey-overlay-title="File manager" { spawn "nautilus"; }
+    Mod+E hotkey-overlay-title="File manager" { spawn-sh "thunar || nautilus"; }
     Mod+B hotkey-overlay-title="Browser" { spawn "zen-beta"; }
     Mod+Shift+Slash { show-hotkey-overlay; }
     Mod+Escape { toggle-keyboard-shortcuts-inhibit; }
@@ -99,7 +101,9 @@ binds {
     // Force-kill a stuck window (sends SIGTERM via niri IPC then escalates).
     Alt+F4 hotkey-overlay-title="Force kill window" { spawn-sh "niri msg action close-window --id $(niri msg --json focused-window | python3 -c 'import json,sys;print(json.load(sys.stdin)[\"id\"])')"; }
     // Random wallpaper (Noctalia wallpaper IPC).
-    Mod+F10 hotkey-overlay-title="Random wallpaper" { spawn-sh "qs -c noctalia-shell ipc call wallpaper random"; }
+    Mod+F10 hotkey-overlay-title="Random wallpaper" { spawn-sh "qs -c noctalia-shell ipc call wallpaper random all"; }
+    // Random wallpaper from the API + save to Wallpapers (SHORiN script).
+    Mod+Shift+F10 hotkey-overlay-title="Random download wallpaper" { spawn-sh "random-anime-wallpaper-noctalia"; }
     // Screenshot -> edit (opens satty with the last screenshot from clipboard).
     Mod+Shift+S hotkey-overlay-title="Edit last screenshot" { spawn-sh "wl-paste | satty -f -"; }
     // Wheel scroll to change workspace (cooldown prevents runaway).

@@ -192,6 +192,13 @@ in
       ExecStart = "${fcitx5Launch}/bin/fcitx5-launch";
       Restart = "always";
       RestartSec = 2;
+      # home.sessionVariables (modules/home/fcitx5.nix) only reach login shells,
+      # NOT systemd user services.  Without this, fcitx5-rime uses its default
+      # user dir ~/.local/share/fcitx5/rime and never reads the custom configs
+      # that home-manager writes to ~/.config/fcitx5/rime (schema_list,
+      # rime_ice.custom.yaml), so rime deploys an empty/broken layout and
+      # produces no candidates.
+      Environment = [ "RIME_USER_DIR=%h/.config/fcitx5/rime" ];
     };
   };
 }

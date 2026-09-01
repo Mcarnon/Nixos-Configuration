@@ -18,6 +18,8 @@ let
 
   # 以 SHORiN 的 settings.json 为底，覆写必须跟本机一致的路径/字体/城市。
   baseSettings = builtins.fromJSON (builtins.readFile ./config/settings-base.json);
+  # kitty 兜底主题（激活时复制，运行时会被 Noctalia 的 kitty 模板覆盖）。
+  kittyNoctaliaConf = ../../../../home/files/kitty/current-theme.conf;
   noctaliaSettings = lib.recursiveUpdate baseSettings {
     appLauncher.terminalCommand = "foot";
     ui = {
@@ -145,7 +147,9 @@ in
   # 默认壁纸（noctalia 壁纸选择器能直接看到）。
   home.file."Pictures/Wallpapers/wallhaven-d88d53.png".source =
     ../../../../wallpapers/wallhaven-d88d53.png;
-
+  # 用户头像（控制中心 profile-card 需要；指向默认壁纸）。
+  home.file.".face".source =
+    ../../../../wallpapers/wallhaven-d88d53.png;
   # 把 store 里的 noctalia 配置复制到 ~/.config/noctalia（可写，比软链更适合
   # noctalia 运行时改 settings.json / colors.json / 模板输出）。
   # 每次 rebuild 会重置为基础配置，Noctalia 启动后再按壁纸重新生成衍生文件。
@@ -159,6 +163,12 @@ in
     cp -r --no-preserve=mode,ownership ${noctaliaConfig}/. ~/.config/noctalia/
     # 确保 Noctalia 运行时可以改写 settings.json / colors.json / 模板输出。
     chmod -R u+w ~/.config/noctalia
+    # 首次给 kitty 种子一个可写的 current-theme.conf（只读 store 软链会阻止
+    # Noctalia 的 kitty 模板覆盖它，这里用备份复制解决）。
+    mkdir -p ~/.config/kitty
+    if [ ! -e ~/.config/kitty/current-theme.conf ]; then
+      cp --no-preserve=mode,ownership ${kittyNoctaliaConf} ~/.config/kitty/current-theme.conf
+    fi
   '';
 
   systemd.user.services.noctalia-shell = {

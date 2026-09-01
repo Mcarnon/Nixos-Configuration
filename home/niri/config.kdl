@@ -53,6 +53,8 @@ environment {
     GSK_RENDERER "gl"
     // 默认文本编辑器
     EDITOR "vim"
+    // 解决 quickshell 图标主题缺失问题（Noctalia/Qt 图标有时不显示）
+    QS_ICON_THEME "Adwaita"
 }
 
 hotkey-overlay {
@@ -71,6 +73,7 @@ include "blur.kdl" // global opacity/blur baseline — before windowrule.kdl so 
 include "noctalia-static.kdl" // SHORiN 默认 niri 配色（会被 noctalia 生成的动态配色覆盖）
 include optional=true "noctalia.kdl" // noctalia 模板按壁纸生成的 niri 配色
 include "windowrule.kdl"
+include "supertab.kdl" // 带缩略图的 Alt/Ctrl+Tab 窗口切换（SHORiN 原版）
 include "binds.kdl"
 
 layout {

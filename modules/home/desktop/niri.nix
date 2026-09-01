@@ -15,6 +15,7 @@
     "niri/blur.kdl".source = ../../../home/niri/blur.kdl;
     "niri/startup.kdl".source = ../../../home/niri/startup.kdl;
     "niri/windowrule.kdl".source = ../../../home/niri/windowrule.kdl;
+    "niri/supertab.kdl".source = ../../../home/niri/supertab.kdl;
     "niri/noctalia-static.kdl".source = ../../../home/niri/noctalia-static.kdl;
     "niri/niri-hardware.kdl".source = hostPath + "/niri-hardware.kdl";
   };

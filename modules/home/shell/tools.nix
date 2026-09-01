@@ -6,7 +6,11 @@
   ...
 }:
 {
-  programs.starship.enable = true;
+  programs.starship = {
+    enable = true;
+    # SHORiN 原版 starship 配置（含 noctalia 配色 palette）
+    settings = builtins.fromTOML (builtins.readFile ../../../home/files/starship.toml);
+  };
 
   programs.direnv = {
     enable = true;

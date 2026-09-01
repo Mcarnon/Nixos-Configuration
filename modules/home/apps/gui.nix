@@ -20,15 +20,12 @@
     thunar-volman # 移动设备自动挂载
     thunar-archive-plugin # Thunar 右键压缩/解压
     tumbler # Thunar 缩略图服务
-    poppler-glib # PDF 缩略图
+    poppler_gi # PDF 缩略图
     libgsf # Office 文档缩略图
     webp-pixbuf-loader # WebP 缩略图
     ffmpegthumbnailer # 视频缩略图
     file-roller # 压缩包管理 GUI
-    gvfs # 回收站 + 远程/可移动挂载（thunar/nautilus 共用）
-    gvfs-smb # SMB 网络共享
-    gvfs-mtp # Android MTP
-    gvfs-gphoto2 # 相机 PTP
+    gnome.gvfs # 回收站 + 远程/可移动挂载（含 SMB/MTP/GPhoto2）
     nautilus # 备用文件管理器（Mod+Alt+E）
     nautilus-open-any-terminal # Nautilus 右键“在此打开终端”
     icoextract # Windows exe 图标缩略图
@@ -58,5 +55,11 @@
     "xfce4/xfconf/xfce-perchannel-xml/thunar-volman.xml".source =
       ../../../home/files/thunar/thunar-volman.xml;
     "mimeapps.list".source = ../../../home/files/mimeapps.list;
+    # 基配置：Noctalia 模板会生成覆盖物（如 fuzzel/themes/noctalia、
+    # kitty/current-theme.conf），基配置只做兜底
+    "fuzzel/fuzzel.ini".source = ../../../home/files/fuzzel.ini;
+    "kitty/kitty.conf".source = ../../../home/files/kitty.conf;
+    "kitty/themes/noctalia.conf".source = ../../../home/files/kitty/noctalia.conf;
+    "xsettingsd/xsettingsd.conf".source = ../../../home/files/xsettingsd.conf;
   };
 }
