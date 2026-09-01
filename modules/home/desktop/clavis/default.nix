@@ -26,6 +26,17 @@ let
   # 壁纸（默认部署位置）
   wallpaperPath = "${config.home.homeDirectory}/Pictures/Wallpapers/wallhaven-d88d53.png";
 
+  # Clavis 需要的额外 QML 搜索路径（Qt5Compat.GraphicalEffects / Qt.labs.lottieqt
+  # 以及 Clavis 自己的 C++ QML 模块）。key 的 wrapper 里虽然也设了，
+  # 但这里从 session 和 systemd service 两侧再补一次，避免被中间 wrapper 覆盖。
+  clavisQmlPath = lib.concatStringsSep ":" [
+    "${pkgs.clavisShell}/lib/qt6/qml"
+    "${pkgs.qt6.qt5compat}/lib/qt6/qml"
+    "${pkgs.qt6.qt5compat}/lib/qml"
+    "${pkgs.qt6.qtlottie}/lib/qt6/qml"
+    "${pkgs.qt6.qtlottie}/lib/qml"
+  ];
+
   # Clavis 启动需要 WAYLAND_DISPLAY 已经进入 systemd user 环境。
   # niri 启动后会通过 spawn-sh-at-startup 执行 import-environment，
   # 但 clavis-shell.service 作为 niri.service 的依赖可能在这个导入完成前
@@ -51,6 +62,10 @@ in
     pkgs.awww # 壁纸引擎（Clavis 设置中心 / 壁纸随机都调它）
     pkgs.matugen # M3 色板生成（Clavis 主题的硬依赖，必须进 PATH）
   ];
+
+  # 让 Clavis 在交互式终端/手动启动时也能找到 Qt5Compat / lottie 模块。
+  home.sessionVariables.QML_IMPORT_PATH = clavisQmlPath;
+  home.sessionVariables.QML2_IMPORT_PATH = clavisQmlPath;
 
   # 默认壁纸：部署到 ~/Pictures/Wallpapers/（Clavis 设置中心从这里选图）。
   home.file."Pictures/Wallpapers/wallhaven-d88d53.png".source =
@@ -156,6 +171,11 @@ in
       Restart = "on-failure";
       RestartSec = 3;
       TimeoutStopSec = 10;
+      # 显式把 Clavis 需要的 QML 路径带进 service 环境，避免 wrapper 链丢失。
+      Environment = [
+        "QML_IMPORT_PATH=${clavisQmlPath}"
+        "QML2_IMPORT_PATH=${clavisQmlPath}"
+      ];
     };
     Install = {
       WantedBy = [ "niri.service" ];
