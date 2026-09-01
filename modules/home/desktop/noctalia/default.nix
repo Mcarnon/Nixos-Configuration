@@ -50,9 +50,26 @@ let
     cp ${pkgs.writeText "settings.json" (builtins.toJSON noctaliaSettings)} $out/settings.json
   '';
 
+  # Noctalia 组件依赖的运行时工具。noctalia-launch 会整体替换 PATH，而
+  # noctalia-shell 的 Qt wrapper 只会把自己打包的 runtimeDeps 前置到 PATH
+  # （brightnessctl/ddcutil/wlsunset/bluez/...），系统默认 PATH 里的工具对
+  # noctalia 进程不可见。nmcli/wpctl/rfkill/powerprofilesctl 不在此列，必须
+  # 显式加进 PATH，否则 Wi-Fi / 音量 / 飞行模式 / 电源模式面板会一直判定
+  # "工具不可用"而完全不工作。
+  noctaliaTools = with pkgs; [
+    systemd                 # systemctl --user
+    coreutils               # seq/sleep/sed
+    gnugrep                 # grep
+    networkmanager          # nmcli —— Wi-Fi/以太网面板、连接管理
+    wireplumber             # wpctl —— 音量/静音（AudioService 首选控制通道）
+    wtype                   # 键盘模拟（锁屏密码框自动输入等）
+    util-linux              # rfkill —— 飞行模式开关
+    power-profiles-daemon   # powerprofilesctl —— 电源模式面板
+  ];
+
   # 等 niri 把 WAYLAND_DISPLAY 写进 systemd user 环境后，再把它读出来并启动 noctalia。
   noctaliaLaunch = pkgs.writeShellScriptBin "noctalia-launch" ''
-    PATH="${lib.makeBinPath [ pkgs.systemd pkgs.coreutils pkgs.gnugrep ]}"
+    PATH="${lib.makeBinPath noctaliaTools}"
     for i in $(seq 1 60); do
       if systemctl --user show-environment 2>/dev/null | grep -q '^WAYLAND_DISPLAY='; then
         eval "$(${pkgs.systemd}/bin/systemctl --user show-environment 2>/dev/null | \

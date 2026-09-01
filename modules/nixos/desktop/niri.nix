@@ -66,6 +66,24 @@ let
       # symlinkJoin drops it, so re-attach it from the underlying niri package.
       providedSessions = pkgs.niri.providedSessions or [ "niri" ];
     };
+  # 等 niri 把 WAYLAND_DISPLAY 写进 systemd user 环境后再启动 fcitx5。
+  # fcitx5 的 Wayland 前端依赖 WAYLAND_DISPLAY；若它比 niri 的
+  # spawn-sh-at-startup 更早启动，会退回无前端状态（托盘无图标、候选框不弹，
+  # 症状等同"输入法没加载"）。与 noctalia-launch 相同的轮询逻辑。
+  fcitx5Launch = pkgs.writeShellScriptBin "fcitx5-launch" ''
+    PATH="${lib.makeBinPath [ pkgs.systemd pkgs.coreutils pkgs.gnugrep ]}"
+    for i in $(seq 1 60); do
+      if systemctl --user show-environment 2>/dev/null | grep -q '^WAYLAND_DISPLAY='; then
+        eval "$(${pkgs.systemd}/bin/systemctl --user show-environment 2>/dev/null | \
+          ${pkgs.gnugrep}/bin/grep -E '^(WAYLAND_DISPLAY|DISPLAY|XDG_SESSION_TYPE|XDG_RUNTIME_DIR|XDG_CURRENT_DESKTOP)=' | \
+          ${pkgs.coreutils}/bin/sed 's/^/export /')"
+        exec ${config.i18n.inputMethod.package}/bin/fcitx5
+      fi
+      sleep 0.5
+    done
+    # 兜底：超时也照常启动（fcitx5 自行处理无 Wayland 的情况）
+    exec ${config.i18n.inputMethod.package}/bin/fcitx5
+  '';
 in
 {
   programs.niri = {
@@ -150,7 +168,7 @@ in
     after = [ "graphical-session.target" ];
     serviceConfig = {
       Type = "simple";
-      ExecStart = "${config.i18n.inputMethod.package}/bin/fcitx5";
+      ExecStart = "${fcitx5Launch}/bin/fcitx5-launch";
       Restart = "always";
       RestartSec = 2;
     };
