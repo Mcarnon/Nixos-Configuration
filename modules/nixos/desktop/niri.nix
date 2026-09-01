@@ -88,7 +88,7 @@ in
     maple-mono.NF-CN
     nerd-fonts.jetbrains-mono
     noto-fonts-cjk-sans
-    noto-fonts-emoji
+    noto-fonts-color-emoji
   ];
 
   # xdg-desktop-portal routing（对齐 SHORiN 的 niri-portals.conf：

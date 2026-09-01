@@ -9,11 +9,12 @@
 #   3. niri 动态模糊 —— 开启 PersonalizationConfig.shellBlurEnabled，并在
 #      home/niri/config.kdl 里 include optional=true "clavis/effects.kdl"，
 #      让 Clavis 的 BlurService 自动生成 layer/window 模糊规则。
-#   4. startup.kdl 里 `key ipc call wallpaper set <壁纸>` —— clavis 自己
+#   4. systemd service 加了一个短暂的 ExecStartPre，等待 niri 把
+#      WAYLAND_DISPLAY 写进 systemd user 环境后再启动，避免启动即崩。
+#   5. startup.kdl 里 `key ipc call wallpaper set <壁纸>` —— clavis 自己
 #      不会在启动时生成主题（WallpaperService 只在 setWallpaper 时触发
 #      ThemeService.generateFromWallpaper），所以登录后异步 IPC 触发一次：
 #      设壁纸 → 生成 M3 色板 → reload 颜色，全程走 clavis 内部流程。
-#      不用 ExecStartPre（会阻塞服务启动，登录后长时间无组件）。
 {
   config,
   pkgs,
@@ -24,6 +25,24 @@
 let
   # 壁纸（默认部署位置）
   wallpaperPath = "${config.home.homeDirectory}/Pictures/Wallpapers/wallhaven-d88d53.png";
+
+  # Clavis 启动需要 WAYLAND_DISPLAY 已经进入 systemd user 环境。
+  # niri 启动后会通过 spawn-sh-at-startup 执行 import-environment，
+  # 但 clavis-shell.service 作为 niri.service 的依赖可能在这个导入完成前
+  # 就启动，导致 key shell 找不到 wayland socket 而崩溃。
+  # 这个 Pre 最多等 30 秒，检测到 WAYLAND_DISPLAY 后再 import 一次并启动。
+  waitWayland = pkgs.writeShellScriptBin "clavis-wait-wayland" ''
+    PATH="${lib.makeBinPath [ pkgs.systemd ]}"
+    for i in $(${pkgs.coreutils}/bin/seq 1 60); do
+      if ${pkgs.systemd}/bin/systemctl --user show-environment 2>/dev/null | ${pkgs.gnugrep}/bin/grep -q '^WAYLAND_DISPLAY='; then
+        ${pkgs.systemd}/bin/systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_RUNTIME_DIR 2>/dev/null || true
+        exit 0
+      fi
+      ${pkgs.coreutils}/bin/sleep 0.5
+    done
+    echo "clavis-shell: WAYLAND_DISPLAY not found in systemd user environment" >&2
+    exit 1
+  '';
 in
 {
   home.packages = [
@@ -132,9 +151,10 @@ in
     };
     Service = {
       Type = "simple";
+      ExecStartPre = "${waitWayland}/bin/clavis-wait-wayland";
       ExecStart = "${pkgs.keyCli}/bin/key shell --foreground --no-duplicate";
       Restart = "on-failure";
-      RestartSec = 2;
+      RestartSec = 3;
       TimeoutStopSec = 10;
     };
     Install = {
@@ -151,9 +171,10 @@ in
     };
     Service = {
       Type = "simple";
+      ExecStartPre = "${waitWayland}/bin/clavis-wait-wayland";
       ExecStart = "${pkgs.keyCli}/bin/key clipboard watch";
       Restart = "on-failure";
-      RestartSec = 2;
+      RestartSec = 3;
     };
     Install = {
       WantedBy = [ "niri.service" ];
