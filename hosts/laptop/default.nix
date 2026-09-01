@@ -55,6 +55,9 @@ in
   environment.sessionVariables = {
     NIXOS_OZONE_WAYLAND = "1";
     XDG_CURRENT_DESKTOP = "niri";
+    XMODIFIERS = "@im=fcitx";
+    GTK_IM_MODULE = "fcitx";
+    QT_IM_MODULE = "fcitx";
   };
 
   # ---- Home Manager wired in as a NixOS module ----

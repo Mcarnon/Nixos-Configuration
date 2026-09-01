@@ -179,11 +179,15 @@ in
     # the upstream one (which ships an empty default.yaml that breaks schema
     # compilation).  To add more languages, import their rime schemas here and
     # append them to the rimeDataPkgs list.
-    i18n.inputMethod.fcitx5.addons = with pkgs; [
-      (fcitx5-rime.override {
-        rimeDataPkgs = [ rime-data-fcitx5 ];
-      })
-    ];
+    i18n.inputMethod = {
+      enable = true;
+      type = "fcitx5";
+      fcitx5.addons = with pkgs; [
+        (fcitx5-rime.override {
+          rimeDataPkgs = [ rime-data-fcitx5 ];
+        })
+      ];
+    };
 
     fonts.fontconfig.defaultFonts = {
       sansSerif = [

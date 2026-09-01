@@ -92,9 +92,23 @@ in
   };
 
   # Noctalia 及其 IPC 引擎（qs）进系统 PATH，方便 niri 快捷键和脚本调用。
+  # 同时把 Noctalia 各面板常用的外部命令装进系统 PATH，这样即使手动在终端
+  # 调试或脚本调用时也能找到它们。
   environment.systemPackages = with pkgs; [
     noctalia-shell
     noctalia-qs
+    brightnessctl
+    pamixer
+    playerctl
+    cliphist
+    wl-clipboard
+    wlr-randr
+    networkmanager
+    bluez
+    imagemagick
+    xdg-utils
+    wlsunset
+    ddcutil
   ];
 
   # Noctalia / 终端 / 中文 UI 所需的字体。

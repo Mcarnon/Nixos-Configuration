@@ -29,6 +29,20 @@ let
       weatherEnabled = true;
     };
     general.avatarImage = "${home}/.face";
+    # 默认开启完整外观与桌面组件，避免登录后只有灰屏。
+    noctaliaPerformance = {
+      disableWallpaper = false;
+      disableDesktopWidgets = false;
+    };
+    controlCenter.cards = [
+      { enabled = true; id = "profile-card"; }
+      { enabled = true; id = "shortcuts-card"; }
+      { enabled = true; id = "audio-card"; }
+      { enabled = true; id = "brightness-card"; }
+      { enabled = true; id = "weather-card"; }
+      { enabled = true; id = "media-sysmon-card"; }
+    ];
+    desktopWidgets.enabled = true;
     wallpaper = {
       directory = wallpaperDir;
       monitorDirectories = [
@@ -50,12 +64,10 @@ let
     cp ${pkgs.writeText "settings.json" (builtins.toJSON noctaliaSettings)} $out/settings.json
   '';
 
-  # Noctalia 组件依赖的运行时工具。noctalia-launch 会整体替换 PATH，而
-  # noctalia-shell 的 Qt wrapper 只会把自己打包的 runtimeDeps 前置到 PATH
-  # （brightnessctl/ddcutil/wlsunset/bluez/...），系统默认 PATH 里的工具对
-  # noctalia 进程不可见。nmcli/wpctl/rfkill/powerprofilesctl 不在此列，必须
-  # 显式加进 PATH，否则 Wi-Fi / 音量 / 飞行模式 / 电源模式面板会一直判定
-  # "工具不可用"而完全不工作。
+  # Noctalia 组件依赖的运行时工具。注意：noctalia-launch 用
+  # `PATH="${lib.makeBinPath noctaliaTools}"` 整体替换了进程 PATH，因此这里
+  # 必须列出 noctalia-shell 运行时所有可能调用的外部命令，包括原本由
+  # noctalia-shell 的 Qt wrapper 注入 PATH 的 runtimeDeps。
   noctaliaTools = with pkgs; [
     systemd                 # systemctl --user
     coreutils               # seq/sleep/sed
@@ -65,6 +77,17 @@ let
     wtype                   # 键盘模拟（锁屏密码框自动输入等）
     util-linux              # rfkill —— 飞行模式开关
     power-profiles-daemon   # powerprofilesctl —— 电源模式面板
+    brightnessctl           # 亮度调节
+    pamixer                 # 音量/静音（备用音频控制）
+    playerctl               # 媒体控制
+    cliphist                # 剪贴板历史
+    wl-clipboard            # 剪贴板读写
+    wlr-randr               # 显示器配置/查询
+    bluez                   # bluetoothctl —— 蓝牙面板
+    imagemagick             # 壁纸/缩略图处理
+    xdg-utils               # xdg-open —— 状态栏点击打开应用/链接
+    wlsunset                # 夜灯/色温
+    ddcutil                 # 外接显示器 DDC 亮度
   ];
 
   # 等 niri 把 WAYLAND_DISPLAY 写进 systemd user 环境后，再把它读出来并启动 noctalia。
@@ -98,10 +121,15 @@ in
   ];
 
   # Qt6 图标/缩放主题；noctalia 本身用 Qt6 渲染。
+  # 输入法变量同步写入 session，再通过 niri-session-wrapper 的
+  # `systemctl --user import-environment` 导入 systemd 用户环境。
   home.sessionVariables = {
     "QT_QPA_PLATFORM" = "wayland;xcb";
     "QT_QPA_PLATFORMTHEME" = "qt6ct";
     "QT_AUTO_SCREEN_SCALE_FACTOR" = "1";
+    "XMODIFIERS" = "@im=fcitx";
+    "GTK_IM_MODULE" = "fcitx";
+    "QT_IM_MODULE" = "fcitx";
   };
 
   # 默认壁纸（noctalia 壁纸选择器能直接看到）。
@@ -119,6 +147,8 @@ in
     fi
     mkdir -p ~/.config/noctalia
     cp -r --no-preserve=mode,ownership ${noctaliaConfig}/. ~/.config/noctalia/
+    # 确保 Noctalia 运行时可以改写 settings.json / colors.json / 模板输出。
+    chmod -R u+w ~/.config/noctalia
   '';
 
   systemd.user.services.noctalia-shell = {
@@ -134,11 +164,17 @@ in
       Restart = "on-failure";
       RestartSec = 3;
       TimeoutStopSec = 10;
+      # 输入法与 Qt 主题变量必须显式传入，否则 noctalia-shell 进程内无法切换
+      # 输入法，GTK/Qt 应用也可能弹不出候选框。
       Environment = [
         "QT_QPA_PLATFORM=wayland;xcb"
         "QT_QPA_PLATFORMTHEME=qt6ct"
         "QT_AUTO_SCREEN_SCALE_FACTOR=1"
         "XDG_CURRENT_DESKTOP=niri"
+        "XMODIFIERS=@im=fcitx"
+        "GTK_IM_MODULE=fcitx"
+        "QT_IM_MODULE=fcitx"
+        "NOCTALIA_PAM_SERVICE=login"
       ];
     };
     Install = {
