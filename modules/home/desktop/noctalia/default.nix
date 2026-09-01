@@ -186,12 +186,15 @@ in
     if [ ! -e ~/.config/kitty/kitty.conf ]; then
       cp --no-preserve=mode,ownership ${kittyBaseConf} ~/.config/kitty/kitty.conf
     fi
-    # foot.ini：可写兜底（Noctalia 的 foot 模板 apply.sh 会注入 include）；
-    # 若文件已存在（apply.sh 改过），不要覆盖，否则会丢掉它加的行。
+    # foot.ini：可写兜底 + 幂等 include。每次 rebuild 无条件重建：include 置于
+    # 首行使 foot 一定加载 Noctalia 配色（themes/noctalia 由 foot 模板 recolor 时
+    # 刷新），并顺带修掉旧版 [color-dark] 错字。若要改 foot 配置，改基配置即可。
     mkdir -p ~/.config/foot
-    if [ ! -e ~/.config/foot/foot.ini ]; then
-      cp --no-preserve=mode,ownership ${footBaseConf} ~/.config/foot/foot.ini
-    fi
+    {
+      printf 'include=%s/.config/foot/themes/noctalia\n' "${home}"
+      cat ${footBaseConf}
+    } > ~/.config/foot/foot.ini
+    chmod u+w ~/.config/foot/foot.ini
     # qt6ct 图标主题（Qt 应用紫黑棋盘格修复）；qt6ct 保存设置时需要可写。
     mkdir -p ~/.config/qt6ct
     if [ ! -e ~/.config/qt6ct/qt6ct.conf ]; then
