@@ -1,6 +1,9 @@
 # Desktop look & feel: cursor theme + GTK icons/dark mode + 输入法桥接。
-# Noctalia 会按壁纸生成 ~/.config/gtk-{3,4}.0/noctalia.css；这里负责把生成的
-# CSS import 进来，并保留光标/图标/字体等基础外观。
+# 注意：GTK 的 gtk.css / settings.ini 由 Noctalia 的 "gtk" 模板（apply.sh）接管，
+# 这里【不用】 home-manager 的 gtk 模块——它会把文件做成只读 store 软链，
+# 导致 Noctalia 模板处理失败（"模板处理失败"弹窗的根因之一）。
+# 基础外观走 dconf（DB，无文件冲突）；Noctalia 切壁纸时会用 gsettings/dconf
+# 覆盖为 matugen 生成的主题（icon-theme=Adwaita-Matugen-* 等）。
 {
   config,
   pkgs,
@@ -9,7 +12,7 @@
 }:
 {
   # Wayland 光标：niri 的 `cursor {}` 块（home/niri/config.kdl）为 niri 启动的
-  # 进程设置 XCURSOR_THEME/SIZE；gsettings 覆盖 GTK 应用。
+  # 进程设置 XCURSOR_THEME/SIZE；这里再同步到 dconf 覆盖 GTK 应用。
   # 对齐 SHORiN：使用 Breeze 光标。
   home.pointerCursor = {
     enable = true;
@@ -18,35 +21,16 @@
     size = 24;
   };
 
-  gtk = {
+  # 基础 GTK 外观（主题/图标/深色/输入法）。动态配色交给 Noctalia 的 GTK 模板。
+  dconf = {
     enable = true;
-    theme = {
-      name = "adw-gtk3-dark"; # M3 风格兜底
-      package = pkgs.adw-gtk3;
-    };
-    # 安装 Adwaita 图标主题作为 Adwaita-Matugen 生成主题的继承源；
-    # Noctalia 的 matugen/recolor 会在切换壁纸后接管图标主题设置。
-    gtk3.extraCss = ''
-      @import url("noctalia.css");
-    '';
-    gtk4.extraCss = ''
-      @import url("noctalia.css");
-    '';
-
-    iconTheme = {
-      name = "Papirus-Dark";
-      package = pkgs.papirus-icon-theme;
-    };
-    gtk3.extraConfig = {
-      gtk-application-prefer-dark-theme = 1;
-      gtk-im-module = "fcitx";
-    };
-
-    # 输入法桥接：GTK2/4 走 fcitx（走 extraConfig 避免与 HM gtk 模块
-    # 写同一 settings.ini 冲突）
-    gtk2.extraConfig = "gtk-im-module=\"fcitx\"";
-    gtk4.extraConfig = {
-      gtk-im-module = "fcitx";
+    settings = {
+      "org/gnome/desktop/interface" = {
+        color-scheme = "prefer-dark";
+        gtk-theme = "adw-gtk3-dark";
+        icon-theme = "Papirus-Dark";
+        gtk-im-module = "fcitx";
+      };
     };
   };
 
@@ -57,8 +41,11 @@
   xdg.configFile."fontconfig/fonts.conf".source = ../../../home/files/fonts.conf;
 
   # Adwaita 图标主题是 Adwaita-Matugen 的继承源；必须存在，否则生成主题
-  # 的图标会显示为缺失/错误图标。
+  # 的图标会显示为缺失/错误图标（紫黑棋盘格）。
+  # adw-gtk3（GTK 主题包）与 Papirus-Dark（初始图标主题）也由这里安装。
   home.packages = with pkgs; [
+    adw-gtk3
+    papirus-icon-theme
     adwaita-icon-theme
   ];
 }

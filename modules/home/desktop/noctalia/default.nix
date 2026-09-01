@@ -20,6 +20,11 @@ let
   baseSettings = builtins.fromJSON (builtins.readFile ./config/settings-base.json);
   # kitty 兜底主题（激活时复制，运行时会被 Noctalia 的 kitty 模板覆盖）。
   kittyNoctaliaConf = ../../../../home/files/kitty/current-theme.conf;
+  # kitty/foot 基配置 + qt6ct 图标主题配置（激活时复制为可写副本；kitty.conf 与
+  # foot.ini 会被 Noctalia 的 apply.sh 注入 include，qt6ct 保存设置时需要可写）。
+  kittyBaseConf = ../../../../home/files/kitty.conf;
+  footBaseConf = ../../../../home/files/foot.ini;
+  qt6ctBaseConf = ../../../../home/files/qt6ct/qt6ct.conf;
   noctaliaSettings = lib.recursiveUpdate baseSettings {
     appLauncher.terminalCommand = "foot";
     ui = {
@@ -56,6 +61,12 @@ let
       ];
     };
     colorSchemes.syncGsettings = true;
+    # 启用 Noctalia 内置 foot 模板（输出 ~/.config/foot/themes/noctalia，
+    # apply.sh 会往 ~/.config/foot/foot.ini 注入 include），让 foot 与 kitty
+    # 一样跟随壁纸动态换色（Shorin 风格）。
+    templates.activeTemplates =
+      (baseSettings.templates.activeTemplates or [ ])
+      ++ [ { enabled = true; id = "foot"; } ];
   };
 
   # 把配置目录放进 store，其中 settings.json 是上面生成的版本。
@@ -98,6 +109,7 @@ let
     wget                    # 壁纸下载等（noctalia-shell 的 runtimeDeps）
     python3                 # 日历/脚本等（noctalia-shell 的 runtimeDeps）
     matugen                 # 从壁纸生成配色/主题/图标颜色（Noctalia 核心）
+    glib.bin                # gsettings/dconf/gio —— GTK 模板 apply.sh 与 recolor.sh 依赖
   ];
 
   # 等 niri 把 WAYLAND_DISPLAY 写进 systemd user 环境后，再把它读出来并启动 noctalia。
@@ -168,6 +180,22 @@ in
     mkdir -p ~/.config/kitty
     if [ ! -e ~/.config/kitty/current-theme.conf ]; then
       cp --no-preserve=mode,ownership ${kittyNoctaliaConf} ~/.config/kitty/current-theme.conf
+    fi
+    # kitty.conf：可写兜底（Noctalia 的 kitty 模板 apply.sh 要注入 include）；
+    # 已存在（被 apply.sh 改过或用户改过）则不覆盖。
+    if [ ! -e ~/.config/kitty/kitty.conf ]; then
+      cp --no-preserve=mode,ownership ${kittyBaseConf} ~/.config/kitty/kitty.conf
+    fi
+    # foot.ini：可写兜底（Noctalia 的 foot 模板 apply.sh 会注入 include）；
+    # 若文件已存在（apply.sh 改过），不要覆盖，否则会丢掉它加的行。
+    mkdir -p ~/.config/foot
+    if [ ! -e ~/.config/foot/foot.ini ]; then
+      cp --no-preserve=mode,ownership ${footBaseConf} ~/.config/foot/foot.ini
+    fi
+    # qt6ct 图标主题（Qt 应用紫黑棋盘格修复）；qt6ct 保存设置时需要可写。
+    mkdir -p ~/.config/qt6ct
+    if [ ! -e ~/.config/qt6ct/qt6ct.conf ]; then
+      cp --no-preserve=mode,ownership ${qt6ctBaseConf} ~/.config/qt6ct/qt6ct.conf
     fi
   '';
 
