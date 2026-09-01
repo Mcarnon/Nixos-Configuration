@@ -64,14 +64,19 @@ let
     cp ${pkgs.writeText "settings.json" (builtins.toJSON noctaliaSettings)} $out/settings.json
   '';
 
-  # Noctalia 组件依赖的运行时工具。注意：noctalia-launch 用
-  # `PATH="${lib.makeBinPath noctaliaTools}"` 整体替换了进程 PATH，因此这里
-  # 必须列出 noctalia-shell 运行时所有可能调用的外部命令，包括原本由
-  # noctalia-shell 的 Qt wrapper 注入 PATH 的 runtimeDeps。
+  # Noctalia 组件依赖的运行时工具。注意：noctalia-launch 会把它前置到
+  # 进程 PATH 最前面，因此这里必须列出 noctalia-shell 运行时所有可能调用
+  # 的外部命令，包括原本由 noctalia-shell 的 Qt wrapper 注入 PATH 的
+  # runtimeDeps。
   noctaliaTools = with pkgs; [
     systemd                 # systemctl --user
-    coreutils               # seq/sleep/sed
+    bash                    # /bin/sh —— Noctalia 内部 QProcess 调用 "sh" 执行脚本
+    coreutils               # seq/sleep/df/cat/...
     gnugrep                 # grep
+    gnused                  # sed
+    gawk                    # awk
+    findutils               # find/xargs
+    procps                  # ps/free/top —— SystemStat 等系统监控
     networkmanager          # nmcli —— Wi-Fi/以太网面板、连接管理
     wireplumber             # wpctl —— 音量/静音（AudioService 首选控制通道）
     wtype                   # 键盘模拟（锁屏密码框自动输入等）
@@ -88,11 +93,16 @@ let
     xdg-utils               # xdg-open —— 状态栏点击打开应用/链接
     wlsunset                # 夜灯/色温
     ddcutil                 # 外接显示器 DDC 亮度
+    wget                    # 壁纸下载等（noctalia-shell 的 runtimeDeps）
+    python3                 # 日历/脚本等（noctalia-shell 的 runtimeDeps）
+    matugen                 # 从壁纸生成配色/主题/图标颜色（Noctalia 核心）
   ];
 
   # 等 niri 把 WAYLAND_DISPLAY 写进 systemd user 环境后，再把它读出来并启动 noctalia。
   noctaliaLaunch = pkgs.writeShellScriptBin "noctalia-launch" ''
-    PATH="${lib.makeBinPath noctaliaTools}"
+    # 把 Noctalia 需要的工具前置到 PATH，同时保留原有 PATH（这样
+    # noctalia-shell 的 Qt wrapper 后续追加自己的 runtimeDeps 时不会丢失它们）。
+    PATH="${lib.makeBinPath noctaliaTools}:$PATH"
     for i in $(seq 1 60); do
       if systemctl --user show-environment 2>/dev/null | grep -q '^WAYLAND_DISPLAY='; then
         eval "$(${pkgs.systemd}/bin/systemctl --user show-environment 2>/dev/null | \

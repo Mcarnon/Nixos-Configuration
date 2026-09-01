@@ -26,7 +26,7 @@ input {
 }
 
 cursor {
-    xcursor-theme "volantes_cursors"
+    xcursor-theme "breeze_cursors"
     xcursor-size 24
     hide-when-typing
     hide-after-inactive-ms 3000
@@ -36,7 +36,7 @@ cursor {
 environment {
     XDG_CURRENT_DESKTOP "niri"
     XDG_SESSION_DESKTOP "niri"
-    XCURSOR_THEME "volantes_cursors"
+    XCURSOR_THEME "breeze_cursors"
     XCURSOR_SIZE "24"
     QT_QPA_PLATFORM "wayland"
     // Locale (locale) + input method + QT theme for niri-spawned processes.

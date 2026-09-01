@@ -18,9 +18,21 @@
     # -- 文件管理器 --
     thunar # 主文件管理器（Mod+E）
     thunar-volman # 移动设备自动挂载
+    thunar-archive-plugin # Thunar 右键压缩/解压
+    tumbler # Thunar 缩略图服务
+    poppler-glib # PDF 缩略图
+    libgsf # Office 文档缩略图
+    webp-pixbuf-loader # WebP 缩略图
     ffmpegthumbnailer # 视频缩略图
+    file-roller # 压缩包管理 GUI
     gvfs # 回收站 + 远程/可移动挂载（thunar/nautilus 共用）
+    gvfs-smb # SMB 网络共享
+    gvfs-mtp # Android MTP
+    gvfs-gphoto2 # 相机 PTP
     nautilus # 备用文件管理器（Mod+Alt+E）
+    nautilus-open-any-terminal # Nautilus 右键“在此打开终端”
+    icoextract # Windows exe 图标缩略图
+    python3Packages.pillow # 缩略图/图片处理
     imv # 图片查看器（mimeapps 默认）
 
     # -- 桌面工具 --
@@ -31,6 +43,7 @@
     xdg-utils # xdg-open & friends
     xwayland-satellite # X11 support (started by spawn-at-startup)
     networkmanagerapplet # nm-applet tray icon
+    nwg-look # GTK 主题/图标设置 GUI（Noctalia 配色同步辅助）
 
   ];
 

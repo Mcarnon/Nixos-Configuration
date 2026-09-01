@@ -109,6 +109,13 @@ in
     xdg-utils
     wlsunset
     ddcutil
+    wget
+    python3
+    gnused
+    gawk
+    findutils
+    procps
+    matugen # 从壁纸生成 GTK/Qt/图标配色，Noctalia 外观同步依赖
   ];
 
   # Noctalia / 终端 / 中文 UI 所需的字体。

@@ -10,10 +10,11 @@
 {
   # Wayland 光标：niri 的 `cursor {}` 块（home/niri/config.kdl）为 niri 启动的
   # 进程设置 XCURSOR_THEME/SIZE；gsettings 覆盖 GTK 应用。
+  # 对齐 SHORiN：使用 Breeze 光标。
   home.pointerCursor = {
     enable = true;
-    name = "volantes_cursors"; # XCursor 主题名（下划线）
-    package = pkgs.volantes-cursors; # nixpkgs 属性名（连字符）
+    name = "breeze_cursors";
+    package = pkgs.breeze-cursors;
     size = 24;
   };
 
@@ -23,6 +24,8 @@
       name = "adw-gtk3-dark"; # M3 风格兜底
       package = pkgs.adw-gtk3;
     };
+    # 安装 Adwaita 图标主题作为 Adwaita-Matugen 生成主题的继承源；
+    # Noctalia 的 matugen/recolor 会在切换壁纸后接管图标主题设置。
     gtk3.extraCss = ''
       @import url("noctalia.css");
     '';
@@ -52,4 +55,10 @@
 
   # fontconfig 用户级微调（抗锯齿/hinting + monospace 优先 Maple Mono NF）
   xdg.configFile."fontconfig/fonts.conf".source = ../../../home/files/fonts.conf;
+
+  # Adwaita 图标主题是 Adwaita-Matugen 的继承源；必须存在，否则生成主题
+  # 的图标会显示为缺失/错误图标。
+  home.packages = with pkgs; [
+    adwaita-icon-theme
+  ];
 }
