@@ -36,7 +36,7 @@ chmod +x scripts/install.sh && sudo ./scripts/install.sh
 > 2. 运行 disko 分区格式化
 > 3. 复制仓库到 /mnt/etc/nixos
 > 4. 生成本机配置并移动到 hosts/laptop/
-> 5. 提示编辑 LUKS/ESP UUID
+> 5. 提示编辑 ROOT/ESP UUID
 > 6. 运行 nixos-install
 
 仅需在脚本提示确认时按 y，需要时编辑 UUID。

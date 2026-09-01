@@ -81,6 +81,16 @@ in
     keytop
   ];
 
+  # Clavis / 终端 / 中文 UI 所需的字体。
+  fonts.packages = with pkgs; [
+    adwaita-fonts
+    lxgw-wenkai
+    maple-mono.NF-CN
+    nerd-fonts.jetbrains-mono
+    noto-fonts-cjk-sans
+    noto-fonts-emoji
+  ];
+
   # xdg-desktop-portal routing（对齐 SHORiN 的 niri-portals.conf：
   # 默认 gnome;gtk，文件选择走 gtk，录屏/截图走 gnome，密钥走 gnome-keyring）
   xdg.portal = {

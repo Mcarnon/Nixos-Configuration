@@ -1,12 +1,15 @@
-# Clavis Shell — Quickshell desktop shell for niri（开箱即用：M3 主题 + 壁纸）。
+# Clavis Shell — Quickshell desktop shell for niri（完整外观：M3 主题 + 壁纸 + 模糊）。
 #
 # 关键点让“裸 clavis”变成“完整外观”：
 #   1. matugen —— Clavis 的 M3 色板生成是运行时硬依赖（ThemeService 调
 #      scripts/theme/generate_matugen_colors.sh，脚本第一件事就检查 matugen）
 #   2. ~/.config/clavis/config.json —— PersonalizationConfig 的持久文件
 #      （Paths.configHome = ~/.config/clavis）。预置默认壁纸 + dark +
-#      scheme-tonal-spot；clavis 启动时据此渲染壁纸。
-#   3. startup.kdl 里 `key ipc call wallpaper set <壁纸>` —— clavis 自己
+#      scheme-tonal-spot + 字体 + 光标/图标主题；clavis 启动时据此渲染。
+#   3. niri 动态模糊 —— 开启 PersonalizationConfig.shellBlurEnabled，并在
+#      home/niri/config.kdl 里 include optional=true "clavis/effects.kdl"，
+#      让 Clavis 的 BlurService 自动生成 layer/window 模糊规则。
+#   4. startup.kdl 里 `key ipc call wallpaper set <壁纸>` —— clavis 自己
 #      不会在启动时生成主题（WallpaperService 只在 setWallpaper 时触发
 #      ThemeService.generateFromWallpaper），所以登录后异步 IPC 触发一次：
 #      设壁纸 → 生成 M3 色板 → reload 颜色，全程走 clavis 内部流程。
@@ -14,6 +17,7 @@
 {
   config,
   pkgs,
+  inputs,
   lib,
   ...
 }:
@@ -73,15 +77,24 @@ in
           yazi = true;
         };
         mode = "dark";
+        cursorTheme = "volantes_cursors";
         cursorSize = 24;
         cursorHideWhenTyping = false;
         cursorHideAfterInactiveMs = 0;
+        iconTheme = "Papirus-Dark";
         powerMenuStyle = "grid";
+        fonts = {
+          ui = "LXGW WenKai";
+          mono = "JetBrainsMono Nerd Font";
+          numeric = "JetBrainsMono Nerd Font";
+          expressive = "Google Sans Flex";
+        };
       };
       effects = {
         shellBackgroundOpacity = 1;
-        shellBlurEnabled = false;
-        shellBlurXray = true;
+        # 开启动态模糊；xray=false 表示面板/窗口后面的内容会实时模糊。
+        shellBlurEnabled = true;
+        shellBlurXray = false;
       };
       keystone = {
         style = "bangs";
@@ -105,6 +118,10 @@ in
   # 由 key 的 wrapper 通过 QML_IMPORT_PATH 提供给 qs 引擎。
   xdg.configFile."quickshell/clavis".source =
     "${pkgs.clavisShell}/etc/xdg/quickshell/clavis";
+
+  # keytop 的 matugen 模板（让 Clavis 在换壁纸时也能同步生成 keytop 配色）。
+  xdg.configFile."keytop/matugen.conf".source =
+    "${inputs.keytop}/defaults/matugen.conf";
 
   systemd.user.services.clavis-shell = {
     Unit = {

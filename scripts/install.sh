@@ -9,10 +9,10 @@
 #
 # Flow:
 #   - Enable nix-command and flakes (live env may not have them)
-#   - Run disko (interactive - you will set LUKS password)
+#   - Run disko (interactive - wipes the disk)
 #   - Copy repo to /mnt/etc/nixos (persist config)
 #   - Generate hardware config and move to hosts/laptop/
-#   - Prompt to edit LUKS/ESP UUIDs
+#   - Prompt to edit ROOT/ESP UUIDs
 #   - Run nixos-install
 #==============================================================================
 
@@ -90,15 +90,14 @@ check_disk() {
 }
 
 #==============================================================================
-# Run disko (interactive - user will set LUKS password inside disko)
+# Run disko (interactive - wipes and repartitions the disk)
 #==============================================================================
 run_disko() {
     local disko_file="$1"
     section "Disko: Partition, Format, Mount"
     info "This will:"
     info "  1. Wipe the disk and create partitions"
-    info "  2. Set up LUKS encryption (you'll be asked for a password - REMEMBER IT!)"
-    info "  3. Create btrfs subvolumes and mount everything"
+    info "  2. Create btrfs subvolumes and mount everything"
     echo ""
     info "Starting disko..."
     info "When asked 'Do you want to continue?', type 'y' to proceed"
@@ -218,7 +217,7 @@ edit_uuids() {
     blkid 2>/dev/null | grep -E "(UUID|PARTUUID)" || true
     echo ""
 
-    info "If LUKS/ESP UUIDs show as <LUKS-UUID>/<ESP-UUID>, they need to be replaced"
+    info "If ROOT/ESP UUIDs show as <ROOT-UUID>/<ESP-UUID>, they need to be replaced"
     pause "Press Enter to edit hardware-configuration.nix, or Ctrl+C to skip... "
     ${EDITOR:-nano} "$hosts_dir/hardware-configuration.nix"
 }
@@ -266,9 +265,8 @@ do_install() {
         echo ""
         info "Next steps:"
         echo "  1. Reboot: sudo reboot"
-        echo "  2. At boot, enter LUKS password when prompted"
-        echo "  3. Login as $userName"
-        echo "  4. Run: cd ~/Nixos-Configuration && git add -A && sudo nixos-rebuild switch --flake .#laptop"
+        echo "  2. Login as $userName"
+        echo "  3. Run: cd ~/Nixos-Configuration && git add -A && sudo nixos-rebuild switch --flake .#laptop"
     else
         error "Installation failed"
         exit 1
@@ -308,7 +306,7 @@ main() {
 
     # Check if we have a pre-configured hardware-configuration.nix (no placeholders)
     if [[ -f "$hosts_dir/hardware-configuration.nix" ]] && \
-       ! grep -q "<LUKS-UUID>" "$hosts_dir/hardware-configuration.nix" 2>/dev/null; then
+       ! grep -q "<ROOT-UUID>" "$hosts_dir/hardware-configuration.nix" 2>/dev/null; then
         warn "Found pre-configured hardware-configuration.nix, skipping generation"
     else
         generate_config

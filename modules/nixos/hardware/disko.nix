@@ -1,5 +1,5 @@
 # Hardware HAL: disko template documentation
-# Hosts keep disko-fs.nix under hosts/<host>/ (device + LUKS + btrfs subvols).
+# Hosts keep disko-fs.nix under hosts/<host>/ (device + btrfs subvols).
 # This file is a shared reference for the hardware abstraction layer.
 {
   config,

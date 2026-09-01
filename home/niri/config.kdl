@@ -68,6 +68,8 @@ spawn-sh-at-startup "systemctl --user import-environment WAYLAND_DISPLAY XDG_CUR
 include "niri-hardware.kdl"
 include "startup.kdl"
 include "blur.kdl" // global opacity/blur baseline — before windowrule.kdl so per-app rules win
+include optional=true "clavis/cursor.kdl" // Clavis 生成的光标配置
+include optional=true "clavis/effects.kdl" // Clavis 生成的模糊/透明 layer 规则
 include "windowrule.kdl"
 include "binds.kdl"
 

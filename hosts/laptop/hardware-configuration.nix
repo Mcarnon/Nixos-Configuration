@@ -1,14 +1,12 @@
-# Hardware + disk mounts (tmpfs root + LUKS-encrypted btrfs subvolumes)
+# Hardware + disk mounts (tmpfs root + plain btrfs subvolumes)
 #
 #   - The root filesystem "/" is mounted as tmpfs and wiped on every reboot.
-#   - /nix /var /etc /home /swap persist on btrfs subvolumes inside a single
-#     LUKS container (one passphrase at boot). Swap is a swapfile, so it is
-#     encrypted too.
+#   - /nix /var /etc /home /swap persist on btrfs subvolumes on the root
+#     partition. Swap is a swapfile inside the @swap subvolume.
 #
 # Before first install:
-#   1. Partition and format as ESP (vfat) + LUKS-btrfs (use disko, see
-#      disko-fs.nix — you'll be prompted to set the LUKS passphrase).
-#   2. Find the LUKS / ESP UUIDs with `blkid` and replace <LUKS-UUID> / <ESP-UUID>.
+#   1. Partition and format as ESP (vfat) + btrfs (use disko, see disko-fs.nix).
+#   2. Find the ROOT / ESP UUIDs with `blkid` and replace <ROOT-UUID> / <ESP-UUID>.
 #   3. If you want hibernation, measure the swapfile resume offset (see bottom).
 {
   config,
@@ -30,13 +28,7 @@
   hardware.enableAllFirmware = true;
   hardware.enableRedistributableFirmware = true;
 
-  # ---- LUKS unlock (prompted for the passphrase at boot) ----
-  boot.initrd.luks.devices."cryptroot" = {
-    device = "/dev/disk/by-uuid/<LUKS-UUID>";
-    allowDiscards = true; # SSD TRIM; drop if you prefer stronger security
-  };
-
-  # ---- tmpfs root + btrfs subvolume mounts (on the unlocked mapper) ----
+  # ---- tmpfs root + btrfs subvolume mounts (on the root partition) ----
 
   # Root -> tmpfs (RAM), cleared on reboot
   fileSystems."/" = {
@@ -49,9 +41,9 @@
     ];
   };
 
-  # All btrfs subvolumes live on the same unlocked LUKS mapper.
+  # All btrfs subvolumes live on the same root partition.
   fileSystems."/nix" = {
-    device = "/dev/mapper/cryptroot";
+    device = "/dev/disk/by-uuid/<ROOT-UUID>";
     fsType = "btrfs";
     options = [
       "subvol=@nix"
@@ -61,7 +53,7 @@
   };
 
   fileSystems."/var" = {
-    device = "/dev/mapper/cryptroot";
+    device = "/dev/disk/by-uuid/<ROOT-UUID>";
     fsType = "btrfs";
     options = [
       "subvol=@var"
@@ -71,7 +63,7 @@
   };
 
   fileSystems."/etc" = {
-    device = "/dev/mapper/cryptroot";
+    device = "/dev/disk/by-uuid/<ROOT-UUID>";
     fsType = "btrfs";
     options = [
       "subvol=@etc"
@@ -81,7 +73,7 @@
   };
 
   fileSystems."/home" = {
-    device = "/dev/mapper/cryptroot";
+    device = "/dev/disk/by-uuid/<ROOT-UUID>";
     fsType = "btrfs";
     options = [
       "subvol=@home"
@@ -91,7 +83,7 @@
   };
 
   fileSystems."/swap" = {
-    device = "/dev/mapper/cryptroot";
+    device = "/dev/disk/by-uuid/<ROOT-UUID>";
     fsType = "btrfs";
     options = [
       "subvol=@swap"
@@ -99,7 +91,7 @@
     ];
   };
 
-  # ESP (EFI system partition, unencrypted so UEFI/GRUB can load the kernel)
+  # ESP (EFI system partition; UEFI/GRUB loads the kernel from here)
   fileSystems."/boot" = {
     device = "/dev/disk/by-uuid/<ESP-UUID>";
     fsType = "vfat";
@@ -109,13 +101,13 @@
     ];
   };
 
-  # ---- Swap (swapfile inside the encrypted btrfs) ----
+  # ---- Swap (swapfile inside the btrfs @swap subvolume) ----
   swapDevices = [ { device = "/swap/swapfile"; } ];
 
   # ---- Hibernation (optional) ----
-  # resume from the unlocked mapper. After the first install, measure the
+  # Resume from the root partition. After the first install, measure the
   # swapfile's resume offset and fill it in, then uncomment both lines:
   #   sudo btrfs inspect-internal map-swapfile -r /swap/swapfile
-  # boot.resumeDevice = "/dev/mapper/cryptroot";
+  # boot.resumeDevice = "/dev/disk/by-uuid/<ROOT-UUID>";
   # boot.kernelParams = [ "resume_offset=<OFFSET>" ];
 }

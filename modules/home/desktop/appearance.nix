@@ -40,6 +40,9 @@
     };
   };
 
+  # 启用 HM 的 fontconfig 支持，确保系统字体和用户 profile 字体都能被应用找到。
+  fonts.fontconfig.enable = true;
+
   # fontconfig 用户级微调（抗锯齿/hinting + monospace 优先 Maple Mono NF）
   xdg.configFile."fontconfig/fonts.conf".source = ../../../home/files/fonts.conf;
 }

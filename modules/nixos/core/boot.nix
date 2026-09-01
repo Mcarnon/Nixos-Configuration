@@ -2,7 +2,7 @@
 # `device = "nodev"` = 不写 MBR，安装到 ESP（/boot，见 hosts/laptop/disko-fs.nix）。
 # `boot.initrd.systemd` is required by the tmpfs-root scheme in
 # hardware-configuration.nix (root is a tmpfs mounted from the initrd).
-# Hibernation resume is host-specific (LUKS mapper + swapfile offset), so it
+# Hibernation resume is host-specific (root partition + swapfile offset), so it
 # lives in hosts/laptop/hardware-configuration.nix.
 {
   config,

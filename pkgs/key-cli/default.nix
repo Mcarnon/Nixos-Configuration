@@ -15,6 +15,7 @@
   ffmpeg,
   slurp,
   pipewire,
+  awww,
   lib,
   src,
   ...
@@ -41,6 +42,7 @@ python3Packages.buildPythonApplication {
   # （Qt5Compat.GraphicalEffects：clavis 的 SystemBatteryTank/桌面卡片等大量
   # 依赖）和 qtlottie（Qt.labs.lottieqt：天气动画）——否则 QML 加载在
   # "module not installed" 处失败，整个 shell 起不来。
+  # awww 是 Clavis 的壁纸后端，key shell 运行时需要调用 awww/awww-daemon。
   postFixup = ''
     wrapProgram "$out/bin/key" \
       --prefix PATH : "${
@@ -53,6 +55,7 @@ python3Packages.buildPythonApplication {
           ffmpeg
           slurp
           pipewire
+          awww
         ]
       }" \
       --prefix QML_IMPORT_PATH : "${clavisShell}/lib/qt6/qml:${qt5compat}/lib/qt6/qml:${qtlottie}/lib/qt6/qml" \

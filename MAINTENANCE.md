@@ -67,9 +67,6 @@ sudo nix store optimise           # dedupe (auto-optimise-store is already on)
 - **Diagnostics** (installed by `modules/nixos/core/diagnostics.nix`):
   `lspci`, `lsusb`, `dmidecode`, `smartctl -a /dev/nvme0n1`, `nvme list`,
   `sensors`, `powertop`, `inxi -F`.
-- **LUKS**: the disk is unlocked at boot (passphrase) as `/dev/mapper/cryptroot`.
-  `sudo cryptsetup luksDump /dev/nvme0n1p2` shows header info; add/remove a
-  passphrase slot with `cryptsetup luksAddKey` / `luksRemoveKey`.
 - **Audio** (Huawei / Intel SOF — PipeWire in `modules/nixos/desktop/audio.nix`):
   ```bash
   lspci -nnk | grep -iA3 audio                    # kernel sees the sound card?
@@ -82,9 +79,9 @@ sudo nix store optimise           # dedupe (auto-optimise-store is already on)
 
 - Everything is declarative: edit `.nix`, `git add`, `nixos-rebuild switch`.
 - **Machine-specific UUIDs live only in `hardware-configuration.nix`.** Before
-  first install, fill the real LUKS/ESP UUIDs (from `blkid`) there. The repo
-  must not ship placeholder `<LUKS-UUID>` / `<ESP-UUID>` values — a rebuild
-  with placeholders produces a system that can't unlock the disk / mount `/nix`.
+  first install, fill the real ROOT/ESP UUIDs (from `blkid`) there. The repo
+  must not ship placeholder `<ROOT-UUID>` / `<ESP-UUID>` values — a rebuild
+  with placeholders produces a system that can't mount `/nix` or `/boot`.
 - `system.stateVersion` and `home.stateVersion` are pinned at first install and
   must **not** be bumped on upgrade (they control upgrade-compat behaviour).
 
@@ -111,7 +108,7 @@ laptop and re-apply it after a push — or commit the real UUIDs into the repo.
 ## Performance & security baselines
 
 - **Performance**: `flake-parts` perSystem caching, `nix.settings` (`max-jobs auto`, `cores 0`, `auto-optimise-store`, `keep-derivations false`), `nix.gc` weekly, `zramSwap` zstd 25%, `boot.kernel.sysctl` BBR/fq + `vm.swappiness 10`, `services.resolved` cache, CN mirror substituters.
-- **Security**: `networking.firewall` closed (only 22), `services.openssh` `PermitRootLogin no` (flip `PasswordAuthentication` to `false` after agenix), `age` via `agenix` (tmpfs `/run/agenix.d`), `LUKS` (`/dev/mapper/cryptroot`), `security.sudo.execWheelOnly`, `boot.kernel.sysctl` (`kptr_restrict`, `ptrace_scope`), `nix.settings.trusted-users = [ root @wheel ]`, `nix.channel.enable = false`.
+- **Security**: `networking.firewall` closed (only 22), `services.openssh` `PermitRootLogin no` (flip `PasswordAuthentication` to `false` after agenix), `age` via `agenix` (tmpfs `/run/agenix.d`), `security.sudo.execWheelOnly`, `boot.kernel.sysctl` (`kptr_restrict`, `ptrace_scope`), `nix.settings.trusted-users = [ root @wheel ]`, `nix.channel.enable = false`.
 - **CI**: `nix flake check` runs `checks/miyu.nix` VM smoke + `nix fmt --check`; add more VM tests under `checks/` and wire in `flake-parts/checks.nix`.
 
 ## Secrets

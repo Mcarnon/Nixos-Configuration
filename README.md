@@ -5,10 +5,10 @@
 - **flake-parts** standardized entry (perSystem memoization, `nix flake check` parallelism)
 - **Flake + Home Manager** declarative management
 - **disko** partitioning as code (tmpfs root + fine-grained btrfs subvolumes)
-- **LUKS** full-disk encryption (single passphrase, encrypted swap) + hardware HAL (`hardware.intel.enable`)
+- hardware HAL (`hardware.intel.enable`)
 - **agenix** secrets management (age-encrypted, decrypt only on the target host)
 - **roles/** host composition (base/desktop) — cross-host reuse without double-eval
-- **niri** scrollable-tiling Wayland compositor + **Clavis**（Quickshell 桌面壳）：ly 登录 + keystone 状态栏 + Spotlight 启动器 + 控制中心 + 锁屏 + Matugen M3 动态主题
+- **niri** scrollable-tiling Wayland compositor + **Clavis**（Quickshell 桌面壳）：ly 登录 + keystone 状态栏 + Spotlight 启动器 + 控制中心 + 锁屏 + Matugen M3 动态主题 + niri 动态模糊
 - **Intel Iris Xe** graphics acceleration (VA-API) via `modules/hardware/intel.nix`
 - **Chinese environment** (locale + fonts + Fcitx5 input method)
 - **Miyu** terminal AI assistant via overlay `pkgs.miyu` + `home/modules/miyu.nix`
@@ -77,11 +77,10 @@ To add e.g. Japanese:
 Several regions can be enabled at once; only `locales.defaultLocale` is a
 single value.
 
-## Disk layout (tmpfs + LUKS + btrfs subvolumes)
+## Disk layout (tmpfs + btrfs subvolumes)
 
 - The root filesystem `/` is mounted as **tmpfs** and is wiped on every reboot ("erase your darlings").
-- Everything persistent lives on btrfs subvolumes inside a single **LUKS** container
-  (one passphrase at boot; unlocked as `/dev/mapper/cryptroot`):
+- Everything persistent lives on btrfs subvolumes on the root partition:
 
 | subvolume | mountpoint | contents |
 |-----------|------------|----------|
@@ -89,10 +88,9 @@ single value.
 | `@var`  | `/var`  | logs, runtime state |
 | `@etc`  | `/etc`  | machine-id, SSH host keys, etc. |
 | `@home` | `/home` | user data |
-| `@swap` | `/swap` | swapfile (encrypted, used for hibernation) |
+| `@swap` | `/swap` | swapfile (used for hibernation) |
 
-`/boot` is a separate EFI system partition (ESP), kept unencrypted so UEFI/GRUB
-can load the kernel.
+`/boot` is a separate EFI system partition (ESP) so UEFI/GRUB can load the kernel.
 
 ## SSH remote sync / deploy
 
@@ -127,9 +125,7 @@ to erase the disk completely first, e.g. for an SSD reinstall:
    ```
 2. Set the target disk in `hosts/laptop/disko-fs.nix`
    (`device = "/dev/nvme0n1"`, or `/dev/disk/by-id/...`).
-3. Partition, format, create subvolumes and mount (wipes the target disk; you'll
-   be prompted to set the **LUKS passphrase** — remember it, it unlocks the disk
-   at every boot):
+3. Partition, format, create subvolumes and mount (wipes the target disk):
    ```bash
    sudo nix run github:nix-community/disko/latest -- \
      --mode destroy,format,mount ./hosts/laptop/disko-fs.nix
@@ -147,10 +143,9 @@ to erase the disk completely first, e.g. for an SSD reinstall:
    sudo nixos-generate-config --root /mnt
    blkid
    ```
-   Replace the placeholders `<LUKS-UUID>` / `<ESP-UUID>` in
+   Replace the placeholders `<ROOT-UUID>` / `<ESP-UUID>` in
    `/mnt/home/<user>/Nixos-Configuration/hosts/laptop/hardware-configuration.nix`
-   with the real LUKS / ESP UUIDs. (The btrfs subvolumes already reference the
-   unlocked mapper `/dev/mapper/cryptroot`, so no btrfs UUID is needed.)
+   with the real btrfs root / ESP UUIDs.
 6. (Optional) If you want hibernation, measure the swapfile resume offset and
    fill it in `hardware-configuration.nix` (see the comment at the bottom of
    that file).
@@ -161,7 +156,7 @@ to erase the disk completely first, e.g. for an SSD reinstall:
    git add -A
    sudo nixos-install --flake .#laptop
    ```
-8. Reboot and log in via **ly** into niri (enter the LUKS passphrase at boot).
+8. Reboot and log in via **ly** into niri.
    The repo now lives at `~/Nixos-Configuration`; see
    [MAINTENANCE.md](MAINTENANCE.md) for everything after that.
 
@@ -172,7 +167,7 @@ Reinstalling later is the same flow — disko's `destroy` step handles the wipe.
 | Location | What |
 |----------|------|
 | `hosts/laptop/disko-fs.nix` | target disk `device` |
-| `hosts/laptop/hardware-configuration.nix` | LUKS / ESP UUIDs + swapfile resume offset |
+| `hosts/laptop/hardware-configuration.nix` | ROOT / ESP UUIDs + swapfile resume offset |
 | `hosts/laptop/default.nix` | `userName`/`hostName`/`stateVersion` + `hardware.intel.enable` + `roles/nixos/desktop` vs `base` |
 | `hosts/laptop/niri-hardware.kdl` | display resolution / scale |
 | `modules/nixos/network/openssh.nix` | remote IP / user |
@@ -189,7 +184,7 @@ Reinstalling later is the same flow — disko's `destroy` step handles the wipe.
 - **polkit auth agent**: `polkit_gnome` 在 `modules/nixos/desktop/niri.nix` 以 `graphical-session` 服务运行。
 - **Miyu**: `pkgs.miyu` overlay + `modules/home/services/miyu.nix` 的 `fish/conf.d/zz-miyu.fish` + `home.activation.miyuInit`；`miyu config` 配置。
 - **Performance**: `flake-parts` perSystem 缓存，`nix.gc` weekly，`zramSwap` zstd，`BBR/fq`，`services.resolved` 缓存。
-- **Security**: `agenix` `/run/agenix.d` tmpfs，`LUKS`，`networking.firewall` 默认关，`PermitRootLogin no`。
+- **Security**: `agenix` `/run/agenix.d` tmpfs，`networking.firewall` 默认关，`PermitRootLogin no`。
 - **XWayland**: off by default; configure `xwayland-satellite` per the niri docs if you need X11 apps.
 - **Lock screen**: Clavis 锁屏 bound to `Super+Alt+L`；suspend combo `Mod+Alt+P` 先锁后挂。
 - **Wallpaper**: 图片丢进 `~/Pictures/Wallpapers/`，`Mod+F10` 随机切换（`key ipc call wallpaper random`，awww 引擎）。
