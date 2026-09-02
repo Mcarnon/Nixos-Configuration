@@ -36,9 +36,11 @@ let
       weatherEnabled = true;
     };
     general.avatarImage = "${home}/.face";
-    # 默认开启完整外观与桌面组件，避免登录后只有灰屏。
+    # 禁用 Noctalia 壁纸（由 mpvpaper 接管动态壁纸）。
+    # 注意：disableWallpaper = true 时，Noctalia IPC 的 wallpaper random 等命令不再生效，
+    # 需改用 wallpaper-rotate 脚本。
     noctaliaPerformance = {
-      disableWallpaper = false;
+      disableWallpaper = true;
       disableDesktopWidgets = false;
     };
     controlCenter.cards = [
