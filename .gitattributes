@@ -17,6 +17,9 @@
 *.md text eol=lf
 *.lock text eol=lf
 
+# 无扩展名的可执行脚本（home-manager writeShellScriptBin 源文件等）保持 LF
+modules/**/bin/* text eol=lf
+
 # 二进制/字体等保持原样
 *.png binary
 *.jpg binary
