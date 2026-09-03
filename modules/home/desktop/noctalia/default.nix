@@ -243,10 +243,14 @@ in
     ../../../../wallpapers/wallhaven-d88d53.png;
   # 把 store 里的 noctalia 配置复制到 ~/.config/noctalia（可写，比软链更适合
   # noctalia 运行时改 settings.json / colors.json / 模板输出）。
+<<<<<<< HEAD
   # 策略：
   #   - 首次：复制整个 noctaliaConfig。
   #   - 后续：保留 settings.json / colors.json / user-templates.toml 的用户修改，
   #     但用 Nix overrides 与当前 settings.json 做深度合并；同步 templates 与 plugins.json。
+=======
+  # 首次 rebuild 时复制基础配置，之后保留用户修改。
+>>>>>>> 70cfd8ce67cee51cc752c7f7d1dc9387c313637c
   home.activation.copyNoctaliaConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     NOCTALIA_DIR="${home}/.config/noctalia"
     mkdir -p "${home}/.config"
@@ -255,6 +259,7 @@ in
     if [ -L "$NOCTALIA_DIR" ]; then
       rm -rf "$NOCTALIA_DIR"
     fi
+<<<<<<< HEAD
 
     if [ ! -d "$NOCTALIA_DIR" ]; then
       # 首次：复制完整基础配置
@@ -282,6 +287,15 @@ in
       fi
     fi
 
+=======
+    # 只有在配置目录不存在时才复制基础配置（保留用户修改）
+    if [ ! -d ~/.config/noctalia ]; then
+      mkdir -p ~/.config/noctalia
+      cp -r --no-preserve=mode,ownership ${noctaliaConfig}/. ~/.config/noctalia/
+      # 确保 Noctalia 运行时可以改写 settings.json / colors.json / 模板输出。
+      chmod -R u+w ~/.config/noctalia
+    fi
+>>>>>>> 70cfd8ce67cee51cc752c7f7d1dc9387c313637c
     # 首次给 kitty 种子一个可写的 current-theme.conf（只读 store 软链会阻止
     # Noctalia 的 kitty 模板覆盖它，这里用备份复制解决）。
     mkdir -p "${home}/.config/kitty"
