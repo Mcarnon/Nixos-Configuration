@@ -4,6 +4,16 @@
 // Hide window title bars (no CSD).
 prefer-no-csd
 
+// Noctalia v5 floating settings window (rounded + sized).
+window-rule {
+    match app-id="dev.noctalia.Noctalia"
+    geometry-corner-radius 20
+    clip-to-geometry true
+    open-floating true
+    default-column-width { fixed 1080; }
+    default-window-height { fixed 920; }
+}
+
 input {
     keyboard {
         xkb {

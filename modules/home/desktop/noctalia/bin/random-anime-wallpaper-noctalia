@@ -18,7 +18,7 @@ set -euo pipefail
 #   -h: 显示帮助信息
 #
 # 依赖:
-#   curl, file, notify-send, ImageMagick (magick 或 convert), qs
+#   curl, file, notify-send, ImageMagick (magick 或 convert), noctalia (IPCCLI)
 # =============================================================================
 
 # ================= 默认配置 =================
@@ -137,8 +137,8 @@ rm -f "$RAW_PATH"
 
 # --- 3. 应用模块（Noctalia IPC） ---
 
-# 使用 qs 包装器调用 noctalia-shell 的 ipc，并将 monitor 参数设为 all
-qs -c noctalia-shell ipc call wallpaper set "$FINAL_PATH" all
+# 使用 noctalia v5 的 ipc 设置壁纸（应用到所有显示器）
+noctalia msg wallpaper-set "$FINAL_PATH"
 
 # --- 4. 钩子与清理 ---
 (

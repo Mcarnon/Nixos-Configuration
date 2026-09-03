@@ -1,9 +1,9 @@
-# Desktop (niri + Noctalia) 维护手册
+# Desktop (niri + Noctalia v5) 维护手册
 
-> 2026-09 迁移记录：桌面壳由 Clavis 切换为 **Noctalia**（nixpkgs
-> `noctalia-shell`），并完整迁移 SHORiN 的 Noctalia 配置（settings.json、
-> colors.json、templates、user-templates.toml、niri 配色、随机动漫壁纸脚本）。
-> 登录仍是 ly，niri 合成器不变。
+> 2026-09 迁移记录：桌面壳由 Clavis 切换为 **Noctalia**，随后升级到
+> **v5**（原生 C++/TOML，IPC 从 `qs -c noctalia-shell ipc call` 改为
+> `noctalia msg`）。SHORiN 外观用 v5 TOML 复刻（config/config.toml +
+> templates.toml）。登录仍是 ly，niri 合成器不变。
 
 ## 各文件职责
 
@@ -18,15 +18,16 @@
 | `home/niri/startup.kdl` | 启动项（xwayland-satellite / nm-applet / 环境导入） |
 | `home/niri/noctalia-static.kdl` | SHORiN 默认 niri 配色（登录后首次 niri reload 前兜底） |
 | `hosts/laptop/niri-hardware.kdl` | 本机显示器输出 |
-| `modules/home/desktop/noctalia/default.nix` | Noctalia：包/qs/qt6ct + systemd 用户服务 + 配置复制 + 默认壁纸 + 随机壁纸脚本 |
-| `modules/home/desktop/noctalia/config/` | SHORiN 的完整 Noctalia 配置（settings-base.json、colors.json、plugins.json、templates、user-templates.toml） |
+| `modules/home/desktop/noctalia/default.nix` | Noctalia v5：官方 home 模块 + systemd 用户服务 + TOML 配置 + 默认壁纸 + 随机壁纸脚本 |
+| `modules/home/desktop/noctalia/config/config.toml` | v5 主配置（复刻 SHORiN 外观：bar/组件/主题/壁纸/dock/osd） |
+| `modules/home/desktop/noctalia/config/templates.toml` | v5 用户模板（fcitx5 / gtk-folder） |
 | `modules/home/desktop/appearance.nix` | 光标 volantes / GTK adw-gtk3-dark / 图标 Papirus / fcitx 桥接 / fontconfig |
 | `modules/home/apps/gui.nix` | foot/thunar/nautilus/imv/satty + Thunar 配置 |
 
 ## 启动链路
 
 `ly (tty1)` → 选 niri 会话 → `niri-session-wrapper`（激活
-`graphical-session.target`）→ niri.service → 拉起 noctalia-shell /
+`graphical-session.target`）→ niri.service → 拉起 noctalia /
 polkit / fcitx5 用户服务；`startup.kdl` 再起 xwayland-satellite、
 nm-applet。
 
@@ -45,7 +46,7 @@ nm-applet。
 | `Alt+Tab` | niri 窗口总览切换 |
 | `Print` / `Ctrl+Print` / `Alt+Print` | 区域 / 全屏 / 窗口截图 |
 | `Mod+Shift+S` | satty 编辑最后截图 |
-| `Mod+F10` | 随机壁纸（`qs -c noctalia-shell ipc call wallpaper random`） |
+| `Mod+F10` | 随机壁纸（`noctalia msg wallpaper-random`） |
 | `Super+Alt+L` | Noctalia 锁屏 |
 | `Mod+Alt+P` | 锁屏 + 挂起 |
 
@@ -54,18 +55,21 @@ nm-applet。
 - 改键位 → `home/niri/binds.kdl`（`Mod+Shift+Slash` 可查当前生效键位）。
 - 改 niri → `nixos-rebuild switch` 后 `niri msg action quit` 重进会话。
   注意：niri 配置是 store 软链，不能直接改 `~/.config/niri` 下的文件。
-- 改 Noctalia 外观/壁纸 → Noctalia 设置中心（控制中心 → 设置），运行时写入
-  `~/.config/noctalia/`；主题色由 Noctalia 按壁纸生成。
-- Noctalia 重启 → `systemctl --user restart noctalia-shell`。
+- 改 Noctalia 外观/壁纸 → Noctalia 设置中心（控制中心 → 设置），GUI 覆盖写入
+  `~/.local/state/noctalia/settings.toml`；声明式配置在
+  `modules/home/desktop/noctalia/config/config.toml`（用户层，GUI 覆盖优先）。
+  主题色由 Noctalia 按壁纸原生生成（`[theme].source = "wallpaper"`）。
+- Noctalia 重启 → `systemctl --user restart noctalia`。
 - 换壁纸目录 → 图放 `~/Pictures/Wallpapers/`（Noctalia 壁纸选择器从这里选）。
 - 随机动漫壁纸 → `random-anime-wallpaper-noctalia`（下载到
   `~/Pictures/Wallpapers/api-random-download`）。
 
 ## 已知取舍
 
-- `noctalia-shell` / `noctalia-qs` 来自 nixpkgs，升级 = 更新 flake.lock。
-- Noctalia 模板会按壁纸生成 GTK（`~/.config/gtk-*/noctalia.css`）、niri
-  配色（`~/.config/niri/noctalia.kdl`）、btop/cava/fuzzel/kitty 主题等。
-  这些文件由 Noctalia 运行时管理，Nix 只提供初始配置和模板源文件。
+- Noctalia v5 来自 flake 输入 `github:noctalia-dev/noctalia`（配 Cachix
+  二进制缓存），升级 = `nix flake update noctalia`（或更新 flake.lock）。
+- Noctalia v5 模板会按壁纸生成 GTK（`~/.config/gtk-*/noctalia.css`）、niri
+  配色（`~/.config/niri/noctalia.kdl`）等；这些文件由 Noctalia 运行时管理，
+  Nix 只提供初始配置和模板源文件（templates/、templates.toml）。
 - 锁屏是 Noctalia 自带；休眠组合 `Mod+Alt+P` 会锁屏后挂起。
 - 通知由 Noctalia 接管（`layer-rule` 里把 notification 命名空间排除出录屏）。

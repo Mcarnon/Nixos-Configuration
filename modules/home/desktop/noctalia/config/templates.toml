@@ -1,0 +1,18 @@
+# Noctalia v5 用户模板 — 复刻 v4 的 user-templates.toml。
+# 模板引擎由 [theme.templates] 管理（v5 原生支持壁纸取色渲染）。
+
+[theme.templates]
+enable_builtin_templates   = true
+enable_community_templates = false
+
+# ---- fcitx5 主题（v4 同名模板迁移）----
+[theme.templates.user.fcitx5]
+input_path  = "~/.config/noctalia/templates/fcitx5-theme.conf"
+output_path = "~/.local/share/fcitx5/themes/Matugen/theme.conf"
+post_hook   = "fcitx5 -r & disown"
+
+# ---- GTK 文件夹图标重着色（v4 gtk-folder 模板迁移）----
+[theme.templates.user.gtk-folder]
+input_path  = "~/.config/noctalia/templates/gtk-folder/recolor.sh"
+output_path = "~/.cache/matugen/recoloricons.sh"
+post_hook   = "bash ~/.cache/matugen/recoloricons.sh &"

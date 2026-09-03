@@ -1,0 +1,140 @@
+# Noctalia v5 配置 — SHORiN 外观迁移（保留 v4 的 bar/组件/字体/配色/壁纸风格）。
+#
+# 说明：
+#   - v4 的 JSON settings 在此改为 TOML（v5 配置模型）。
+#   - IPC/服务由官方 home 模块与 `noctalia msg` 接管。
+#   - 壁纸配色原生生成（[theme].source = "wallpaper"），不再依赖 matugen。
+
+[shell]
+font_family = "LXGW WenKai"
+lang = "zh_CN.UTF-8"
+avatar_path = "~/.face"
+telemetry_enabled = false
+clipboard_enabled = true
+launch_apps_as_systemd_services = true
+app_icon_colorize = false
+niri_overview_type_to_launch_enabled = false
+
+# ---- 主题：沿用 v4 深色 + 壁纸取色 (m3 tonal-spot) ----
+[theme]
+mode              = "dark"
+shell_mode        = "follow"
+source            = "wallpaper"
+wallpaper_scheme  = "m3-tonal-spot"
+pure_black_dark   = false
+
+# ---- 位置（v4 location: Shanghai）----
+[location]
+name = "Shanghai"
+show_weather = true
+
+# ---- 壁纸：目录固定在 ~/Pictures/Wallpapers，轮换/过渡沿用 v4 ----
+[wallpaper]
+enabled             = true
+directory           = "~/Pictures/Wallpapers"
+fill_mode           = "crop"
+transition          = ["fade", "disc", "stripes", "wipe", "pixelate", "honeycomb"]
+transition_duration = 1500
+edge_smoothness     = 0.05
+
+[wallpaper.automation]
+enabled = false
+
+# ---- overview backdrop（niri 的 blurred+tint 壁纸背景，对应 v4 overview blur/tint）----
+[backdrop]
+enabled        = true
+blur_intensity = 0.4
+tint_intensity = 0.6
+
+# ---- 顶栏：SHORiN 浮动胶囊风格 ----
+[bar]
+order = ["main"]
+
+[bar.default]
+position           = "top"
+enabled            = true
+auto_hide          = false
+smart_auto_hide    = false
+reserve_space      = true
+background_opacity = 0.93
+radius             = 12
+margin_edge        = 4
+margin_ends        = 8
+padding            = 2
+widget_spacing     = 6
+scale              = 1.0
+font_scale         = 1.0
+capsule            = true
+capsule_opacity    = 1.0
+hover_highlight    = true
+start              = ["launcher", "clock", "sysmon_cpu", "sysmon_mem", "active_window", "media"]
+center             = ["workspaces"]
+end                = ["tray", "notifications", "battery", "volume", "brightness", "control-center"]
+
+# ---- 组件：复刻 v4 的 SHORiN 配置 ----
+[widget.launcher]
+glyph = "rocket"
+
+[widget.workspaces]
+labels_only_when_occupied = true
+focused_color             = "primary"
+occupied_color            = "secondary"
+empty_color               = "secondary"
+hide_when_empty           = false
+
+[widget.clock]
+format = "{:%H:%M %a, %b %d}"
+
+[widget.sysmon_cpu]
+type    = "sysmon"
+stat    = "cpu_usage"
+show_glyph = true
+
+[widget.sysmon_mem]
+type       = "sysmon"
+stat       = "memory_usage"
+show_glyph = true
+
+[widget.active_window]
+title_scroll = "on_hover"
+display      = "icon_and_text"
+max_length   = 145
+
+[widget.media]
+artist_first   = true
+hide_album_art = false
+max_length     = 145
+title_scroll   = "on_hover"
+
+[widget.tray]
+drawer       = true
+hide_passive = false
+
+[widget.battery]
+display_mode = "graphic"
+show_label   = true
+
+# ---- Dock：沿用 v4（底部、浮动、自动隐藏）----
+[dock]
+enabled             = true
+position            = "bottom"
+auto_hide           = true
+background_opacity  = 0.88
+radius              = 16
+margin_ends         = 0
+margin_edge         = 0
+show_running        = true
+active_scale        = 1.0
+inactive_scale      = 0.85
+magnification       = true
+launcher_position   = "end"
+launcher_icon       = "grid-dots"
+
+# ---- OSD：位置沿用 v4 的 top_right ----
+[osd]
+position          = "top_right"
+position_vertical = "center_right"
+background_opacity = 0.97
+border            = true
+offset_x          = 20
+offset_y          = 8

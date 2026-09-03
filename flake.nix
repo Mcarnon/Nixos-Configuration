@@ -1,13 +1,17 @@
 {
-  description = "NixOS + Home Manager: niri + Noctalia (Quickshell) on an Intel laptop";
+  description = "NixOS + Home Manager: niri + Noctalia v5 on an Intel laptop";
 
   # Binary caches: CN mirrors (priority=5 means prefer mirrors
   # over the default cache.nixos.org priority 40).
   nixConfig = {
     extra-substituters = [
+      "https://noctalia.cachix.org"
       "https://mirrors.ustc.edu.cn/nix-channels/store?priority=5"
       "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store?priority=5"
       "https://mirror.sjtu.edu.cn/nix-channels/store?priority=5"
+    ];
+    extra-trusted-public-keys = [
+      "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4="
     ];
   };
 
@@ -31,6 +35,12 @@
       url = "github:0xc000022070/zen-browser-flake";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.home-manager.follows = "home-manager";
+    };
+
+    # Noctalia v5 — native C++ desktop shell
+    noctalia = {
+      url = "github:noctalia-dev/noctalia";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 

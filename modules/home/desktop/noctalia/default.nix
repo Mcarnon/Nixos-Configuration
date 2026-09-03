@@ -1,223 +1,100 @@
-# Noctalia Shell — SHORiN 配置完整迁移到 NixOS。
+# Noctalia v5 — SHORiN 外观迁移（原生 C++/TOML）。
 #
-# 包含：
-#   - pkgs.noctalia-shell / noctalia-qs（IPC）/ qt6ct
-#   - 把 SHORiN 的 ~/.config/noctalia 完整复制进 home
-#   - settings.json 由 Nix 生成，替换用户名/壁纸路径/字体/城市等
-#   - systemd 用户服务，等 WAYLAND_DISPLAY 就绪后再启动
-#   - 随机动漫壁纸脚本 ~/.local/bin/random-anime-wallpaper-noctalia
+# Noctalia v5 是全新一代（Quickshell v4 → 原生 C++/OpenGL ES），
+# 配置从 JSON 改为 TOML，IPC 从 `qs -c noctalia-shell ipc call` 改为
+# `noctalia msg`，随附官方的 Home Manager 模块（programs.noctalia）。
+#
+# 本模块：
+#   - 使用官方 homeModules.default（提供包 + systemd 用户服务）
+#   - 以 v4 的 SHORiN 外观为准，用 v5 TOML 复刻（bar/widgets/字体/配色/壁纸）
+#   - 把 Noctalia 各面板常用的外部工具放进 PATH（noctalia-launch 旧逻辑已由
+#     官方 systemd 服务替代，这里保留工具清单以保证模板/脚本可用）
+  #   - 随机动漫壁纸脚本 ~/.local/bin/random-anime-wallpaper-noctalia（改为 noctalia msg）
 {
   config,
   pkgs,
   lib,
+  inputs,
   ...
 }:
 let
   home = config.home.homeDirectory;
   wallpaperDir = "${home}/Pictures/Wallpapers";
+  system = pkgs.stdenv.hostPlatform.system;
+  noctaliaModule = inputs.noctalia.homeModules.default;
+  noctaliaPkg = inputs.noctalia.packages."${system}".default;
 
-  # 以 SHORiN 的 settings.json 为底，覆写必须跟本机一致的路径/字体/城市。
-  baseSettings = builtins.fromJSON (builtins.readFile ./config/settings-base.json);
-  # kitty 兜底主题（激活时复制，运行时会被 Noctalia 的 kitty 模板覆盖）。
-  kittyNoctaliaConf = ../../../../home/files/kitty/current-theme.conf;
-  # kitty/foot 基配置 + qt6ct 图标主题配置（激活时复制为可写副本；kitty.conf 与
-  # foot.ini 会被 Noctalia 的 apply.sh 注入 include，qt6ct 保存设置时需要可写）。
-  kittyBaseConf = ../../../../home/files/kitty.conf;
-  footBaseConf = ../../../../home/files/foot.ini;
-  qt6ctBaseConf = ../../../../home/files/qt6ct/qt6ct.conf;
+  # v5 TOML 配置（复刻 SHORiN 外观；模板目录引用保持在 config/templates）。
+  noctaliaConfig = pkgs.writeText "noctalia-config.toml" (builtins.readFile ./config/config.toml);
 
-  # Nix 想管理的字段（会和 ~/.config/noctalia/settings.json 做深度合并）。
-  # 注意：不要放 settingsVersion，保留 Noctalia 运行时自己维护的版本号。
-  noctaliaOverrides = {
-    appLauncher.terminalCommand = "foot";
-    ui = {
-      fontDefault = "LXGW WenKai";
-      fontFixed = "Maple Mono NF CN";
-    };
-    location = {
-      name = "Shanghai";
-      weatherEnabled = true;
-    };
-    general.avatarImage = "${home}/.face";
-    # 启用 Noctalia 原生壁纸管理（含动态壁纸轮换）。
-    noctaliaPerformance = {
-      disableWallpaper = false;
-      disableDesktopWidgets = false;
-    };
-    controlCenter.cards = [
-      { enabled = true; id = "profile-card"; }
-      { enabled = true; id = "shortcuts-card"; }
-      { enabled = true; id = "audio-card"; }
-      { enabled = true; id = "brightness-card"; }
-      { enabled = true; id = "weather-card"; }
-      { enabled = true; id = "media-sysmon-card"; }
-    ];
-    desktopWidgets.enabled = true;
-    # Nix 只固定壁纸目录路径；具体显示器配置、轮换间隔、过渡动画等保留给 Noctalia UI。
-    wallpaper = {
-      enabled = true;
-      directory = wallpaperDir;
-    };
-    colorSchemes.syncGsettings = true;
-    # 启用 Noctalia 内置 foot 模板（输出 ~/.config/foot/themes/noctalia，
-    # apply.sh 会往 ~/.config/foot/foot.ini 注入 include），让 foot 与 kitty
-    # 一样跟随壁纸动态换色（Shorin 风格）。
-    templates.activeTemplates =
-      (baseSettings.templates.activeTemplates or [ ])
-      ++ [ { enabled = true; id = "foot"; } ];
-  };
-
-  noctaliaSettings = lib.recursiveUpdate baseSettings noctaliaOverrides;
-
-  noctaliaOverridesJson = pkgs.writeText "noctalia-overrides.json" (builtins.toJSON noctaliaOverrides);
-  noctaliaBaseSettingsJson = pkgs.writeText "noctalia-base-settings.json" (builtins.toJSON noctaliaSettings);
-
-  # 把配置目录放进 store，其中 settings.json 是 Nix 生成的完整版本（首次复制用）。
-  noctaliaConfig = pkgs.runCommand "noctalia-config" { } ''
-    mkdir -p $out
-    cp -r ${./config}/* $out/
-    rm -f $out/settings-base.json
-    cp ${pkgs.writeText "settings.json" (builtins.toJSON noctaliaSettings)} $out/settings.json
-  '';
-
-  # 用 Python 深度合并当前 settings.json 与 Nix overrides，保留用户修改的同时应用 Nix 更新。
-  # 关键：settingsVersion 与 colorSchemes 的用户设置（如 darkMode）必须保留，避免 rebuild 后主题被重置。
-  mergeNoctaliaSettings = pkgs.writeShellScriptBin "merge-noctalia-settings" ''
-    set -euo pipefail
-    export PATH="${lib.makeBinPath [ pkgs.python3 pkgs.coreutils ]}:$PATH"
-
-    CURRENT="$1"
-    OVERRIDES="$2"
-
-    if [ ! -f "$CURRENT" ]; then
-      echo "Current settings not found: $CURRENT" >&2
-      exit 1
-    fi
-
-    # 备份当前设置，方便手动回滚
-    cp "$CURRENT" "$CURRENT.bak.$(date +%s)"
-
-    python3 - <<PY
-import json
-import os
-
-def deep_merge(base, override):
-    for key, value in override.items():
-        if key in base and isinstance(base[key], dict) and isinstance(value, dict):
-            deep_merge(base[key], value)
-        else:
-            base[key] = value
-    return base
-
-current_path = os.environ.get("CURRENT") or "$CURRENT"
-overrides_path = os.environ.get("OVERRIDES") or "$OVERRIDES"
-
-with open(current_path, encoding="utf-8") as f:
-    current = json.load(f)
-with open(overrides_path, encoding="utf-8") as f:
-    overrides = json.load(f)
-
-# 记录合并前的用户关键字段
-before_version = current.get("settingsVersion")
-before_color = current.get("colorSchemes", {})
-print(f"[noctalia-merge] before: settingsVersion={before_version}, darkMode={before_color.get('darkMode')}, scheme={before_color.get('predefinedScheme')}, scheduling={before_color.get('schedulingMode')}")
-
-# 执行深度合并
-merged = deep_merge(current, overrides)
-
-# 保留 Noctalia 运行时维护的版本号（Nix overrides 里不应包含它）
-if "settingsVersion" in current and "settingsVersion" not in overrides:
-    merged["settingsVersion"] = current["settingsVersion"]
-
-# 保留 colorSchemes 中用户通过 UI 修改的字段（Nix 只管理 syncGsettings）
-user_color_keys = [
-    "darkMode", "predefinedScheme", "schedulingMode",
-    "generationMethod", "useWallpaperColors",
-    "manualSunrise", "manualSunset", "monitorForColors",
-]
-if "colorSchemes" in current and "colorSchemes" in overrides:
-    for key in user_color_keys:
-        if key in current["colorSchemes"] and key not in overrides["colorSchemes"]:
-            merged["colorSchemes"][key] = current["colorSchemes"][key]
-
-after_version = merged.get("settingsVersion")
-after_color = merged.get("colorSchemes", {})
-print(f"[noctalia-merge] after:  settingsVersion={after_version}, darkMode={after_color.get('darkMode')}, scheme={after_color.get('predefinedScheme')}, scheduling={after_color.get('schedulingMode')}")
-
-with open(current_path, "w", encoding="utf-8") as f:
-    json.dump(merged, f, ensure_ascii=False, indent=4)
-PY
-  '';
-
-  # Noctalia 组件依赖的运行时工具。注意：noctalia-launch 会把它前置到
-  # 进程 PATH 最前面，因此这里必须列出 noctalia-shell 运行时所有可能调用
-  # 的外部命令，包括原本由 noctalia-shell 的 Qt wrapper 注入 PATH 的
-  # runtimeDeps。
+  # Noctalia 面板/脚本运行时依赖的外部命令（旧 noctaliaTools 清单的 v5 保留版）。
   noctaliaTools = with pkgs; [
-    systemd                 # systemctl --user
-    bash                    # /bin/sh —— Noctalia 内部 QProcess 调用 "sh" 执行脚本
-    coreutils               # seq/sleep/df/cat/...
-    gnugrep                 # grep
-    gnused                  # sed
-    gawk                    # awk
-    findutils               # find/xargs
-    procps                  # ps/free/top —— SystemStat 等系统监控
-    networkmanager          # nmcli —— Wi-Fi/以太网面板、连接管理
-    wireplumber             # wpctl —— 音量/静音（AudioService 首选控制通道）
-    wtype                   # 键盘模拟（锁屏密码框自动输入等）
-    util-linux              # rfkill —— 飞行模式开关
-    power-profiles-daemon   # powerprofilesctl —— 电源模式面板
-    brightnessctl           # 亮度调节
-    pamixer                 # 音量/静音（备用音频控制）
-    playerctl               # 媒体控制
-    cliphist                # 剪贴板历史
-    wl-clipboard            # 剪贴板读写
-    wlr-randr               # 显示器配置/查询
-    bluez                   # bluetoothctl —— 蓝牙面板
-    imagemagick             # 壁纸/缩略图处理
-    xdg-utils               # xdg-open —— 状态栏点击打开应用/链接
-    wlsunset                # 夜灯/色温
-    ddcutil                 # 外接显示器 DDC 亮度
-    wget                    # 壁纸下载等（noctalia-shell 的 runtimeDeps）
-    matugen                 # 从壁纸生成配色/主题/图标颜色（Noctalia 核心）
-    glib.bin                # gsettings/dconf/gio —— GTK 模板 apply.sh 与 recolor.sh 依赖
+    bash                    # /bin/sh —— 模板 post_hook 等脚本
+    coreutils
+    gnugrep
+    gnused
+    gawk
+    findutils
+    procps                  # ps/free/top —— sysmon 等
+    networkmanager          # nmcli —— Wi-Fi/网络
+    wireplumber             # wpctl —— 音量/静音
+    wtype                   # 键盘模拟（锁屏）
+    util-linux              # rfkill
+    power-profiles-daemon   # powerprofilesctl
+    brightnessctl
+    pamixer
+    playerctl
+    cliphist
+    wl-clipboard
+    wlr-randr
+    bluez                   # bluetoothctl
+    imagemagick
+    xdg-utils
+    wlsunset
+    ddcutil
+    wget
+    glib.bin                # gsettings/dconf —— GTK 模板 apply.sh 依赖
   ];
-
-  # 等 niri 把 WAYLAND_DISPLAY 写进 systemd user 环境后，再把它读出来并启动 noctalia。
-  noctaliaLaunch = pkgs.writeShellScriptBin "noctalia-launch" ''
-    # 把 Noctalia 需要的工具前置到 PATH，同时保留原有 PATH（这样
-    # noctalia-shell 的 Qt wrapper 后续追加自己的 runtimeDeps 时不会丢失它们）。
-    PATH="${lib.makeBinPath noctaliaTools}:$PATH"
-    for i in $(seq 1 60); do
-      if systemctl --user show-environment 2>/dev/null | grep -q '^WAYLAND_DISPLAY='; then
-        eval "$(${pkgs.systemd}/bin/systemctl --user show-environment 2>/dev/null | \
-          ${pkgs.gnugrep}/bin/grep -E '^(WAYLAND_DISPLAY|XDG_CURRENT_DESKTOP|XDG_SESSION_TYPE|XDG_RUNTIME_DIR)=' | \
-          ${pkgs.coreutils}/bin/sed 's/^/export /')"
-        exec ${pkgs.noctalia-shell}/bin/noctalia-shell
-      fi
-      sleep 0.5
-    done
-    echo "noctalia-shell: WAYLAND_DISPLAY not found in systemd user environment" >&2
-    exit 1
-  '';
 in
 {
+  imports = [ noctaliaModule ];
+
   home.packages = with pkgs; [
-    noctalia-shell
-    noctalia-qs # `qs -c noctalia-shell ipc call ...` 的 IPC 引擎
-    qt6Packages.qt6ct
+    qt6Packages.qt6ct # 其他 Qt 桌面应用的图标/主题（v4 时代延续；noctalia v5 本身用不到）
     libnotify # random-anime-wallpaper-noctalia 的 notify-send
-    cava      # 对应 activeTemplates 里的 cava
-    fuzzel    # 对应 activeTemplates 里的 fuzzel
-    kitty     # 对应 activeTemplates 里的 kitty
     (writeShellScriptBin "random-anime-wallpaper-noctalia"
       (builtins.readFile ./bin/random-anime-wallpaper-noctalia)
     )
   ];
 
-  # Qt6 图标/缩放主题；noctalia 本身用 Qt6 渲染。
-  # 输入法变量同步写入 session，再通过 niri-session-wrapper 的
-  # `systemctl --user import-environment` 导入 systemd 用户环境。
+  # 官方模块：启用 Noctalia v5 + systemd 用户服务。
+  programs.noctalia = {
+    enable = true;
+    systemd.enable = true;
+    settings = noctaliaConfig;
+  };
+
+  # 默认壁纸（noctalia 壁纸选择器能直接看到）+ 用户头像。
+  home.file."Pictures/Wallpapers/wallhaven-d88d53.png".source =
+    ../../../../wallpapers/wallhaven-d88d53.png;
+  home.file.".face".source =
+    ../../../../wallpapers/wallhaven-d88d53.png;
+
+  # qt6ct 设置种子（沿用 v4：其他 Qt 桌面应用读这个，需可写副本）。
+  home.file.".config/qt6ct/qt6ct.conf".source =
+    ../../../../home/files/qt6ct/qt6ct.conf;
+
+  # 模板输入文件（fitx5 主题、GTK 图标重着色）随配置目录部署为可写副本。
+  home.file.".config/noctalia/templates" = {
+    source = ./config/templates;
+    recursive = true;
+  };
+
+  # 把工具目录前置进 PATH，让 Noctalia 派生的外部命令总能找到。
+  home.sessionPath = noctaliaTools;
+
+  # 输入法 / Qt 主题变量（沿用 v4 的设置；noctalia 不再用 Qt6，但桌面其余 Qt
+  # 应用仍需要 qt6ct 集成）。
   home.sessionVariables = {
     "QT_QPA_PLATFORM" = "wayland;xcb";
     "QT_QPA_PLATFORMTHEME" = "qt6ct";
@@ -225,110 +102,5 @@ in
     "XMODIFIERS" = "@im=fcitx";
     "GTK_IM_MODULE" = "fcitx";
     "QT_IM_MODULE" = "fcitx";
-  };
-
-  # 默认壁纸（noctalia 壁纸选择器能直接看到）。
-  home.file."Pictures/Wallpapers/wallhaven-d88d53.png".source =
-    ../../../../wallpapers/wallhaven-d88d53.png;
-  # 用户头像（控制中心 profile-card 需要；指向默认壁纸）。
-  home.file.".face".source =
-    ../../../../wallpapers/wallhaven-d88d53.png;
-  # 把 store 里的 noctalia 配置复制到 ~/.config/noctalia（可写，比软链更适合
-  # noctalia 运行时改 settings.json / colors.json / 模板输出）。
-  # 策略：
-  #   - 首次：复制整个 noctaliaConfig。
-  #   - 后续：保留 settings.json / colors.json / user-templates.toml 的用户修改，
-  #     但用 Nix overrides 与当前 settings.json 做深度合并；同步 templates 与 plugins.json。
-  home.activation.copyNoctaliaConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    NOCTALIA_DIR="${home}/.config/noctalia"
-    mkdir -p "${home}/.config"
-
-    # 如果旧配置是软链（例如 Clavis 时代留下的），先删掉，否则 cp 会写进 store。
-    if [ -L "$NOCTALIA_DIR" ]; then
-      rm -rf "$NOCTALIA_DIR"
-    fi
-
-    if [ ! -d "$NOCTALIA_DIR" ]; then
-      # 首次：复制完整基础配置
-      mkdir -p "$NOCTALIA_DIR"
-      cp -r --no-preserve=mode,ownership ${noctaliaConfig}/. "$NOCTALIA_DIR/"
-      chmod -R u+w "$NOCTALIA_DIR"
-    else
-      # 后续：深度合并 settings.json，保留用户修改的同时应用 Nix 更新
-      if [ -f "$NOCTALIA_DIR/settings.json" ]; then
-        ${mergeNoctaliaSettings}/bin/merge-noctalia-settings "$NOCTALIA_DIR/settings.json" ${noctaliaOverridesJson}
-      else
-        cp --no-preserve=mode,ownership ${noctaliaConfig}/settings.json "$NOCTALIA_DIR/settings.json"
-        chmod u+w "$NOCTALIA_DIR/settings.json"
-      fi
-
-      # 同步 Nix 管理的模板与插件清单（颜色/用户模板保留运行时修改）
-      if [ -d ${noctaliaConfig}/templates ]; then
-        rm -rf "$NOCTALIA_DIR/templates"
-        cp -r --no-preserve=mode,ownership ${noctaliaConfig}/templates "$NOCTALIA_DIR/templates"
-        chmod -R u+w "$NOCTALIA_DIR/templates"
-      fi
-      if [ -f ${noctaliaConfig}/plugins.json ]; then
-        cp --no-preserve=mode,ownership ${noctaliaConfig}/plugins.json "$NOCTALIA_DIR/plugins.json"
-        chmod u+w "$NOCTALIA_DIR/plugins.json"
-      fi
-    fi
-
-    # 首次给 kitty 种子一个可写的 current-theme.conf（只读 store 软链会阻止
-    # Noctalia 的 kitty 模板覆盖它，这里用备份复制解决）。
-    mkdir -p "${home}/.config/kitty"
-    if [ ! -e "${home}/.config/kitty/current-theme.conf" ]; then
-      cp --no-preserve=mode,ownership ${kittyNoctaliaConf} "${home}/.config/kitty/current-theme.conf"
-    fi
-    # kitty.conf：可写兜底（Noctalia 的 kitty 模板 apply.sh 要注入 include）；
-    # 已存在（被 apply.sh 改过或用户改过）则不覆盖。
-    if [ ! -e "${home}/.config/kitty/kitty.conf" ]; then
-      cp --no-preserve=mode,ownership ${kittyBaseConf} "${home}/.config/kitty/kitty.conf"
-    fi
-    # foot.ini：可写兜底 + 幂等 include。每次 rebuild 无条件重建：include 置于
-    # 首行使 foot 一定加载 Noctalia 配色（themes/noctalia 由 foot 模板 recolor 时
-    # 刷新），并顺带修掉旧版 [color-dark] 错字。若要改 foot 配置，改基配置即可。
-    mkdir -p "${home}/.config/foot"
-    {
-      printf 'include=%s/.config/foot/themes/noctalia\n' "${home}"
-      cat ${footBaseConf}
-    } > "${home}/.config/foot/foot.ini"
-    chmod u+w "${home}/.config/foot/foot.ini"
-    # qt6ct 图标主题（Qt 应用紫黑棋盘格修复）；qt6ct 保存设置时需要可写。
-    mkdir -p "${home}/.config/qt6ct"
-    if [ ! -e "${home}/.config/qt6ct/qt6ct.conf" ]; then
-      cp --no-preserve=mode,ownership ${qt6ctBaseConf} "${home}/.config/qt6ct/qt6ct.conf"
-    fi
-  '';
-
-  systemd.user.services.noctalia-shell = {
-    Unit = {
-      Description = "Noctalia Shell";
-      Requisite = [ "niri.service" ];
-      PartOf = [ "niri.service" ];
-      After = [ "niri.service" ];
-    };
-    Service = {
-      Type = "simple";
-      ExecStart = "${noctaliaLaunch}/bin/noctalia-launch";
-      Restart = "on-failure";
-      RestartSec = 3;
-      TimeoutStopSec = 10;
-      # 输入法与 Qt 主题变量必须显式传入，否则 noctalia-shell 进程内无法切换
-      # 输入法，GTK/Qt 应用也可能弹不出候选框。
-      Environment = [
-        "QT_QPA_PLATFORM=wayland;xcb"
-        "QT_QPA_PLATFORMTHEME=qt6ct"
-        "QT_AUTO_SCREEN_SCALE_FACTOR=1"
-        "XDG_CURRENT_DESKTOP=niri"
-        "XMODIFIERS=@im=fcitx"
-        "GTK_IM_MODULE=fcitx"
-        "QT_IM_MODULE=fcitx"
-        "NOCTALIA_PAM_SERVICE=login"
-      ];
-    };
-    Install = {
-      WantedBy = [ "niri.service" ];
-    };
   };
 }

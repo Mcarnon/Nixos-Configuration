@@ -3,9 +3,12 @@
   config,
   pkgs,
   lib,
+  inputs,
   ...
 }:
 let
+  noctaliaPkg = inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default;
+
   # Wayland session entry point (replaces the default niri-session).
   #
   # niri-session only activates graphical-session.target when it launches
@@ -69,7 +72,7 @@ let
   # 等 niri 把 WAYLAND_DISPLAY 写进 systemd user 环境后再启动 fcitx5。
   # fcitx5 的 Wayland 前端依赖 WAYLAND_DISPLAY；若它比 niri 的
   # spawn-sh-at-startup 更早启动，会退回无前端状态（托盘无图标、候选框不弹，
-  # 症状等同"输入法没加载"）。与 noctalia-launch 相同的轮询逻辑。
+  # 症状等同"输入法没加载"）。
   fcitx5Launch = pkgs.writeShellScriptBin "fcitx5-launch" ''
     PATH="${lib.makeBinPath [ pkgs.systemd pkgs.coreutils pkgs.gnugrep ]}"
     for i in $(seq 1 60); do
@@ -91,14 +94,13 @@ in
     package = niriWithSessionWrapper;
   };
 
-  # Noctalia 及其 IPC 引擎（qs）进系统 PATH，方便 niri 快捷键和脚本调用。
+  # Noctalia v5 及其 IPC CLI（noctalia msg）进系统 PATH，方便 niri 快捷键和脚本调用。
   # 同时把 Noctalia 各面板常用的外部命令装进系统 PATH，这样即使手动在终端
   # 调试或脚本调用时也能找到它们。
   environment.systemPackages = let
     pythonWithDeps = pkgs.python3.withPackages (ps: with ps; [ numpy pillow ]);
   in with pkgs; [
-    noctalia-shell
-    noctalia-qs
+    noctaliaPkg
     brightnessctl
     pamixer
     playerctl
@@ -116,7 +118,7 @@ in
     gawk
     findutils
     procps
-    matugen # 从壁纸生成 GTK/Qt/图标配色，Noctalia 外观同步依赖
+    matugen # v4 遗留下来的壁纸配色工具；v5 原生生成配色，仅当自建模板需要时保留
     pythonWithDeps # scan-tones.py 依赖 (python3 + numpy + pillow)
   ];
 

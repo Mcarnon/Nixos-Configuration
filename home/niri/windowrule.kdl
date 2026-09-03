@@ -107,9 +107,9 @@ debug {
     honor-xdg-activation-with-invalid-serial
 }
 
-// Noctalia overview 壁纸需要画在 backdrop 层，否则可能遮住窗口。
+// Noctalia v5 backdrop 壁纸需要画在 niri 的 backdrop 层，否则 overview 会被遮住。
 layer-rule {
-    match namespace="^noctalia-overview*"
+    match namespace="^noctalia-backdrop"
     place-within-backdrop true
 }
 
