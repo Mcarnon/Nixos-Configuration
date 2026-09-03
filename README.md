@@ -187,9 +187,5 @@ Reinstalling later is the same flow — disko's `destroy` step handles the wipe.
 - **Security**: `agenix` `/run/agenix.d` tmpfs，`networking.firewall` 默认关，`PermitRootLogin no`。
 - **XWayland**: off by default; configure `xwayland-satellite` per the niri docs if you need X11 apps.
 - **Lock screen**: Noctalia 锁屏 bound to `Super+Alt+L`；suspend combo `Mod+Alt+P` 先锁后挂。
-<<<<<<< HEAD
-- **Wallpaper**: 图片丢进 `~/Pictures/Wallpapers/`，视频/动态壁纸丢进 `~/Pictures/Wallpapers/video/`，`Mod+F10` 随机切换（mpvpaper/swaybg + matugen 主题跟随）；也可用 `random-anime-wallpaper-noctalia` 下载动漫壁纸。
-=======
-- **Wallpaper**: 图片丢进 `~/Pictures/Wallpapers/`，视频/动态壁纸丢进 `~/Pictures/Wallpapers/video/`，`Mod+F10` 随机切换（mpvpaper 动态壁纸 + matugen 主题跟随）；也可用 `~/.local/bin/random-anime-wallpaper-noctalia` 下载动漫壁纸。
->>>>>>> 70cfd8ce67cee51cc752c7f7d1dc9387c313637c
+- **Wallpaper**: 图片丢进 `~/Pictures/Wallpapers/`，`Mod+F10` 随机切换（Noctalia 原生壁纸管理 + matugen 主题跟随）；也可用 `random-anime-wallpaper-noctalia` 下载动漫壁纸。
 - **键位教程**: `Mod+Shift+Slash`（niri 内置 hotkey-overlay）。

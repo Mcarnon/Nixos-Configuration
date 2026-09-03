@@ -100,8 +100,8 @@ binds {
     Mod+Slash hotkey-overlay-title="Quick terminal" { spawn-sh "kitty --class quickterminal 2>/dev/null || foot --class quickterminal"; }
     // Force-kill a stuck window (sends SIGTERM via niri IPC then escalates).
     Alt+F4 hotkey-overlay-title="Force kill window" { spawn-sh "niri msg action close-window --id $(niri msg --json focused-window | python3 -c 'import json,sys;print(json.load(sys.stdin)[\"id\"])')"; }
-    // Random wallpaper (mpvpaper dynamic wallpaper rotation).
-    Mod+F10 hotkey-overlay-title="Random wallpaper" { spawn-sh "wallpaper-rotate"; }
+    // Random wallpaper (Noctalia native wallpaper rotation).
+    Mod+F10 hotkey-overlay-title="Random wallpaper" { spawn-sh "qs -c noctalia-shell ipc call wallpaper random"; }
     // Random wallpaper from the API + save to Wallpapers (SHORiN script).
     Mod+Shift+F10 hotkey-overlay-title="Random download wallpaper" { spawn-sh "random-anime-wallpaper-noctalia"; }
     // Screenshot -> edit (opens satty with the last screenshot from clipboard).

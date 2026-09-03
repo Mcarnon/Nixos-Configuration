@@ -117,7 +117,6 @@ in
     findutils
     procps
     matugen # 从壁纸生成 GTK/Qt/图标配色，Noctalia 外观同步依赖
-    mpvpaper # 动态壁纸播放器 (mp4/gif/webm)
     pythonWithDeps # scan-tones.py 依赖 (python3 + numpy + pillow)
   ];
 

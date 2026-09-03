@@ -91,11 +91,7 @@ truncation_symbol = "…/"
 symbol = ""
 style = "bg:color_aqua"
 <<<<<<< HEAD
-<<<<<<< HEAD
 format = '[](fg:color_yellow bg:color_aqua)[[ $symbol $branch ](fg:color_fg0 bg:color_aqua)]($style)'
-=======
-format = '[ ](fg:color_yellow bg:color_aqua)[[ $symbol $branch ](fg:color_fg0 bg:color_aqua)]($style)'
->>>>>>> 70cfd8ce67cee51cc752c7f7d1dc9387c313637c
 =======
 format = '[ ](fg:color_yellow bg:color_aqua)[[ $symbol $branch ](fg:color_fg0 bg:color_aqua)]($style)'
 >>>>>>> 70cfd8ce67cee51cc752c7f7d1dc9387c313637c
@@ -172,11 +168,7 @@ disabled = false
 time_format = "%R"
 style = "bg:color_bg1"
 <<<<<<< HEAD
-<<<<<<< HEAD
 format = "[](fg:color_bg3 bg:color_bg1)[  $time ](fg:color_fg1 bg:color_bg1)[](fg:color_bg1)"
-=======
-format = "[](fg:color_bg3 bg:color_bg1)[  $time ](fg:color_fg1 bg:color_bg1)"
->>>>>>> 70cfd8ce67cee51cc752c7f7d1dc9387c313637c
 =======
 format = "[](fg:color_bg3 bg:color_bg1)[  $time ](fg:color_fg1 bg:color_bg1)"
 >>>>>>> 70cfd8ce67cee51cc752c7f7d1dc9387c313637c
