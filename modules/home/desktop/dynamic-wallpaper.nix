@@ -2,10 +2,7 @@
 #
 # Features:
 #   - mpvpaper for video/gif wallpaper playback
-<<<<<<< HEAD
 #   - swaybg for static image wallpaper
-=======
->>>>>>> 70cfd8ce67cee51cc752c7f7d1dc9387c313637c
 #   - Wallpaper rotation timer (runs every 30 min)
 #   - Time-aware selection: bright wallpapers for day (7:00-19:00), dark for night
 #   - Only switches wallpaper when time period changes, not every 30 min
@@ -21,7 +18,6 @@
 let
   home = config.home.homeDirectory;
   wallpaperDir = "${home}/Pictures/Wallpapers";
-<<<<<<< HEAD
   videoDir = "${home}/Pictures/Wallpapers/video"; # 动态壁纸目录
 
   # 脚本自包含 PATH，避免依赖调用时的外部环境
@@ -35,17 +31,11 @@ let
     pkgs.systemd
     pkgs.matugen
   ];
-=======
-  videoDir = "${home}/Pictures/Wallpapers/video";  # 动态壁纸目录
->>>>>>> 70cfd8ce67cee51cc752c7f7d1dc9387c313637c
 
   # 壁纸轮换脚本：基于时间选择壁纸，只在时间段变化时切换
   wallpaperRotationScript = pkgs.writeShellScriptBin "wallpaper-rotate" ''
     set -euo pipefail
-<<<<<<< HEAD
     export PATH="${scriptPath}:$PATH"
-=======
->>>>>>> 70cfd8ce67cee51cc752c7f7d1dc9387c313637c
 
     WALLPAPER_DIR="${wallpaperDir}"
     VIDEO_DIR="${videoDir}"
@@ -189,11 +179,7 @@ let
     echo "$SELECTED" > "$CURRENT_FILE"
     echo "$TIME_MODE" > "$STATE_FILE"
 
-<<<<<<< HEAD
     # 重启壁纸服务（mpvpaper/swaybg 二合一）
-=======
-    # 重启 mpvpaper
->>>>>>> 70cfd8ce67cee51cc752c7f7d1dc9387c313637c
     systemctl --user restart mpvpaper.service || true
 
     # 触发 matugen
@@ -230,7 +216,6 @@ let
     echo "Theme updated from: $WALLPAPER"
   '';
 
-<<<<<<< HEAD
   # 壁纸服务执行脚本：视频走 mpvpaper，静态图走 swaybg
   wallpaperServiceScript = pkgs.writeShellScriptBin "wallpaper-service" ''
     set -euo pipefail
@@ -288,10 +273,6 @@ in
     matugenWallpaperHook
   ];
 
-=======
-in
-{
->>>>>>> 70cfd8ce67cee51cc752c7f7d1dc9387c313637c
   home.file.".config/mpv/wallpaper.conf".source = ../../../home/files/mpv-wallpaper.conf;
 
   home.activation.setupDynamicWallpaper = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
@@ -306,11 +287,6 @@ in
     cp ${matugenWallpaperHook}/bin/matugen-wallpaper ~/.config/scripts/matugen-wallpaper.sh
     chmod +x ~/.config/scripts/matugen-wallpaper.sh
 
-<<<<<<< HEAD
-=======
-    cp ${wallpaperRotationScript}/bin/wallpaper-rotate ~/.local/bin/wallpaper-rotate
-
->>>>>>> 70cfd8ce67cee51cc752c7f7d1dc9387c313637c
     if [ ! -f "$HOME/.current_wallpaper" ]; then
       echo "${wallpaperDir}/wallhaven-d88d53.png" > "$HOME/.current_wallpaper"
     fi
@@ -319,7 +295,6 @@ in
   systemd.user.services = {
     mpvpaper = {
       Unit = {
-<<<<<<< HEAD
         Description = "Dynamic wallpaper (mpvpaper / swaybg)";
         After = [ "graphical-session.target" ];
         PartOf = [ "graphical-session.target" ];
@@ -327,61 +302,11 @@ in
       Service = {
         Type = "simple";
         ExecStart = "${wallpaperServiceScript}/bin/wallpaper-service";
-=======
-        Description = "mpvpaper dynamic wallpaper";
-        Requisite = [ "niri.service" ];
-        PartOf = [ "niri.service" ];
-        After = [ "niri.service" ];
-      };
-      Service = {
-        Type = "simple";
-        ExecStart = "${pkgs.writeShellScriptBin "mpvpaper-service" ''
-          export XDG_RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
-          export HOME="${home}"
-
-          # 从 systemd 用户环境获取 WAYLAND_DISPLAY
-          for i in $(seq 1 30); do
-            if systemctl --user show-environment 2>/dev/null | grep -q '^WAYLAND_DISPLAY='; then
-              eval "$(systemctl --user show-environment 2>/dev/null | grep -E '^(WAYLAND_DISPLAY|XDG_CURRENT_DESKTOP)=' | sed 's/^/export /')"
-              break
-            fi
-            sleep 0.5
-          done
-
-          # 兜底
-          WAYLAND_DISPLAY="''${WAYLAND_DISPLAY:-wayland-0}"
-
-          for i in $(seq 1 30); do
-            if [ -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" ]; then
-              break
-            fi
-            sleep 0.5
-          done
-
-          CURRENT_WALLPAPER_FILE="$HOME/.current_wallpaper"
-          if [ -f "$CURRENT_WALLPAPER_FILE" ]; then
-            CURRENT=$(cat "$CURRENT_WALLPAPER_FILE")
-          else
-            CURRENT="${wallpaperDir}/wallhaven-d88d53.png"
-          fi
-
-          case "$CURRENT" in
-            *.mp4|*.gif|*.webm|*.mkv)
-              exec ${pkgs.mpvpaper}/bin/mpvpaper -o "no-audio loop" "$WAYLAND_DISPLAY" "$CURRENT"
-              ;;
-            *)
-              echo "Static wallpaper detected, exiting mpvpaper"
-              exec sleep infinity
-              ;;
-          esac
-        ''}/bin/mpvpaper-service";
->>>>>>> 70cfd8ce67cee51cc752c7f7d1dc9387c313637c
         Restart = "always";
         RestartSec = 1;
         TimeoutStopSec = 10;
       };
       Install = {
-<<<<<<< HEAD
         WantedBy = [ "graphical-session.target" ];
       };
     };
@@ -389,28 +314,6 @@ in
     # 壁纸轮换服务（由 timer 触发）
     "wallpaper-rotate" = {
       Unit = {
-=======
-        WantedBy = [ "niri.service" ];
-      };
-    };
-
-    "wallpaper-rotate" = {
-      Unit = {
-        Description = "Wallpaper rotation timer (check every 30 min)";
-      };
-      Timer = {
-        OnActiveSec = 60;
-        OnUnitActiveSec = 1800;
-        Persistent = true;
-      };
-      Install = {
-        WantedBy = [ "niri.service" ];
-      };
-    };
-
-    "wallpaper-rotate-service" = {
-      Unit = {
->>>>>>> 70cfd8ce67cee51cc752c7f7d1dc9387c313637c
         Description = "Rotate wallpaper based on time of day";
       };
       Service = {
@@ -419,7 +322,6 @@ in
       };
     };
   };
-<<<<<<< HEAD
 
   systemd.user.timers = {
     "wallpaper-rotate" = {
@@ -436,6 +338,4 @@ in
       };
     };
   };
-=======
->>>>>>> 70cfd8ce67cee51cc752c7f7d1dc9387c313637c
 }
