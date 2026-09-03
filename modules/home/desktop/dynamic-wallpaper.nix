@@ -204,17 +204,16 @@ let
 
 in
 {
-  home.file = {
-    "Pictures/Wallpapers/video" = {
-      text = "";
-    };
-  };
-
   home.file.".config/mpv/wallpaper.conf".source = ../../../home/files/mpv-wallpaper.conf;
 
   home.activation.setupDynamicWallpaper = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     mkdir -p ~/.config/scripts
     mkdir -p "${videoDir}"
+
+    # 删除旧文件（确保更新）
+    rm -f ~/.config/scripts/matugen-wallpaper.sh
+    rm -f ~/.local/bin/wp
+    rm -f ~/.local/bin/wallpaper-rotate
 
     cp ${matugenWallpaperHook}/bin/matugen-wallpaper ~/.config/scripts/matugen-wallpaper.sh
     chmod +x ~/.config/scripts/matugen-wallpaper.sh
@@ -237,9 +236,20 @@ in
       Service = {
         Type = "simple";
         ExecStart = "${pkgs.writeShellScriptBin "mpvpaper-service" ''
-          export WAYLAND_DISPLAY=''${WAYLAND_DISPLAY:-wayland-0}
           export XDG_RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
           export HOME="${home}"
+
+          # 从 systemd 用户环境获取 WAYLAND_DISPLAY
+          for i in $(seq 1 30); do
+            if systemctl --user show-environment 2>/dev/null | grep -q '^WAYLAND_DISPLAY='; then
+              eval "$(systemctl --user show-environment 2>/dev/null | grep -E '^(WAYLAND_DISPLAY|XDG_CURRENT_DESKTOP)=' | sed 's/^/export /')"
+              break
+            fi
+            sleep 0.5
+          done
+
+          # 兜底
+          WAYLAND_DISPLAY="''${WAYLAND_DISPLAY:-wayland-0}"
 
           for i in $(seq 1 30); do
             if [ -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" ]; then
@@ -257,7 +267,7 @@ in
 
           case "$CURRENT" in
             *.mp4|*.gif|*.webm|*.mkv)
-              exec ${pkgs.mpvpaper}/bin/mpvpaper -o "loop-playback=yes" "$WAYLAND_DISPLAY" "$CURRENT"
+              exec ${pkgs.mpvpaper}/bin/mpvpaper -o "no-audio loop" "$WAYLAND_DISPLAY" "$CURRENT"
               ;;
             *)
               echo "Static wallpaper detected, exiting mpvpaper"
@@ -274,7 +284,7 @@ in
       };
     };
 
-    "wallpaper-rotate.timer" = {
+    "wallpaper-rotate" = {
       Unit = {
         Description = "Wallpaper rotation timer (check every 30 min)";
       };
@@ -288,7 +298,7 @@ in
       };
     };
 
-    "wallpaper-rotate.service" = {
+    "wallpaper-rotate-service" = {
       Unit = {
         Description = "Rotate wallpaper based on time of day";
       };

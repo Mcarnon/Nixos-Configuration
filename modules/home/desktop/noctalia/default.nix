@@ -109,7 +109,6 @@ let
     wlsunset                # 夜灯/色温
     ddcutil                 # 外接显示器 DDC 亮度
     wget                    # 壁纸下载等（noctalia-shell 的 runtimeDeps）
-    python3                 # 日历/脚本等（noctalia-shell 的 runtimeDeps）
     matugen                 # 从壁纸生成配色/主题/图标颜色（Noctalia 核心）
     glib.bin                # gsettings/dconf/gio —— GTK 模板 apply.sh 与 recolor.sh 依赖
   ];
@@ -166,17 +165,20 @@ in
     ../../../../wallpapers/wallhaven-d88d53.png;
   # 把 store 里的 noctalia 配置复制到 ~/.config/noctalia（可写，比软链更适合
   # noctalia 运行时改 settings.json / colors.json / 模板输出）。
-  # 每次 rebuild 会重置为基础配置，Noctalia 启动后再按壁纸重新生成衍生文件。
+  # 首次 rebuild 时复制基础配置，之后保留用户修改。
   home.activation.copyNoctaliaConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     mkdir -p ~/.config
     # 如果旧配置是软链（例如 Clavis 时代留下的），先删掉，否则 cp 会写进 store。
     if [ -L ~/.config/noctalia ]; then
       rm -rf ~/.config/noctalia
     fi
-    mkdir -p ~/.config/noctalia
-    cp -r --no-preserve=mode,ownership ${noctaliaConfig}/. ~/.config/noctalia/
-    # 确保 Noctalia 运行时可以改写 settings.json / colors.json / 模板输出。
-    chmod -R u+w ~/.config/noctalia
+    # 只有在配置目录不存在时才复制基础配置（保留用户修改）
+    if [ ! -d ~/.config/noctalia ]; then
+      mkdir -p ~/.config/noctalia
+      cp -r --no-preserve=mode,ownership ${noctaliaConfig}/. ~/.config/noctalia/
+      # 确保 Noctalia 运行时可以改写 settings.json / colors.json / 模板输出。
+      chmod -R u+w ~/.config/noctalia
+    fi
     # 首次给 kitty 种子一个可写的 current-theme.conf（只读 store 软链会阻止
     # Noctalia 的 kitty 模板覆盖它，这里用备份复制解决）。
     mkdir -p ~/.config/kitty
