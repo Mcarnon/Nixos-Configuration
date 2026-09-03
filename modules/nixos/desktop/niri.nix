@@ -94,9 +94,7 @@ in
   # Noctalia 及其 IPC 引擎（qs）进系统 PATH，方便 niri 快捷键和脚本调用。
   # 同时把 Noctalia 各面板常用的外部命令装进系统 PATH，这样即使手动在终端
   # 调试或脚本调用时也能找到它们。
-  environment.systemPackages = let
-    pythonWithDeps = pkgs.python3.withPackages (ps: with ps; [ numpy pillow ]);
-  in with pkgs; [
+  environment.systemPackages = with pkgs; [
     noctalia-shell
     noctalia-qs
     brightnessctl
@@ -112,13 +110,12 @@ in
     wlsunset
     ddcutil
     wget
+    python3
     gnused
     gawk
     findutils
     procps
     matugen # 从壁纸生成 GTK/Qt/图标配色，Noctalia 外观同步依赖
-    mpvpaper # 动态壁纸播放器 (mp4/gif/webm)
-    pythonWithDeps # scan-tones.py 依赖 (python3 + numpy + pillow)
   ];
 
   # Noctalia / 终端 / 中文 UI 所需的字体。

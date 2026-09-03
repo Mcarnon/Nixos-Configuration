@@ -2,24 +2,23 @@
 set -euo pipefail
 
 # =============================================================================
-# 功能描述:
-#   从指定 API 获取随机壁纸，强制转换为 PNG 格式，并接入 mpvpaper/swaybg
-#   动态壁纸管线（不再调用 Noctalia IPC wallpaper，因为 Noctalia 壁纸已被禁用）。
-#
+# 功能描述: 
+#   从指定 API 获取随机壁纸，强制转换为 PNG 格式，并使用 noctalia IPC 协议设置为桌面壁纸。
+# 
 # 核心特性:
 #   1. 异步下载与长耗时心跳通知。
 #   2. 健壮性检查：校验文件大小与 MIME 类型，剔除损坏/无效文件。
-#   3. 格式转换：自动将下载的图片(无论原格式)转换为 PNG 格式。
+#   3. 格式转换：自动将下载的图片(无论原格式)转换为 noctalia 支持的 PNG 格式。
 #   4. 资源自清洁：根据配置自动清理历史壁纸，保持存储整洁。
-#   5. 应用后写入 ~/.current_wallpaper 并重启 mpvpaper.service，触发 matugen。
-#
+#   5. 解耦设计：更新完毕后触发异步的系统 UI 更新钩子 (matugen, niri等)。
+# 
 # 选项:
 #   -k: 保留模式，不清理旧壁纸
 #   -s: 静默模式，关闭桌面通知
 #   -h: 显示帮助信息
-#
+# 
 # 依赖:
-#   curl, file, notify-send, ImageMagick (magick 或 convert), systemd
+#   curl, file, notify-send, ImageMagick (magick 或 convert), qs (noctalia wrapper)
 # =============================================================================
 
 # ================= 默认配置 =================
@@ -121,14 +120,14 @@ if command -v magick > /dev/null 2>&1; then
 elif command -v convert > /dev/null 2>&1; then
     IMG_TOOL="convert"
 else
-    send_notify "Wallpaper Error" "ImageMagick not found. Please install it."
+    send_notify "Wallpaper Error" "ImageMagick not found. Please install it." 
     rm -f "$RAW_PATH"
     exit 1
 fi
 
 # 执行转换
 if ! $IMG_TOOL "$RAW_PATH" "$FINAL_PATH"; then
-    send_notify "Wallpaper Error" "Failed to convert image to PNG format"
+    send_notify "Wallpaper Error" "Failed to convert image to PNG format" 
     rm -f "$RAW_PATH" "$FINAL_PATH"
     exit 1
 fi
@@ -136,28 +135,23 @@ fi
 # 转换成功，清理原始临时文件
 rm -f "$RAW_PATH"
 
-# --- 3. 应用模块（接入 mpvpaper/swaybg 管线） ---
+# --- 3. 应用模块 (noctalia ipc call) ---
 
-# 写入当前壁纸并重启统一壁纸服务
-echo "$FINAL_PATH" > "$HOME/.current_wallpaper"
-
-if systemctl --user is-active --quiet mpvpaper.service 2>/dev/null; then
-    systemctl --user restart mpvpaper.service || true
-else
-    systemctl --user start mpvpaper.service || true
-fi
+# 使用 qs 包装器调用 noctalia-shell 的 ipc，并将 monitor 参数设为 all
+qs -c noctalia-shell ipc call wallpaper set "$FINAL_PATH" all
 
 # --- 4. 钩子与清理 ---
 (
-    if [ -x "$HOME/.config/scripts/matugen-wallpaper.sh" ]; then
-        "$HOME/.config/scripts/matugen-wallpaper.sh" "$FINAL_PATH" > /dev/null || true
+    if [ -x "$HOME/.config/scripts/matugen-update.sh" ]; then
+        "$HOME/.config/scripts/matugen-update.sh" "$FINAL_PATH" > /dev/null || true
     fi
-
-    # 通知 Noctalia 重新生成配色（如果 qs 可用）
-    if command -v qs &>/dev/null; then
-        qs -c noctalia-shell ipc call colorScheme generate 2>/dev/null || true
+    
+    sleep 0.5
+    
+    if [ -x "$HOME/.config/scripts/niri_set_overview_blur_dark_bg.sh" ]; then
+        "$HOME/.config/scripts/niri_set_overview_blur_dark_bg.sh" > /dev/null || true
     fi
-
+    
     # 动态清理逻辑
     if [ "$ENABLE_CLEANUP" = true ]; then
         DELETE_START=$((KEEP_COUNT + 1))
@@ -166,4 +160,4 @@ fi
     fi
 ) &
 
-send_notify "Wallpaper Updated" "PNG applied successfully!"
+send_notify "Wallpaper Updated" "PNG applied successfully via Noctalia!"

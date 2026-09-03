@@ -42,12 +42,6 @@
     networkmanagerapplet # nm-applet tray icon
     nwg-look # GTK 主题/图标设置 GUI（Noctalia 配色同步辅助）
 
-    # -- Daily Apps --
-    zed-editor # IDE
-    obsidian # note-taking
-    obs-studio # screen recording
-    splayer # netease music player
-    hmcl # minecraft launcher
   ];
 
   # 应用配置文件（raw 部署，Shorin 原版或裁剪版）。
