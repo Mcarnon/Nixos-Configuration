@@ -45,7 +45,7 @@ nm-applet。
 | `Alt+Tab` | niri 窗口总览切换 |
 | `Print` / `Ctrl+Print` / `Alt+Print` | 区域 / 全屏 / 窗口截图 |
 | `Mod+Shift+S` | satty 编辑最后截图 |
-| `Mod+F10` | 随机壁纸（`qs -c noctalia-shell ipc call wallpaper random`） |
+| `Mod+F10` | 随机壁纸（`wallpaper-rotate`：按时间 pool + 重启 mpvpaper/swaybg） |
 | `Super+Alt+L` | Noctalia 锁屏 |
 | `Mod+Alt+P` | 锁屏 + 挂起 |
 
@@ -58,8 +58,10 @@ nm-applet。
   `~/.config/noctalia/`；主题色由 Noctalia 按壁纸生成。
 - Noctalia 重启 → `systemctl --user restart noctalia-shell`。
 - 换壁纸目录 → 图放 `~/Pictures/Wallpapers/`（Noctalia 壁纸选择器从这里选）。
-- 随机动漫壁纸 → `~/.local/bin/random-anime-wallpaper-noctalia`（下载到
+- 随机动漫壁纸 → `random-anime-wallpaper-noctalia`（下载到
   `~/Pictures/Wallpapers/api-random-download`）。
+- 动态壁纸服务状态 → `systemctl --user status mpvpaper.service`。
+- 手动切换壁纸 → `wallpaper-rotate`。
 
 ## 已知取舍
 
