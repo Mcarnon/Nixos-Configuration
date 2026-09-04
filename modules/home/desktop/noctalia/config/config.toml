@@ -38,7 +38,9 @@ transition_duration = 1500
 edge_smoothness     = 0.05
 
 [wallpaper.automation]
-enabled = false
+enabled  = true
+interval = 1800   # 30 分钟自动切换
+shuffle  = true   # 随机顺序
 
 # ---- overview backdrop（niri 的 blurred+tint 壁纸背景，对应 v4 overview blur/tint）----
 [backdrop]

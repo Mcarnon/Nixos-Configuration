@@ -118,8 +118,10 @@ in
     gawk
     findutils
     procps
-    matugen # v4 遗留下来的壁纸配色工具；v5 原生生成配色，仅当自建模板需要时保留
-    pythonWithDeps # scan-tones.py 依赖 (python3 + numpy + pillow)
+    mpvpaper        # 视频壁纸渲染（mp4/webm 动态壁纸）
+    ffmpeg          # mpvpaper 第一帧缩略图提取 + 壁纸格式转换
+    matugen         # v4 遗留下来的壁纸配色工具；v5 原生生成配色，仅当自建模板需要时保留
+    pythonWithDeps  # scan-tones.py 依赖 (python3 + numpy + pillow)
   ];
 
   # Noctalia / 终端 / 中文 UI 所需的字体。
