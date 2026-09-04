@@ -91,7 +91,7 @@ in
   };
 
   # 把工具目录前置进 PATH，让 Noctalia 派生的外部命令总能找到。
-  home.sessionPath = noctaliaTools;
+  home.sessionPath = map (pkg: "${pkg}/bin") noctaliaTools;
 
   # 输入法 / Qt 主题变量（沿用 v4 的设置；noctalia 不再用 Qt6，但桌面其余 Qt
   # 应用仍需要 qt6ct 集成）。
