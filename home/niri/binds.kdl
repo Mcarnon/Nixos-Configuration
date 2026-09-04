@@ -104,9 +104,6 @@ binds {
     Mod+F10 hotkey-overlay-title="Random wallpaper" { spawn-sh "noctalia msg wallpaper-random"; }
     // Random wallpaper from the API + save to Wallpapers (SHORiN script).
     Mod+Shift+F10 hotkey-overlay-title="Random download wallpaper" { spawn-sh "random-anime-wallpaper-noctalia"; }
-    // Dynamic wallpaper controls.
-    Mod+Ctrl+F10 hotkey-overlay-title="Toggle auto rotation" { spawn-sh "dynamic-wallpaper toggle-auto"; }
-    Mod+F11 hotkey-overlay-title="Next wallpaper" { spawn-sh "dynamic-wallpaper next"; }
     // Screenshot -> edit (opens satty with the last screenshot from clipboard).
     Mod+Shift+S hotkey-overlay-title="Edit last screenshot" { spawn-sh "wl-paste | satty -f -"; }
     // Wheel scroll to change workspace (cooldown prevents runaway).
