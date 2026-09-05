@@ -15,9 +15,9 @@ launch_apps_as_systemd_services = true
 app_icon_colorize = false
 niri_overview_type_to_launch_enabled = false
 
-# ---- 主题：沿用 v4 深色 + 壁纸取色 (m3 tonal-spot) ----
+# ---- 主题：自动跟随系统 + 壁纸取色 (m3 tonal-spot) ----
 [theme]
-mode              = "dark"
+mode              = "follow"
 shell_mode        = "follow"
 source            = "wallpaper"
 wallpaper_scheme  = "m3-tonal-spot"
@@ -56,17 +56,18 @@ enabled            = true
 auto_hide          = false
 smart_auto_hide    = false
 reserve_space      = true
-background_opacity = 0.93
-radius             = 12
-margin_edge        = 4
-margin_ends        = 8
-padding            = 2
+background_opacity = 0.50
+radius             = 16
+margin_edge        = 0
+margin_ends        = 0
+padding            = 0
 widget_spacing     = 6
 scale              = 1.0
 font_scale         = 1.0
-capsule            = true
+capsule            = false
 capsule_opacity    = 1.0
 hover_highlight    = true
+outer_corners      = false
 start              = ["launcher", "clock", "sysmon_cpu", "sysmon_mem", "active_window", "media"]
 center             = ["workspaces"]
 end                = ["tray", "notifications", "battery", "volume", "brightness", "control-center"]

@@ -63,6 +63,8 @@
     "xfce4/xfconf/xfce-perchannel-xml/thunar-volman.xml".source =
       ../../../home/files/thunar/thunar-volman.xml;
     "mimeapps.list".source = ../../../home/files/mimeapps.list;
+    # foot.ini 由本配置管理（Noctalia v5 不再生成 foot 模板）
+    "foot/foot.ini".source = ../../../home/files/foot.ini;
     # 基配置：Noctalia 模板会生成覆盖物（如 fuzzel/themes/noctalia、
     # kitty/current-theme.conf），只兜底不做挡板
     "fuzzel/fuzzel.ini".source = ../../../home/files/fuzzel.ini;

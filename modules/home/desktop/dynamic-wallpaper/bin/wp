@@ -1,0 +1,106 @@
+#!/bin/bash
+# wp — 动态壁纸控制命令
+# 用法: wp [list|random|set <文件名>|scan|stop|restart]
+
+WP_DIR="$HOME/Pictures/Wallpapers/video"
+TONES_FILE="$HOME/.config/wallpaper-tones.txt"
+LAST_WALLPAPER="$HOME/.config/.wallpaper_last"
+MONITOR='*'
+
+# 根据当前小时返回目标色调优先级列表（从高到低）
+get_target_tones() {
+    local hour=$(date +%H)
+    if   [ "$hour" -ge 0  ] && [ "$hour" -lt 6  ]; then echo "dark cool neutral"
+    elif [ "$hour" -ge 6  ] && [ "$hour" -lt 9  ]; then echo "cool neutral dark"
+    elif [ "$hour" -ge 9  ] && [ "$hour" -lt 17 ]; then echo "cool neutral bright"
+    elif [ "$hour" -ge 17 ] && [ "$hour" -lt 20 ]; then echo "warm neutral cool"
+    else echo "dark cool neutral"
+    fi
+}
+
+# 从色调池里收集壁纸文件列表
+get_pool() {
+    local tones="$1"
+    local tone
+    local files=()
+    for tone in $tones; do
+        while IFS= read -r line; do
+            local name="${line%%#39;\t'*}"
+            local t="${line#*#39;\t'}"
+            [ "$t" = "$tone" ] && [ -f "$WP_DIR/$name" ] && files+=("$WP_DIR/$name")
+        done < "$TONES_FILE"
+        if [ ${#files[@]} -gt 0 ]; then
+            printf '%s\n' "${files[@]}"
+            return 0
+        fi
+    done
+    return 1
+}
+
+count_tones() {
+    local tone="$1"
+    awk -F'\t' -v t="$tone" '$2==t{n++} END{print n+0}' "$TONES_FILE" 2>/dev/null
+}
+
+set_wallpaper() {
+    # 告诉 Noctalia 的 mpvpaper 插件放弃壁纸层
+    noctalia msg plugin noctalia/mpvpaper:service all clear-all 2>/dev/null || true
+    pkill mpvpaper 2>/dev/null
+    sleep 0.3
+    mpvpaper -o "no-audio loop-file=inf hwdec=auto panscan=1.0" "$MONITOR" "$1" > /dev/null 2>&1 &
+    echo "$1" > "$LAST_WALLPAPER"
+}
+
+case "${1:-list}" in
+    list)
+        TOTAL=$(ls "$WP_DIR" 2>/dev/null | wc -l)
+        echo "壁纸库: $TOTAL 张 ($WP_DIR)"
+        echo ""
+        echo "色调分布:"
+        echo "  dark:    $(count_tones dark)"
+        echo "  cool:    $(count_tones cool)"
+        echo "  warm:    $(count_tones warm)"
+        echo "  neutral: $(count_tones neutral)"
+        echo "  bright:  $(count_tones bright)"
+        echo ""
+        TONES=$(get_target_tones)
+        echo "当前时段目标色调: $TONES"
+        if [ -f "$LAST_WALLPAPER" ] && [ -s "$LAST_WALLPAPER" ]; then
+            echo "当前壁纸: $(basename "$(cat "$LAST_WALLPAPER")")"
+        fi
+        ;;
+    random)
+        TONES=$(get_target_tones)
+        POOL=()
+        while IFS= read -r f; do POOL+=("$f"); done < <(get_pool "$TONES")
+        if [ ${#POOL[@]} -eq 0 ]; then
+            while IFS= read -r f; do POOL+=("$f"); done < <(find "$WP_DIR" -maxdepth 1 -type f \( -name '*.mp4' -o -name '*.webm' -o -name '*.mkv' -o -name '*.gif' \) 2>/dev/null | sort)
+        fi
+        [ ${#POOL[@]} -eq 0 ] && echo "壁纸库为空" && exit 1
+        PICK="${POOL[RANDOM % ${#POOL[@]}]}"
+        set_wallpaper "$PICK"
+        echo "已切换($TONES): $(basename "$PICK")"
+        ;;
+    set)
+        [ -z "$2" ] && echo "用法: wp set <文件名>" && exit 1
+        FOUND=$(find "$WP_DIR" -maxdepth 1 -name "$2" 2>/dev/null | head -1)
+        [ -z "$FOUND" ] && echo "找不到 $2" && exit 1
+        set_wallpaper "$FOUND"
+        echo "已切换: $(basename "$FOUND")"
+        ;;
+    scan)
+        scan-tones.py "$WP_DIR" "$TONES_FILE"
+        ;;
+    stop)
+        systemctl --user stop wallpaper-rotate 2>/dev/null || true
+        pkill mpvpaper 2>/dev/null || true
+        echo "已停止"
+        ;;
+    restart)
+        systemctl --user restart wallpaper-rotate 2>/dev/null || true
+        echo "已重启"
+        ;;
+    *)
+        echo "用法: wp [list|random|set <文件名>|scan|stop|restart]"
+        ;;
+esac

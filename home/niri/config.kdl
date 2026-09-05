@@ -10,8 +10,8 @@ window-rule {
     geometry-corner-radius 20
     clip-to-geometry true
     open-floating true
-    default-column-width { fixed 1080; }
-    default-window-height { fixed 920; }
+    default-column-width { fixed 1000; }
+    default-window-height { fixed 800; }
 }
 
 input {
@@ -90,6 +90,9 @@ layout {
     gaps 8
     background-color "transparent" // see-through to wallpaper (required for blur to show)
 
+    // Default column width: 50% screen width (SHORiN pattern)
+    default-column-width { proportion 0.5; }
+
     preset-column-widths {
         proportion 0.5
         proportion 0.75
@@ -110,6 +113,11 @@ layout {
         spread 5
         offset x=0 y=8
         color "#00000060"
+    }
+
+    // Struts: 避开 Noctalia bar (top ~48px)
+    struts {
+        top 48
     }
 }
 
