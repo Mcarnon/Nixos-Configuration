@@ -115,10 +115,6 @@ layout {
         color "#00000060"
     }
 
-    // Struts: 避开 Noctalia bar (top ~48px)
-    struts {
-        top 48
-    }
 }
 
 // Animation: all-spring (SHORiN pattern) for cohesive feel.
