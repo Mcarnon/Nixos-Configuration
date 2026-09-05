@@ -16,6 +16,7 @@
     device = "nodev";
     efiSupport = true;
     useOSProber = true; # 自动检测其他系统（Windows 等），不需要可删
+    theme = ./grub-themes/blackice;
   };
   boot.loader.efi.canTouchEfiVariables = true;
   boot.supportedFilesystems = [ "btrfs" ];
