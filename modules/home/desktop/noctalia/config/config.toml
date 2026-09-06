@@ -15,6 +15,11 @@ launch_apps_as_systemd_services = true
 app_icon_colorize = false
 niri_overview_type_to_launch_enabled = false
 
+# ---- panel 边框控制：关闭 borders 避免亮主题下出现描边 ----
+[shell.panel]
+borders = false
+shadow = true
+
 # ---- 主题：自动跟随系统 + 壁纸取色 (m3 tonal-spot) ----
 [theme]
 mode              = "follow"
@@ -23,26 +28,27 @@ source            = "wallpaper"
 wallpaper_scheme  = "m3-tonal-spot"
 pure_black_dark   = false
 
-# ---- 位置（v4 location: Shanghai）----
+# ---- 位置（v4 location: Guangzhou）----
 [location]
-name = "Shanghai"
+auto_locate = true
+name = "Guangzhou;"
 show_weather = true
 
-# ---- 壁纸：目录固定在 ~/Pictures/Wallpapers，轮换/过渡沿用 v4 ----
+# ---- 壁纸：禁用 Noctalia 内置壁纸（由 mpvpaper 动态壁纸接管）----
 [wallpaper]
-enabled             = true
+enabled             = false
 directory           = "~/Pictures/Wallpapers"
 fill_mode           = "crop"
 transition          = ["fade", "disc", "stripes", "wipe", "pixelate", "honeycomb"]
 transition_duration = 1500
-edge_smoothness     = 0.05
+edge_smoothness     = 0.3
 
 [wallpaper.automation]
 enabled = false
 
 # ---- overview backdrop（niri 的 blurred+tint 壁纸背景，对应 v4 overview blur/tint）----
 [backdrop]
-enabled        = true
+enabled        = false
 blur_intensity = 0.4
 tint_intensity = 0.6
 
@@ -68,6 +74,7 @@ capsule            = false
 capsule_opacity    = 1.0
 hover_highlight    = true
 outer_corners      = false
+edge_smoothness    = 0.3
 start              = ["launcher", "clock", "sysmon_cpu", "sysmon_mem", "active_window", "media"]
 center             = ["workspaces"]
 end                = ["tray", "notifications", "battery", "volume", "brightness", "control-center"]
@@ -128,6 +135,7 @@ show_running        = true
 active_scale        = 1.0
 inactive_scale      = 0.85
 magnification       = true
+reserve_space       = false
 launcher_position   = "end"
 launcher_icon       = "grid-dots"
 
@@ -139,3 +147,12 @@ background_opacity = 0.97
 border            = true
 offset_x          = 20
 offset_y          = 8
+
+# ---- mpvpaper 动态壁纸插件（Noctalia 内置）----
+[plugins]
+enabled = ["noctalia/mpvpaper"]
+
+[plugin_settings."noctalia/mpvpaper"]
+mpv_options = "--config=no --load-scripts=no"
+video_directory = "~/Pictures/Wallpapers/video"
+transition_on_change = true

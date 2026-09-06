@@ -43,21 +43,22 @@ in
   # ── mpv Lua hook（mpvpaper 启动时加载，同步 Noctalia 配色）──────────────────
   home.file.".config/noctalia/mpv-hook.lua".source = ./dynamic-wallpaper/mpv-hook.lua;
 
-  # ── systemd user service ────────────────────────────────────────────────────
-  systemd.user.services.wallpaper-rotate = {
-    Unit = {
-      Description = "mpvpaper 动态壁纸轮换 daemon";
-      After = [ "graphical-session-pre.target" ];
-      PartOf = [ "graphical-session.target" ];
-    };
-    Service = {
-      Type = "simple";
-      ExecStart = "wallpaper-rotate";
-      Restart = "on-failure";
-      RestartSec = 5;
-    };
-    Install = { WantedBy = [ "graphical-session.target" ]; };
-  };
+  # ── systemd user service（已禁用，改用 Noctalia 内置 mpvpaper 插件）----
+  # systemd.user.services.wallpaper-rotate = {
+  #   Unit = {
+  #     Description = "mpvpaper 动态壁纸轮换 daemon";
+  #     After = [ "graphical-session.target" "noctalia.service" ];
+  #     PartOf = [ "graphical-session.target" ];
+  #   };
+  #   Service = {
+  #     Type = "simple";
+  #     Environment = "PATH=${lib.makeBinPath (with pkgs; [ coreutils bash gnused gnugrep findutils procps util-linux mpvpaper ])}:$HOME/.local/bin";
+  #     ExecStart = "${pkgs.bash}/bin/bash -c 'sleep 3; wallpaper-rotate'";
+  #     Restart = "on-failure";
+  #     RestartSec = 5;
+  #   };
+  #   Install = { WantedBy = [ "graphical-session.target" ]; };
+  # };
 
   # ── 启用用户 systemd 服务自启 ──────────────────────────────────────────────
   systemd.user.startServices = true;

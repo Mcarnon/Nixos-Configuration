@@ -73,7 +73,16 @@ set_wallpaper() {
     # 告诉 Noctalia 的 mpvpaper 插件放弃壁纸层
     noctalia msg plugin noctalia/mpvpaper:service all clear-all 2>/dev/null || true
     pkill mpvpaper 2>/dev/null
-    sleep 0.3
+    sleep 1
+    # 重试机制：等待 Noctalia 完全启动
+    for i in 1 2 3 4 5; do
+        if mpvpaper -o "no-audio loop-file=inf hwdec=auto panscan=1.0" "$MONITOR" "$1" > /dev/null 2>&1; then
+            echo "$1" > "$LAST_WALLPAPER"
+            return 0
+        fi
+        sleep 2
+    done
+    # 最后一次尝试，不重试
     mpvpaper -o "no-audio loop-file=inf hwdec=auto panscan=1.0" "$MONITOR" "$1" > /dev/null 2>&1 &
     echo "$1" > "$LAST_WALLPAPER"
 }
