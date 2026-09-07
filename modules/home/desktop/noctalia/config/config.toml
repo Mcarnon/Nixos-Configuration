@@ -20,13 +20,17 @@ niri_overview_type_to_launch_enabled = false
 borders = false
 shadow = true
 
-# ---- 主题：自动跟随系统 + 壁纸取色 (m3 tonal-spot) ----
+# ---- 主题：自动模式 + 壁纸取色 (m3 tonal-spot) ----
 [theme]
-mode              = "follow"
-shell_mode        = "follow"
+mode              = "auto"
 source            = "wallpaper"
 wallpaper_scheme  = "m3-tonal-spot"
 pure_black_dark   = false
+
+# ---- 主题/壁纸变化时同步 GTK 应用 ----
+[hooks]
+theme_mode_changed = ["~/.config/noctalia/theme-sync.sh"]
+wallpaper_changed = ["~/.config/noctalia/wallpaper-hook.sh"]
 
 # ---- 位置（v4 location: Guangzhou）----
 [location]
@@ -34,10 +38,10 @@ auto_locate = true
 name = "Guangzhou;"
 show_weather = true
 
-# ---- 壁纸：禁用 Noctalia 内置壁纸（由 mpvpaper 动态壁纸接管）----
+# ---- 壁纸：Noctalia 壁纸用于配色提取，mpvpaper 插件接管视频播放 ----
 [wallpaper]
-enabled             = false
-directory           = "~/Pictures/Wallpapers"
+enabled             = true
+directory           = "/home/mccarnon/Pictures/Wallpapers"
 fill_mode           = "crop"
 transition          = ["fade", "disc", "stripes", "wipe", "pixelate", "honeycomb"]
 transition_duration = 1500
@@ -122,6 +126,10 @@ hide_passive = false
 display_mode = "graphic"
 show_label   = true
 
+# ---- mpvpaper 动态壁纸插件 widget（激活视频播放）----
+[widget.mpvpaper]
+type = "noctalia/mpvpaper:mpvpaper"
+
 # ---- Dock：沿用 v4（底部、浮动、自动隐藏）----
 [dock]
 enabled             = true
@@ -144,15 +152,29 @@ launcher_icon       = "grid-dots"
 position          = "top_right"
 position_vertical = "center_right"
 background_opacity = 0.97
-border            = true
+border            = false
 offset_x          = 20
 offset_y          = 8
+
+# ---- GTK Material You 模板（由 Noctalia 渲染到 gtk.css）----
+[theme.templates.user.nyxniri_gtk3]
+index = 3
+input_path = "~/.config/noctalia/templates/gtk-3.0.css"
+output_path = "~/.config/gtk-3.0/gtk.css"
+
+[theme.templates.user.nyxniri_gtk4]
+index = 4
+input_path = "~/.config/noctalia/templates/gtk-4.0.css"
+output_path = "~/.config/gtk-4.0/gtk.css"
 
 # ---- mpvpaper 动态壁纸插件（Noctalia 内置）----
 [plugins]
 enabled = ["noctalia/mpvpaper"]
 
 [plugin_settings."noctalia/mpvpaper"]
-mpv_options = "--config=no --load-scripts=no"
-video_directory = "~/Pictures/Wallpapers/video"
-transition_on_change = true
+mpv_options = ""
+video_directory = "/home/mccarnon/Pictures/Wallpapers"
+# 关闭 clear 时的"提取旧视频末帧当静态壁纸"：该过程是异步的，会在统一壁纸
+# 选择器刚设好新静态图后把它覆盖（竞态）。置 false 后 clear 仅重新启用 Noctalia
+# 静态壁纸层，让选择器后续的 wallpaper-set 稳定生效。
+extract_last_frame = false

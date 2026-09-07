@@ -7,3 +7,5 @@ result-*
 secrets/*.age.plain
 secrets/keys
 **/.age-secrets
+__pycache__/
+*.pyc

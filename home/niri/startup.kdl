@@ -17,3 +17,5 @@ spawn-at-startup "xwayland-satellite"
 
 // Network manager tray applet.
 spawn-at-startup "nm-applet" "--indicator"
+
+

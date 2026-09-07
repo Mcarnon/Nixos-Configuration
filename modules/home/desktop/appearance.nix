@@ -26,7 +26,7 @@
     enable = true;
     settings = {
       "org/gnome/desktop/interface" = {
-        color-scheme = "prefer-dark";
+        color-scheme = "prefer-system";
         gtk-theme = "adw-gtk3-dark";
         icon-theme = "Papirus-Dark";
         gtk-im-module = "fcitx";

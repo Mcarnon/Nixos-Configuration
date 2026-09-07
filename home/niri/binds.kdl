@@ -6,7 +6,7 @@ binds {
     Mod+Comma { spawn-sh "noctalia msg panel-toggle control-center"; }
     Alt+Tab hotkey-overlay-title="Switch windows" { spawn-sh "noctalia msg window-switcher"; }
     Mod+F2 hotkey-overlay-title="Settings" { spawn-sh "noctalia msg settings-toggle"; }
-    Mod+W hotkey-overlay-title="Wallpaper picker" { spawn-sh "noctalia msg panel-toggle wallpaper"; }
+    Mod+W hotkey-overlay-title="Wallpaper picker" { spawn-sh "~/.config/niri/scripts/wallpaper-picker.py"; }
     Mod+V hotkey-overlay-title="Clipboard history" { spawn-sh "noctalia msg panel-toggle clipboard"; }
     Mod+Shift+B hotkey-overlay-title="Toggle bar" { spawn-sh "noctalia msg bar-toggle"; }
 

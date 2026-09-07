@@ -54,17 +54,30 @@ let
     ddcutil
     wget
     glib.bin                # gsettings/dconf —— GTK 模板 apply.sh 依赖
+    inotify-tools           # inotifywait —— mpvpaper-sync.sh 监听视频切换
+    jq                     # jq —— mpvpaper-sync.sh 解析 assignments.json
   ];
 in
 {
   imports = [ noctaliaModule ];
 
   home.packages = with pkgs; [
+    mpvpaper              # 动态壁纸播放器（Noctalia mpvpaper 插件后端）
+    ffmpeg                # 视频缩略图生成（mpv-hook.lua / wallpaper-hook.sh）
     qt6Packages.qt6ct # 其他 Qt 桌面应用的图标/主题（v4 时代延续；noctalia v5 本身用不到）
     libnotify # random-anime-wallpaper-noctalia 的 notify-send
     (writeShellScriptBin "random-anime-wallpaper-noctalia"
       (builtins.readFile ./bin/random-anime-wallpaper-noctalia)
     )
+
+    # NyxNiri 壁纸选择器依赖
+    gtk3
+    gdk-pixbuf
+    gtk-layer-shell
+    (python3.withPackages (ps: with ps; [
+      pygobject3           # gi.repository.Gtk / GdkPixbuf
+      pycairo              # 某些主题需要
+    ]))
   ];
 
   # 官方模块：启用 Noctalia v5 + systemd 用户服务。
@@ -90,8 +103,36 @@ in
     recursive = true;
   };
 
+  # mpvpaper 动态壁纸脚本
+  home.file.".config/noctalia/mpv-hook.lua".source = ./bin/mpv-hook.lua;
+  home.file.".config/noctalia/wallpaper-hook.sh" = {
+    source = ./bin/wallpaper-hook.sh;
+    executable = true;
+  };
+  home.file.".config/noctalia/mpvpaper-sync.sh" = {
+    source = ./bin/mpvpaper-sync.sh;
+    executable = true;
+  };
+
+  # theme-sync.sh：主题切换调度中枢（GTK 主题跟随的核心）
+  home.file.".config/noctalia/theme-sync.sh" = {
+    source = ./bin/theme-sync.sh;
+    executable = true;
+  };
+
+  # NyxNiri 壁纸选择器（Super+W 唤起，替代 Noctalia 内置选择器）
+  home.file.".config/niri/scripts/wallpaper-picker.py" = {
+    source = ./nix/wallpaper-picker.py;
+    executable = true;
+  };
+  home.file.".config/niri/scripts/wallpaper_picker" = {
+    source = ./nix/wallpaper_picker;
+    recursive = true;
+  };
+
   # 把工具目录前置进 PATH，让 Noctalia 派生的外部命令总能找到。
-  home.sessionPath = map (pkg: "${pkg}/bin") noctaliaTools;
+  # 同时保留用户 PATH（包含 ~/.local/bin）。
+  home.sessionPath = [ "${home}/.local/bin" ] ++ map (pkg: "${pkg}/bin") noctaliaTools;
 
   # 输入法 / Qt 主题变量（沿用 v4 的设置；noctalia 不再用 Qt6，但桌面其余 Qt
   # 应用仍需要 qt6ct 集成）。
