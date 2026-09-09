@@ -1,28 +1,36 @@
 function f
     # ==============================================================================
-    # features:
-    # 1. Asynchronous background download
-    # 2. Automatic cache management
-    # 3. Network fault tolerance
-    # 4. Auto cleanup
+    # 脚本功能说明
+    # 1. 结合 Fastfetch，在终端启动时展示随机二次元图片。
+    # 2. 具备静默后台异步下载机制，库存不足时自动补货，绝不阻塞前台终端的启动。
+    # 3. 具备智能缓存管理机制，自动控制待展示区与已使用区的图片数量上限。
+    # 4. 具备极致的网络环境容错处理，无网或弱网时自动降级，避免死等。
+    # 5. 具备自动清理 Fastfetch 内部生成的图片转换缓存功能，防止磁盘空间无感膨胀。
+    #
+    # 来源: shorin-arch-setup/minimal-niri-dotfiles/.config/fish/functions/f.fish
     # ==============================================================================
 
-    # ================= Configuration =================
+    # ================= 配置区域 =================
 
-    # false to disable cache cleanup
+    # 开关：阅后即焚模式，针对 Fastfetch 内部缓存
+    # true  = 运行后强力清空 ~/.cache/fastfetch/images/，防止转码缓存膨胀
+    # false = 保留缓存
     set -l CLEAN_CACHE_MODE true
 
+    # 每次补货下载多少张
     set -l DOWNLOAD_BATCH_SIZE 10
-
+    # 最大库存上限，即待展示区
     set -l MAX_CACHE_LIMIT 100
-
+    # 库存少于多少张时开始补货
     set -l MIN_TRIGGER_LIMIT 60
 
+    # used 目录最大存放数量
+    # 超过此数量将按照时间顺序删除最旧的文件
     set -l MAX_USED_LIMIT 50
 
     # ===========================================
 
-    # --- Language & Prompt ---
+    # --- 0. 语言与提示语配置 ---
 
     set -l IS_ZH true
     if not string match -q -r "^zh" "$LANG"

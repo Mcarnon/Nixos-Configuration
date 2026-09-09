@@ -73,7 +73,7 @@ launch_mpvpaper() {
         noctalia msg wallpaper-set "$thumb_path" 2>/dev/null || true
     fi
 
-    echo "mpvpaper-launcher: starting video wallpaper: $video"
+    echo "mpvpaper-launcher: 启动视频壁纸: $video"
     exec mpvpaper --auto-pause -o "$mpv_opts" "*" "$video"
 }
 
@@ -95,7 +95,7 @@ if [ -z "$VIDEO" ] || [ ! -f "$VIDEO" ]; then
 fi
 
 if [ -z "$VIDEO" ] || [ ! -f "$VIDEO" ]; then
-    echo "mpvpaper-launcher: no video file found, exiting"
+    echo "mpvpaper-launcher: 未找到视频文件，退出"
     exit 0
 fi
 

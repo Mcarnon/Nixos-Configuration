@@ -99,14 +99,14 @@ while IFS= read -r f; do POOL+=("$f"); done < <(get_pool "$TARGET_TONES")
 if [ ${#POOL[@]} -gt 0 ]; then
     if WP=$(pick_random "$LAST_SET" "${POOL[@]}"); then
         set_wallpaper "$WP"
-        echo "[$(date '+%H:%M:%S')] initial set ($TARGET_TONES): $(basename "$WP")"
+        echo "[$(date '+%H:%M:%S')] 初始设置($TARGET_TONES): $(basename "$WP")"
     fi
 else
     # 色调池全空：全库随机兜底
     while IFS= read -r f; do POOL+=("$f"); done < <(find "$WP_DIR" -maxdepth 1 -type f \( -name '*.mp4' -o -name '*.webm' -o -name '*.mkv' -o -name '*.gif' \) 2>/dev/null | sort)
     if WP=$(pick_random "$LAST_SET" "${POOL[@]}"); then
         set_wallpaper "$WP"
-        echo "[$(date '+%H:%M:%S')] initial set (full library fallback): $(basename "$WP")"
+        echo "[$(date '+%H:%M:%S')] 初始设置(全库兜底): $(basename "$WP")"
     fi
 fi
 
@@ -128,13 +128,13 @@ while true; do
         if [ ${#POOL[@]} -gt 0 ]; then
             if WP=$(pick_random "$(cat "$LAST_WALLPAPER" 2>/dev/null)" "${POOL[@]}"); then
                 set_wallpaper "$WP"
-                echo "[$(date '+%H:%M:%S')] period switch ($TARGET_TONES): $(basename "$WP")"
+                echo "[$(date '+%H:%M:%S')] 时段切换($TARGET_TONES): $(basename "$WP")"
             fi
         else
             while IFS= read -r f; do POOL+=("$f"); done < <(find "$WP_DIR" -maxdepth 1 -type f \( -name '*.mp4' -o -name '*.webm' -o -name '*.mkv' -o -name '*.gif' \) 2>/dev/null | sort)
             if WP=$(pick_random "$(cat "$LAST_WALLPAPER" 2>/dev/null)" "${POOL[@]}"); then
                 set_wallpaper "$WP"
-                echo "[$(date '+%H:%M:%S')] period switch (full library fallback): $(basename "$WP")"
+                echo "[$(date '+%H:%M:%S')] 时段切换(全库兜底): $(basename "$WP")"
             fi
         fi
         LAST_SWITCH=$NOW
@@ -150,13 +150,13 @@ while true; do
         if [ ${#POOL[@]} -gt 0 ]; then
             if WP=$(pick_random "$(cat "$LAST_WALLPAPER" 2>/dev/null)" "${POOL[@]}"); then
                 set_wallpaper "$WP"
-                echo "[$(date '+%H:%M:%S')] rotation ($TARGET_TONES): $(basename "$WP")"
+                echo "[$(date '+%H:%M:%S')] 轮换($TARGET_TONES): $(basename "$WP")"
             fi
         else
             while IFS= read -r f; do POOL+=("$f"); done < <(find "$WP_DIR" -maxdepth 1 -type f \( -name '*.mp4' -o -name '*.webm' -o -name '*.mkv' -o -name '*.gif' \) 2>/dev/null | sort)
             if WP=$(pick_random "$(cat "$LAST_WALLPAPER" 2>/dev/null)" "${POOL[@]}"); then
                 set_wallpaper "$WP"
-                echo "[$(date '+%H:%M:%S')] rotation (full library fallback): $(basename "$WP")"
+                echo "[$(date '+%H:%M:%S')] 轮换(全库兜底): $(basename "$WP")"
             fi
         fi
         LAST_SWITCH=$NOW

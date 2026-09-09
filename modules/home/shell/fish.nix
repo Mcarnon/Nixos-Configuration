@@ -34,7 +34,7 @@
     functions = {
       # ---- proxy toggles ----
       proxy_on = {
-        description = "Enable terminal proxy (default port 7897, override with arg)";
+        description = "启用终端代理（默认端口 7897，可传参覆盖）";
         body = ''
           set -l port 7897
           if set -q argv[1]
@@ -47,7 +47,7 @@
         '';
       };
       proxy_off = {
-        description = "Disable terminal proxy";
+        description = "关闭终端代理";
         body = ''
           set -e http_proxy
           set -e https_proxy
@@ -58,7 +58,7 @@
 
       # ---- SHORiN functions ----
       y = {
-        description = "Launch yazi and cd into its directory on exit";
+        description = "启动 yazi 并在退出时 cd 到其所在目录";
         body = ''
           set tmp (mktemp -t "yazi-cwd.XXXXXX")
           yazi $argv --cwd-file="$tmp"
@@ -69,31 +69,31 @@
         '';
       };
       cat = {
-        description = "bat instead of cat";
+        description = "bat 代替 cat";
         body = ''
           command bat --theme="base16" -- $argv
         '';
       };
       ls = {
-        description = "eza instead of ls";
+        description = "eza 代替 ls";
         body = ''
           command eza --icons=auto -- $argv
         '';
       };
       lt = {
-        description = "eza tree view";
+        description = "eza 树状视图";
         body = ''
           command eza --icons=auto --tree -- $argv
         '';
       };
       la = {
-        description = "eza long listing";
+        description = "eza 长列表";
         body = ''
           command eza -l --icons=auto -- $argv
         '';
       };
       sl = {
-        description = "Steam locomotive (colored with lolcat)";
+        description = "小火车（lolcat 上色）";
         body = ''
           command sl | lolcat
         '';
