@@ -51,7 +51,10 @@ let
       name = "niri-with-session-wrapper";
       # 关键：wrapper 脚本本身必须作为 path 装进最终包，否则 .desktop
       # 引用的 bin/niri-session-wrapper 不存在，会话启动即失败（登录循环）。
-      paths = [ pkgs.niri niriSessionWrapperScript ];
+      paths = [
+        pkgs.niri
+        niriSessionWrapperScript
+      ];
       postBuild = ''
         rm -f "$out/share/wayland-sessions/niri.desktop"
         cat > "$out/share/wayland-sessions/niri.desktop" <<EOF
@@ -74,7 +77,13 @@ let
   # spawn-sh-at-startup 更早启动，会退回无前端状态（托盘无图标、候选框不弹，
   # 症状等同"输入法没加载"）。
   fcitx5Launch = pkgs.writeShellScriptBin "fcitx5-launch" ''
-    PATH="${lib.makeBinPath [ pkgs.systemd pkgs.coreutils pkgs.gnugrep ]}"
+    PATH="${
+      lib.makeBinPath [
+        pkgs.systemd
+        pkgs.coreutils
+        pkgs.gnugrep
+      ]
+    }"
     for i in $(seq 1 60); do
       if systemctl --user show-environment 2>/dev/null | grep -q '^WAYLAND_DISPLAY='; then
         eval "$(${pkgs.systemd}/bin/systemctl --user show-environment 2>/dev/null | \
@@ -97,30 +106,38 @@ in
   # Noctalia v5 及其 IPC CLI（noctalia msg）进系统 PATH，方便 niri 快捷键和脚本调用。
   # 同时把 Noctalia 各面板常用的外部命令装进系统 PATH，这样即使手动在终端
   # 调试或脚本调用时也能找到它们。
-  environment.systemPackages = let
-    pythonWithDeps = pkgs.python3.withPackages (ps: with ps; [ numpy pillow ]);
-  in with pkgs; [
-    noctaliaPkg
-    brightnessctl
-    pamixer
-    playerctl
-    cliphist
-    wl-clipboard
-    wlr-randr
-    networkmanager
-    bluez
-    imagemagick
-    xdg-utils
-    wlsunset
-    ddcutil
-    wget
-    gnused
-    gawk
-    findutils
-    procps
-    matugen # v4 遗留下来的壁纸配色工具；v5 原生生成配色，仅当自建模板需要时保留
-    pythonWithDeps # scan-tones.py 依赖 (python3 + numpy + pillow)
-  ];
+  environment.systemPackages =
+    let
+      pythonWithDeps = pkgs.python3.withPackages (
+        ps: with ps; [
+          numpy
+          pillow
+        ]
+      );
+    in
+    with pkgs;
+    [
+      noctaliaPkg
+      brightnessctl
+      pamixer
+      playerctl
+      cliphist
+      wl-clipboard
+      wlr-randr
+      networkmanager
+      bluez
+      imagemagick
+      xdg-utils
+      wlsunset
+      ddcutil
+      wget
+      gnused
+      gawk
+      findutils
+      procps
+      matugen # v4 遗留下来的壁纸配色工具；v5 原生生成配色，仅当自建模板需要时保留
+      pythonWithDeps # scan-tones.py 依赖 (python3 + numpy + pillow)
+    ];
 
   # Noctalia / 终端 / 中文 UI 所需的字体。
   fonts.packages = with pkgs; [
@@ -141,7 +158,10 @@ in
       xdg-desktop-portal-gtk
     ];
     config.niri = {
-      default = [ "gnome" "gtk" ];
+      default = [
+        "gnome"
+        "gtk"
+      ];
       "org.freedesktop.impl.portal.Access" = [ "gtk" ];
       "org.freedesktop.impl.portal.Notification" = [ "gtk" ];
       "org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];

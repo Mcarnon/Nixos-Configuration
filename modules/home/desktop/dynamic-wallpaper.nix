@@ -20,16 +20,21 @@
 }:
 let
   # 带 numpy/pillow 的 python3 解释器（store 路径在构建时解析）
-  pythonWithDeps = pkgs.python3.withPackages (ps: [ ps.numpy ps.pillow ]);
+  pythonWithDeps = pkgs.python3.withPackages (ps: [
+    ps.numpy
+    ps.pillow
+  ]);
   scanTonesPython = lib.getExe pythonWithDeps;
 
   # 替换 scan-tones.py 调用为带完整 store 路径的 python
   # wp 和 wallpaper-rotate 都会调用 scan-tones.py，统一替换为带完整解释器路径
   scanTonesCmd = "${scanTonesPython} ${./dynamic-wallpaper/bin/scan-tones.py}";
-  wpScriptContent = lib.replaceStrings [ "scan-tones.py" ] [ scanTonesCmd ]
-    (builtins.readFile ./dynamic-wallpaper/bin/wp);
-  rotateScriptContent = lib.replaceStrings [ "scan-tones.py" ] [ scanTonesCmd ]
-    (builtins.readFile ./dynamic-wallpaper/bin/wallpaper-rotate.sh);
+  wpScriptContent = lib.replaceStrings [ "scan-tones.py" ] [ scanTonesCmd ] (
+    builtins.readFile ./dynamic-wallpaper/bin/wp
+  );
+  rotateScriptContent = lib.replaceStrings [ "scan-tones.py" ] [ scanTonesCmd ] (
+    builtins.readFile ./dynamic-wallpaper/bin/wallpaper-rotate.sh
+  );
 in
 {
   # ── 依赖 + 脚本 ───────────────────────────────────────────────────────────────

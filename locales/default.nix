@@ -85,7 +85,7 @@ in
       fontconfig = {
         enable = true;
         defaultFonts = {
-          monospace = [ "JetBrainsMono Nerd Font" ];
+          monospace = [ "CaskaydiaCove Nerd Font" ];
         };
       };
     };

@@ -58,8 +58,7 @@
     "satty/config.toml".source = ../../../home/files/satty.toml;
     "Thunar/uca.xml".source = ../../../home/files/thunar/uca.xml;
     "Thunar/accels.scm".source = ../../../home/files/thunar/accels.scm;
-    "xfce4/xfconf/xfce-perchannel-xml/thunar.xml".source =
-      ../../../home/files/thunar/thunar.xml;
+    "xfce4/xfconf/xfce-perchannel-xml/thunar.xml".source = ../../../home/files/thunar/thunar.xml;
     "xfce4/xfconf/xfce-perchannel-xml/thunar-volman.xml".source =
       ../../../home/files/thunar/thunar-volman.xml;
     "mimeapps.list".source = ../../../home/files/mimeapps.list;

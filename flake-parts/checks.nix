@@ -1,4 +1,4 @@
-# CI checks (security + performance regressions surface as `nix flake check`).
+# CI checks
 { inputs, ... }:
 {
   perSystem =

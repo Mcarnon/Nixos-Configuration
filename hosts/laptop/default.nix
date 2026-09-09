@@ -27,9 +27,12 @@ in
   system.stateVersion = "26.11"; # pinned at first install; do NOT bump on upgrade
 
   # ---- Locale / environment ----
+  # 系统默认语言为英语（en_US.UTF-8），避免地区特定路径/配置兼容问题。
+  # 中文作为可选的扩展语言包：需要时把 defaultLocale 改为 "zh_CN.UTF-8"
+  # 并开启 zh-cn.enable = true（会安装 rime 拼音输入法 + CJK 字体）。
   locales = {
-    defaultLocale = "zh_CN.UTF-8";
-    zh-cn.enable = true;
+    defaultLocale = "en_US.UTF-8";
+    zh-cn.enable = false;
   };
 
   # ---- User ----

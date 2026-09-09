@@ -1,17 +1,14 @@
-# NixOS VM test: Miyu package + fish hook (security: no network, smoke only).
-# Performance: VM boots once, runs two quick checks.
+# Smoke test: miyu package + fish hook
 { pkgs, inputs, ... }:
 pkgs.testers.nixosTest {
   name = "miyu-smoke";
   nodes.machine =
     { config, pkgs, ... }:
     {
-      # Reuse the repo's miyu overlay (pkgs.miyu already via overlay; inject here for the test VM)
       nixpkgs.overlays = [ (import ../pkgs/default.nix inputs) ];
       environment.systemPackages = [ pkgs.miyu ];
-      # Fish + starship present so the hook's `fish_prompt` wrap is realistic
+
       programs.fish.enable = true;
-      # Minimal HM-less hook install for the test
       environment.etc."fish/conf.d/zz-miyu.fish".source = ../home/files/miyu.fish;
     };
   testScript = ''
