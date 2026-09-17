@@ -13,6 +13,8 @@
     {
       packages = {
         inherit (pkgs) miyu;
+        # External-flake app (kept buildable here; consumers reference it via `inputs.airi`)
+        airi = inputs.airi.packages.${system}.default;
       };
       formatter = pkgs.nixfmt;
     };
