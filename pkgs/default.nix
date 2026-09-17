@@ -4,4 +4,7 @@
 inputs: final: prev:
 {
   miyu = prev.callPackage ./miyu { };
+  # AIRI 用本仓库 nixpkgs 构建（airi 自带 flake 内部对 electron_41 无 insecure 豁免；
+  # 豁免见 modules/nixos/core/nix.nix 的 permittedInsecurePackages）。
+  airi = prev.callPackage "${inputs.airi}/nix/package.nix" { };
 }

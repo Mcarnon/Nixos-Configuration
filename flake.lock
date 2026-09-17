@@ -21,6 +21,26 @@
         "type": "github"
       }
     },
+    "airi": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1789586139,
+        "narHash": "sha256-SNDz4xfjEpo679r1ostjMUifEhfa27SsSzlzvyACgY8=",
+        "owner": "moeru-ai",
+        "repo": "airi",
+        "rev": "438a067dde47aa0bdb46c2323d1fe293dc805218",
+        "type": "github"
+      },
+      "original": {
+        "owner": "moeru-ai",
+        "repo": "airi",
+        "type": "github"
+      }
+    },
     "darwin": {
       "inputs": {
         "nixpkgs": [
@@ -172,6 +192,7 @@
     "root": {
       "inputs": {
         "agenix": "agenix",
+        "airi": "airi",
         "flake-parts": "flake-parts",
         "home-manager": "home-manager_2",
         "nixpkgs": "nixpkgs_2",

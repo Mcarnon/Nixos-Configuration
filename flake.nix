@@ -42,6 +42,12 @@
       url = "github:noctalia-dev/noctalia";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # AIRI — self-hosted Grok/Neuro-sama companion (Electron "tamagotchi" desktop)
+    airi = {
+      url = "github:moeru-ai/airi";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
