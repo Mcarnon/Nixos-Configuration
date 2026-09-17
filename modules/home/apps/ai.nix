@@ -10,7 +10,6 @@
   home.packages =
     with pkgs; [
       opencode
-      ollama
-      inputs.airi.packages.${pkgs.stdenv.hostPlatform.system}.default
+      airi
     ];
 }

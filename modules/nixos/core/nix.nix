@@ -9,6 +9,11 @@
 }:
 {
   nixpkgs.config.allowUnfree = true;
+  # AIRI 上游锁定 electron 41（EOL）。这是明知风险：接受该版本才能打包；
+  # 等 mceru-ai/airi 升级 electron 后可移除。
+  nixpkgs.config.permittedInsecurePackages = [
+    "electron-41.10.6"
+  ];
 
   nix = {
     settings = {

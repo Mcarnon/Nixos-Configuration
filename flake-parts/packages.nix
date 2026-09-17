@@ -8,13 +8,13 @@
       pkgs = import inputs.nixpkgs {
         inherit system;
         overlays = [ (import ../pkgs/default.nix inputs) ];
+        # AIRI is built on EOL electron_41; exempt it here too so `.#airi` builds.
+        config.permittedInsecurePackages = [ "electron-41.10.6" ];
       };
     in
     {
       packages = {
-        inherit (pkgs) miyu;
-        # External-flake app (kept buildable here; consumers reference it via `inputs.airi`)
-        airi = inputs.airi.packages.${system}.default;
+        inherit (pkgs) miyu airi;
       };
       formatter = pkgs.nixfmt;
     };
