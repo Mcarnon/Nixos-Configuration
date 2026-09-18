@@ -1,8 +1,9 @@
 # Fcitx5 home-manager config — full port of shorin's Arch config:
 #   * config — hotkeys + behaviour
-#   * classicui.conf — vertical candidate list + default theme
+#   * classicui.conf — vertical candidate list + macOS theme
 #   * pinyin/punctuation/chttrans/notifications — addon behaviour
 #   * rime — default.custom.yaml + rime_ice.custom.yaml overrides
+#   * theme — Fcitx5-MacOS-Theme (MIT) into ~/.local/share/fcitx5/themes
 # System-level fcitx5 (addons, wayland frontend, dbus) lives in
 # locales/default.nix + locales/zh-cn.nix. RIME_USER_DIR is set there too.
 {
@@ -12,9 +13,39 @@
   ...
 }:
 
+let
+  # Fcitx5-MacOS-Theme (MIT, © Become-ILLUSORY) — pure data: four variants,
+  # each a theme.conf plus its SVGs. Pinned by rev; to update, bump rev and
+  # hash (base32 from `nix-prefetch-url --unpack --type sha256 <archive-url>`,
+  # then `nix hash convert --hash-algo sha256 --to sri <hash>`).
+  macosTheme = pkgs.fetchFromGitHub {
+    owner = "Become-ILLUSORY";
+    repo = "Fcitx5-MacOS-Theme";
+    rev = "ae1d3580042785c4fba9815cffa3cf153075e47d";
+    hash = "sha256-GlLp9XGUAuiFd2uvSV38B5+TT6UTkSxZJO3f1tHdXV0=";
+  };
+
+  # Variant picked by classicui.conf below. All four are installed (they appear
+  # in fcitx5-configtool's theme list), so switching is a one-word change:
+  #   macOS-Light / macOS-Dark / macOS-Light-Blur / macOS-Dark-Blur
+  # With UseDarkTheme=True a dark desktop uses DarkTheme, light mode uses Theme.
+  fcitxThemeLight = "macOS-Light-Blur";
+  fcitxThemeDark = "macOS-Dark-Blur";
+in
 {
-  # classicui: vertical candidate list (default theme — no runtime theme
-  # generator here, so we use the stock theme).
+  # 主题数据：只软链四个主题目录，`~/.local/share/fcitx5/themes` 本身保持真实
+  # 目录——Noctalia 的 fcitx5 模板还要往 themes/Matugen/ 写文件，软链整个
+  # themes/ 会把它变成只读 store 路径（同 modules/home/apps/gui.nix 的说明）。
+  xdg.dataFile = {
+    "fcitx5/themes/macOS-Light".source = "${macosTheme}/themes/macOS-Light";
+    "fcitx5/themes/macOS-Light-Blur".source = "${macosTheme}/themes/macOS-Light-Blur";
+    "fcitx5/themes/macOS-Dark".source = "${macosTheme}/themes/macOS-Dark";
+    "fcitx5/themes/macOS-Dark-Blur".source = "${macosTheme}/themes/macOS-Dark-Blur";
+  };
+
+  # classicui: vertical candidate list + Fcitx5-MacOS-Theme. The theme declares
+  # [AccentColorField], so UseAccentColor=True keeps recolouring its highlight
+  # and borders with the desktop accent colour.
   xdg.configFile."fcitx5/conf/classicui.conf".text = ''
     # 垂直候选列表
     Vertical Candidate List=True
@@ -36,10 +67,10 @@
     ShowLayoutNameInIcon=True
     # 使用输入法的语言来显示文字
     UseInputMethodLanguageToDisplayText=True
-    # 主题
-    Theme=default
+    # 主题（Fcitx5-MacOS-Theme，变体见文件顶部 fcitxThemeLight/Dark）
+    Theme=${fcitxThemeLight}
     # 深色主题
-    DarkTheme=default-dark
+    DarkTheme=${fcitxThemeDark}
     # 跟随系统浅色/深色设置
     UseDarkTheme=True
     # 当被主题和桌面支持时使用系统的重点色
