@@ -15,6 +15,7 @@ in
 {
   imports = [
     ./hardware-configuration.nix
+    ./acpi-override.nix # hides the phantom ES8336 so SOF drives the real codecs
     ../../roles/nixos/desktop.nix
   ];
 

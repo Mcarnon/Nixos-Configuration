@@ -46,6 +46,7 @@
     zed-editor # IDE
     obsidian # note-taking
     obs-studio # screen recording
+    bitwig-studio # DAW
     splayer-next # netease music player
     hmcl # minecraft launcher
   ];

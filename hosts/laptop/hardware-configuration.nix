@@ -25,6 +25,26 @@
   ];
   boot.kernelModules = [ "kvm-intel" ];
 
+  # ---- Audio: temporary legacy HDA pin (Huawei NbDE-WXX9 / MateBook D 15 2022) ----
+  # History: the DSDT declares an Everest ES8336 codec at \_SB_.PC00.I2C2.ESSX
+  # (ACPI I2C2 = PCI 00:15.2), a controller this board does not expose. The
+  # codec is unreachable, but Intel SOF matches by ACPI HID, so it kept picking
+  # the unusable `sof-essx8336` machine driver, which then asked for
+  # `intel/sof-tplg/sof-tgl-es8336-dmic2ch.tplg` — a name current sof-bin
+  # releases no longer ship (only the -ssp0/-ssp1/-ssp2 variants) — and the
+  # probe died with -ENOENT: no sound card at all.
+  # ./acpi-override.nix now renames that phantom HID away, which lets SOF fall
+  # back to the HDA machine driver (`sof-hda-generic-2ch`, incl. the PCH DMIC
+  # array). Until that override is verified on a real boot, this pin keeps the
+  # legacy HDA driver in charge so audio cannot regress:
+  #   dsp_driver = 0 auto / 1 legacy HDA / 2 SST / 3 SOF / 4 AVS
+  # Verify the override with `ls /sys/bus/acpi/devices | grep ESSX` (expect
+  # ESSX8337:00, no ESSX8336:00) and `journalctl -k -b | grep 'Table Upgrade'`,
+  # then delete this block to hand the device back to SOF.
+  boot.extraModprobeConfig = ''
+    options snd-intel-dspcfg dsp_driver=1
+  '';
+
   hardware.enableAllFirmware = true;
   hardware.enableRedistributableFirmware = true;
 
