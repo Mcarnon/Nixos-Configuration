@@ -163,6 +163,11 @@ in
 
   # polkit authentication agent
   security.polkit.enable = true;
+  # pkexec 需要 setuid root 才能给 GUI 提权（gparted 的菜单条目就是
+  # `pkexec --disable-internal-agent gparted`）。NixOS 默认不装任何 setuid
+  # 二进制（store 里也放不了 setuid），不开这个开关，pkexec 会直接报
+  # "pkexec must be setuid root" 并以 127 退出——菜单点了没任何反应。
+  security.polkit.enablePkexecWrapper = true;
   systemd.user.services.polkit-gnome-authentication-agent-1 = {
     description = "polkit-gnome authentication agent";
     wantedBy = [ "graphical-session.target" ];
