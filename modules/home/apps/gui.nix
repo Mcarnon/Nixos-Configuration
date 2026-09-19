@@ -16,15 +16,25 @@
     adwaita-fonts # Adwaita Sans（fontconfig 回退）
 
     # -- 文件管理器 --
-    thunar # 主文件管理器（Mod+E）
+    # 必须用 `thunarPlugins` 装箱：插件 .so 在别的 store 路径下，只有
+    # thunar.override 会设 THUNARX_DIRS，单独装 thunar-archive-plugin 包
+    # Thunar 是找不到的（右键“解压到此处 / 压缩”菜单不会出现）。
+    (thunar.override { thunarPlugins = [ thunar-archive-plugin ]; })
     thunar-volman # 移动设备自动挂载
-    thunar-archive-plugin # Thunar 右键压缩/解压
     tumbler # Thunar 缩略图服务
     poppler_gi # PDF 缩略图
     libgsf # Office 文档缩略图
     webp-pixbuf-loader # WebP 缩略图
     ffmpegthumbnailer # 视频缩略图
     file-roller # 压缩包管理 GUI
+    # 压缩包后端：file-roller / thunar-archive-plugin 只是前端，真正解压要调这些
+    # 外部命令。之前一个都没装，所以只能解普通 zip（走 gnome-autoar/libarchive），
+    # 加密的就不行了：AES 加密 zip 必须 7z（info-zip 的 unzip 不支持 AES），
+    # RAR 只有 unrar 能解。
+    p7zip # 7z/7za：AES 加密 zip、7z 归档
+    unzip # info-zip 解包（普通 zip）
+    zip # info-zip 打包（file-roller “新建归档”）
+    unrar # RAR（unfree，nixpkgs.config.allowUnfree 已开）
     gnome.gvfs # 回收站 + 远程/可移动挂载（含 SMB/MTP/GPhoto2）
     nautilus # 备用文件管理器（Mod+Alt+E）
     nautilus-open-any-terminal # Nautilus 右键“在此打开终端”
