@@ -29,6 +29,7 @@
     rustfmt
     clippy
     rust-analyzer
+    gcc # 提供 cc，rustc 链接时需要（否则报 linker `cc` not found）
     # Nix
     nil
     nixpkgs-fmt
