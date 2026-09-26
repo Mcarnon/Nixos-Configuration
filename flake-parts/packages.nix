@@ -14,7 +14,7 @@
     in
     {
       packages = {
-        inherit (pkgs) miyu airi;
+        inherit (pkgs) miyu airi clavisShell keyCli keytop libcava;
       };
       formatter = pkgs.nixfmt;
     };

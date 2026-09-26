@@ -16,7 +16,12 @@
     "niri/startup.kdl".source = ../../../home/niri/startup.kdl;
     "niri/windowrule.kdl".source = ../../../home/niri/windowrule.kdl;
     "niri/supertab.kdl".source = ../../../home/niri/supertab.kdl;
-    "niri/noctalia-static.kdl".source = ../../../home/niri/noctalia-static.kdl;
+    "niri/clavis-static.kdl".source = ../../../home/niri/clavis-static.kdl;
     "niri/niri-hardware.kdl".source = hostPath + "/niri-hardware.kdl";
   };
+
+  # ~/.config/niri/clavis/ 是 Clavis 自己的地盘：colors/effects/cursor 三个
+  # kdl 片段由 Clavis 运行时生成，配置文件也是它回写。不能做成 store 软链，
+  # 所以这里只保证父目录存在（xdg.configFile 建的目录本身就够了，Clavis 也会
+  # 自己 mkdir）。
 }

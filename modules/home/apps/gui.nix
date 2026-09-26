@@ -1,6 +1,6 @@
 # GUI / desktop applications — 基础桌面工具：
 # foot 终端、satty 截图标注、imv 图片查看（mimeapps 默认）。
-# 通知/电源菜单由 Noctalia 提供（不再需要 mako/wlogout）。
+# 通知/电源菜单由 Clavis 提供（不再需要 mako/wlogout）。
 {
   config,
   pkgs,
@@ -12,7 +12,7 @@
 
     # -- 终端 / 字体 --
     foot # Wayland 终端（foot.ini 见下方 xdg.configFile）
-    maple-mono.NF-CN # Maple Mono NF（含中文字形；foot/Noctalia 主字体）
+    maple-mono.NF-CN # Maple Mono NF（含中文字形；foot/Clavis 主字体）
     adwaita-fonts # Adwaita Sans（fontconfig 回退）
 
     # -- 文件管理器 --
@@ -50,7 +50,7 @@
     xdg-utils # xdg-open & friends
     xwayland-satellite # X11 support (started by spawn-at-startup)
     networkmanagerapplet # nm-applet tray icon
-    nwg-look # GTK 主题/图标设置 GUI（Noctalia 配色同步辅助）
+    nwg-look # GTK 主题/图标设置 GUI（配合 clavis-theme-sync 手工微调 GTK）
 
     # -- Daily Apps --
     zed-editor # IDE
@@ -62,11 +62,12 @@
   ];
 
   # 应用配置文件（raw 部署，Shorin 原版或裁剪版）。
-  # 注意：foot.ini 与 kitty 的 themes/noctalia.conf、current-theme.conf 都归
-  # Noctalia 的模板管（模板会覆写它们），不能做成只读 store 软链；foot.ini 由
-  # noctalia 模块激活时以可写副本种子部署。这里只保留不需要被模板改写的文件。
+  # 注意：~/.config/kitty/themes/Matugen.conf 由 Clavis 的 matugen 模板覆写，
+  # 所以 kitty.conf 只 include 它、自身保持只读 store 软链没问题；那份主题由
+  # clavis 模块以可写副本种子部署（首次 matugen 运行前的静态兜底）。
   xdg.configFile = {
     "satty/config.toml".source = ../../../home/files/satty.toml;
+    "kitty/kitty.conf".source = ../../../home/files/kitty.conf;
     "Thunar/uca.xml".source = ../../../home/files/thunar/uca.xml;
     "Thunar/accels.scm".source = ../../../home/files/thunar/accels.scm;
     "xfce4/xfconf/xfce-perchannel-xml/thunar.xml".source =
@@ -74,10 +75,10 @@
     "xfce4/xfconf/xfce-perchannel-xml/thunar-volman.xml".source =
       ../../../home/files/thunar/thunar-volman.xml;
     "mimeapps.list".source = ../../../home/files/mimeapps.list;
-    # foot.ini 由本配置管理（Noctalia v5 不再生成 foot 模板）
+    # foot.ini 由本配置管理（Clavis 不生成 foot 模板）
     "foot/foot.ini".source = ../../../home/files/foot.ini;
-    # 基配置：Noctalia 模板会生成覆盖物（如 fuzzel/themes/noctalia、
-    # kitty/current-theme.conf），只兜底不做挡板
+    # 基配置：Clavis 接管后由 kitty/themes/Matugen.conf 这类生成物做覆盖，
+    # fuzzel.ini 只是兜底，不做挡板
     "fuzzel/fuzzel.ini".source = ../../../home/files/fuzzel.ini;
     "xsettingsd/xsettingsd.conf".source = ../../../home/files/xsettingsd.conf;
   };

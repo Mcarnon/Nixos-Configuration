@@ -1,0 +1,53 @@
+{
+  "wallpaper": {
+    "folder": "/home/mccarnon/Pictures/Wallpapers",
+    "path": "/home/mccarnon/Pictures/Wallpapers/ad03d234d7613927d05f222a67e7d87411100419.gif",
+    "fillMode": "Fill",
+    "desktopBackend": "quickshell",
+    "transition": {
+      "type": "fade",
+      "durationMs": 1500,
+      "easingMode": "cubic"
+    },
+    "overview": {
+      "enabled": true,
+      "useDesktopWallpaper": true,
+      "fillMode": "Fill"
+    },
+    "autoCycle": {
+      "enabled": false,
+      "mode": "interval",
+      "interval": 1800
+    }
+  },
+  "theme": {
+    "mode": "dark",
+    "matugenScheme": "scheme-tonal-spot",
+    "cursorTheme": "breeze_cursors",
+    "cursorSize": 24,
+    "cursorHideWhenTyping": true,
+    "cursorHideAfterInactiveMs": 3000,
+    "iconTheme": "",
+    "fonts": {
+      "ui": "LXGW WenKai"
+    }
+  },
+  "effects": {
+    "shellBackgroundOpacity": 1,
+    "shellBlurEnabled": true,
+    "shellBlurXray": false
+  },
+  "keystone": {
+    "style": "bangs",
+    "position": "top",
+    "hideDate": false
+  },
+  "bar": {
+    "position": "top",
+    "barLeadingComponents": ["workspaces", "information", "activeWindow"],
+    "barTrailingComponents": ["tray", "systemMonitor", "quickSettings"]
+  },
+  "sidebar": {
+    "keepLoaded": true
+  }
+}

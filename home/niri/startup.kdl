@@ -1,15 +1,28 @@
 // Startup commands for niri session.
-// Noctalia v5 (the desktop shell) runs as a user systemd service
-// (`noctalia.service`, via the official home-manager module under
-// niri.service), and fcitx5 as another
-// (`systemd.user.services.fcitx5` in modules/nixos/desktop/niri.nix).
+// Clavis (the Quickshell desktop shell) is NOT started here — it runs as a
+// user systemd service (`clavis-shell.service`, see
+// modules/home/desktop/clavis/default.nix) under graphical-session.target, so
+// it survives shell crashes and restarts on failure. The clipboard watcher
+// (`clavis-clipboard.service`) is likewise a systemd service (key clipboard
+// watch). fcitx5 is also a systemd service (see modules/nixos/desktop/niri.nix) —
+// the systemd service and this spawn race to own the DBus name, and the winner runs.
+//
+// systemd --user is started by the wayland-session script (greetd env), so
+// polkit/fcitx5/clavis services are available.
 
 // 环境传播（关键）：niri 自己设置 WAYLAND_DISPLAY，但 systemd 用户服务
-// （noctalia 等）的环境来自 systemd user manager，拿不到。不传播的话
-// noctalia 启动找不到 wayland socket 会直接崩溃（桌面只剩灰屏）。必须在
-// niri 启动后立刻把 WAYLAND_DISPLAY 写进 systemd 用户环境。
+// （clavis-shell 等）的环境来自 systemd user manager，拿不到。不传播的话
+// clavis 启动找不到 wayland socket 会直接崩溃（桌面全黑）。必须在 niri 启动后
+// 立刻把 WAYLAND_DISPLAY 写进 systemd 用户环境。
+// clavis-shell.service 额外用 clavis-session-env 等 socket（双保险，见该脚本）。
 spawn-sh-at-startup "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=niri"
 spawn-sh-at-startup "systemctl --user set-environment WAYLAND_DISPLAY=$WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=niri"
+
+// 兜底看门狗：systemd 之外再守一次，只救"服务彻底死掉"的场景。
+// 30s 后开始：Clavis 活着就退出；服务还活着（在重启中）就继续等；只有服务
+// 已经不在了才 restart 它（服务本身 Restart=always 且不限速，正常不会走到
+// 这条分支，这里防的是 unit 被 start-limit 打死后永久黑屏）。约 10 分钟后放弃。
+spawn-sh-at-startup "setsid nohup bash -c 'sleep 30; for i in $(seq 1 40); do key ipc show >/dev/null 2>&1 && exit 0; systemctl --user is-active --quiet clavis-shell.service || systemctl --user restart clavis-shell.service; sleep 15; done' >/dev/null 2>&1 &"
 
 // XWayland-on-demand for legacy X11 apps (QQ, WeChat, older electron apps).
 // niri 25.08+ auto-spawns this on demand, but starting it explicitly is safer.
@@ -17,5 +30,3 @@ spawn-at-startup "xwayland-satellite"
 
 // Network manager tray applet.
 spawn-at-startup "nm-applet" "--indicator"
-
-

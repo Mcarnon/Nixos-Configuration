@@ -9,6 +9,7 @@
     {
       checks = {
         miyu-smoke = miyuTest;
+        niri-config = pkgs.callPackage ../checks/niri-config.nix { };
       };
     };
 }

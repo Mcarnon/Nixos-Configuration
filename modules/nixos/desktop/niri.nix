@@ -3,12 +3,9 @@
   config,
   pkgs,
   lib,
-  inputs,
   ...
 }:
 let
-  noctaliaPkg = inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default;
-
   # Wayland session entry point (replaces the default niri-session).
   #
   # niri-session only activates graphical-session.target when it launches
@@ -16,7 +13,7 @@ let
   # runs inside a systemd --user manager, so niri-session takes its "already
   # managed" shortcut and execs `niri --session` directly — leaving
   # graphical-session.target inactive, which means every user service
-  # `WantedBy=graphical-session.target`（noctalia, fcitx5, polkit）永远
+  # `WantedBy=graphical-session.target`（clavis-shell, fcitx5, polkit）永远
   # 不会启动。显式启动 niri.service 可修复此问题：它
   # BindsTo=graphical-session.target，目标被激活后会把
   # 所有用户服务一并拉起。`systemctl --wait` 让本进程存活到
@@ -94,13 +91,16 @@ in
     package = niriWithSessionWrapper;
   };
 
-  # Noctalia v5 及其 IPC CLI（noctalia msg）进系统 PATH，方便 niri 快捷键和脚本调用。
-  # 同时把 Noctalia 各面板常用的外部命令装进系统 PATH，这样即使手动在终端
-  # 调试或脚本调用时也能找到它们。
+  # Clavis Shell 及其 IPC CLI（`key`）进系统 PATH，方便 niri 快捷键和脚本调用
+  # （home.sessionPath 里也有一份，见 modules/home/desktop/clavis）。
+  # 同时把面板常用的外部命令装进系统 PATH，这样即使手动在终端调试或脚本调用
+  # 时也能找到它们。
   environment.systemPackages = let
     pythonWithDeps = pkgs.python3.withPackages (ps: with ps; [ numpy pillow ]);
   in with pkgs; [
-    noctaliaPkg
+    clavisShell
+    keyCli
+    keytop
     brightnessctl
     pamixer
     playerctl
@@ -118,11 +118,11 @@ in
     gawk
     findutils
     procps
-    matugen # v4 遗留下来的壁纸配色工具；v5 原生生成配色，仅当自建模板需要时保留
+    matugen # Clavis ThemeService 用它按壁纸重生成 niri/kitty/cava/zsh/... 配色
     pythonWithDeps # scan-tones.py 依赖 (python3 + numpy + pillow)
   ];
 
-  # Noctalia / 终端 / 中文 UI 所需的字体。
+  # Clavis / 终端 / 中文 UI 所需的字体。
   fonts.packages = with pkgs; [
     adwaita-fonts
     lxgw-wenkai
@@ -150,7 +150,7 @@ in
     };
   };
 
-  # Noctalia / GTK 主题切换依赖 gsettings 写 dconf。
+  # Clavis / GTK 主题切换依赖 gsettings 写 dconf。
   programs.dconf.enable = true;
 
   # Fix graphical-session.target so systemd user services can use it
