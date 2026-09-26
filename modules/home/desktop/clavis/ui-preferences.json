@@ -1,0 +1,10 @@
+{
+  "dndEnabled": false,
+  "language": "zh_CN",
+  "weatherTemperatureUnit": "celsius",
+  "systemTemperatureUnit": "celsius",
+  "useTwelveHourClock": false,
+  "sidebarClockStyle": "digital",
+  "sidebarCookieSides": 14,
+  "sidebarCookieDateStyle": "bubble"
+}

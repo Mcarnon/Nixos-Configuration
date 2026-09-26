@@ -8,7 +8,7 @@
 - hardware HAL (`hardware.intel.enable`)
 - **agenix** secrets management (age-encrypted, decrypt only on the target host)
 - **roles/** host composition (base/desktop) — cross-host reuse without double-eval
-- **niri** scrollable-tiling Wayland compositor + **Noctalia**（Quickshell 桌面壳）：ly 登录 + 状态栏 + 启动器 + 控制中心 + 锁屏 + M3 动态主题 + niri 动态模糊
+- **niri** scrollable-tiling Wayland compositor + **Clavis Shell**（Quickshell 桌面壳）：ly 登录 + 状态栏 + 启动器 + 控制中心 + 锁屏 + 按壁纸取色的 M3 主题 + niri 动态模糊
 - **Intel Iris Xe** graphics acceleration (VA-API) via `modules/hardware/intel.nix`
 - **Chinese environment** (locale + fonts + Fcitx5 input method)
 - **Miyu** terminal AI assistant via overlay `pkgs.miyu` + `home/modules/miyu.nix`
@@ -44,7 +44,7 @@ git add -A && sudo nixos-rebuild switch --flake .#laptop
 │   │   └── i18n/ -> ../../locales                    # locale框架垫片
 │   ├── home/
 │   │   ├── shell/{fish.nix,tools.nix} # fish 含 SHORiN 风格函数（y/cat/ls/lt/la/sl/f）
-│   │   ├── desktop/{niri.nix,appearance.nix,noctalia/}
+│   │   ├── desktop/{niri.nix,appearance.nix,clavis/}
 │   │   ├── apps/{cli,gui,media,network,ai,neovim}.nix
 │   │   └── services/{miyu,cliphist}.nix
 │   └── _templates/{enable-option.nix,nested-import.nix,example-simple.nix}
@@ -173,7 +173,7 @@ Reinstalling later is the same flow — disko's `destroy` step handles the wipe.
 | `modules/nixos/network/openssh.nix` | remote IP / user |
 | `modules/nixos/network/firewall.nix` | `allowedTCPPorts` (default only 22) |
 | `modules/nixos/security/hardening.nix` | `boot.kernel.sysctl` BBR/fq, `zramSwap` |
-| `modules/home/desktop/noctalia/default.nix` | Noctalia 桌面壳（包 + qs IPC + systemd 用户服务 + SHORiN 配置 + 默认壁纸） |
+| `modules/home/desktop/clavis/default.nix` | Clavis 桌面壳（包 + `key` IPC + systemd 用户服务/定时器 + 主题种子 + 壁纸选择器/轮换） |
 | `modules/nixos/desktop/ly.nix` | 登录界面（ly，TUI 显示管理器） |
 | `modules/home/services/miyu.nix` | Miyu TUI (`miyu config`); no prefill needed |
 | `locales/zh-cn.nix` | input method (e.g. Rime) |
@@ -186,6 +186,6 @@ Reinstalling later is the same flow — disko's `destroy` step handles the wipe.
 - **Performance**: `flake-parts` perSystem 缓存，`nix.gc` weekly，`zramSwap` zstd，`BBR/fq`，`services.resolved` 缓存。
 - **Security**: `agenix` `/run/agenix.d` tmpfs，`networking.firewall` 默认关，`PermitRootLogin no`。
 - **XWayland**: off by default; configure `xwayland-satellite` per the niri docs if you need X11 apps.
-- **Lock screen**: Noctalia 锁屏 bound to `Super+Alt+L`；suspend combo `Mod+Alt+P` 先锁后挂。
-- **Wallpaper**: 图片丢进 `~/Pictures/Wallpapers/`，`Mod+F10` 随机切换（Noctalia 原生壁纸管理 + matugen 主题跟随）；也可用 `random-anime-wallpaper-noctalia` 下载动漫壁纸。
+- **Lock screen**: Clavis 锁屏 bound to `Super+Alt+L`；suspend combo `Mod+Alt+P` 先锁后挂。
+- **Wallpaper**: 图片丢进 `~/Pictures/Wallpapers/`，`Mod+F10` 随机切换、`Mod+W` 打开 NyxNiri 选择器（都走 Clavis 壁纸 IPC + matugen 主题跟随）；也可用 `random-anime-wallpaper-clavis` 下载动漫壁纸。GIF 可用；Clavis 不支持视频壁纸（`.mp4/.webm` 只留库不参与轮换）。
 - **键位教程**: `Mod+Shift+Slash`（niri 内置 hotkey-overlay）。

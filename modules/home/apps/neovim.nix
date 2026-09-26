@@ -23,13 +23,19 @@
   # Optional: LSP / formatter binaries for temp IDE use — uncomment as needed.
   # Kept separate from neovim package so you can toggle per-language.
   home.packages = with pkgs; [
+    # Rust toolchain
+    cargo
+    rustc
+    rustfmt
+    clippy
+    rust-analyzer
+    gcc # 提供 cc，rustc 链接时需要（否则报 linker `cc` not found）
     # Nix
     nil
     nixpkgs-fmt
     # Lua
     lua-language-server
     stylua
-    # Add more per project: e.g. rust-analyzer, pyright, typescript-language-server
   ];
 
   # Deploy real nvim dotfiles. Source dir is co-located with this module.

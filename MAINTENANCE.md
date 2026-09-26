@@ -68,11 +68,38 @@ sudo nix store optimise           # dedupe (auto-optimise-store is already on)
   `lspci`, `lsusb`, `dmidecode`, `smartctl -a /dev/nvme0n1`, `nvme list`,
   `sensors`, `powertop`, `inxi -F`.
 - **Audio** (Huawei / Intel SOF — PipeWire in `modules/nixos/desktop/audio.nix`):
+  This board's DSDT declares an Everest ES8336 codec at `\_SB_.PC00.I2C2.ESSX`,
+  but ACPI I2C2 is PCI `00:15.2`, a controller Quanta never exposed here (only
+  I2C0 / `00:15.0` exists). The codec is unreachable, yet SOF matches machine
+  drivers by ACPI HID, so it kept picking the unusable `sof-essx8336` driver,
+  which then asked for `intel/sof-tplg/sof-tgl-es8336-dmic2ch.tplg` — a name
+  current sof-bin releases no longer ship — and the probe died with `-ENOENT`:
+  no sound card at all.
+  Fix: `hosts/laptop/acpi-override.nix` renames that phantom HID in the DSDT
+  (`hosts/laptop/acpi/DSDT.raw` + `patch-dsdt.py`) and injects the patched
+  table through `boot.initrd.prepend`. With the ES8336 match gone, SOF falls
+  back to the HDA machine driver (`skl_hda_dsp_generic` +
+  `sof-hda-generic-2ch.tplg`), which drives the codecs that really are wired
+  (HDA #0 Conexant SN6140, HDA #2 Intel HDMI) and the PCH digital mic array.
+
+  While the override is being verified, `hosts/laptop/hardware-configuration.nix`
+  still pins `options snd-intel-dspcfg dsp_driver=1` (legacy HDA) so audio
+  cannot regress; **delete that block once the override is confirmed** to hand
+  the device back to SOF.
   ```bash
-  lspci -nnk | grep -iA3 audio                    # kernel sees the sound card?
-  aplay -l                                        # ALSA devices
-  wpctl status                                    # wireplumber routing
-  systemctl --user status pipewire pipewire-pulse wireplumber
+  ls /sys/bus/acpi/devices | grep ESSX     # expect ESSX8337:00, no ESSX8336:00
+  journalctl -k -b | grep -i 'Table Upgrade'   # ACPI: Table Upgrade: ... DSDT
+  lspci -nnk | grep -iA3 audio             # snd_hda_intel vs sof-audio-*
+  aplay -l && cat /proc/asound/cards       # ALSA devices
+  wpctl status                             # sinks/sources (DMIC = 2nd source)
+  journalctl -k -b | grep -iE 'snd|sof'    # machine driver / topology picked
+  ```
+  After a BIOS update the stored DSDT is stale — re-dump and re-patch (the
+  override only applies while its OEM revision is newer than the firmware's,
+  which the patch script takes care of):
+  ```bash
+  sudo cp /sys/firmware/acpi/tables/DSDT hosts/laptop/acpi/DSDT.raw
+  python3 hosts/laptop/acpi/patch-dsdt.py hosts/laptop/acpi/DSDT.raw /tmp/check.aml
   ```
 
 ## Configuration maintenance

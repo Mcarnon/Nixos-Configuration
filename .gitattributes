@@ -28,3 +28,7 @@ modules/**/bin/* text eol=lf
 *.mp4 binary
 *.oga binary
 *.zst binary
+
+# ACPI 表（hosts/laptop/acpi/ 里的 DSDT 原件与打补丁后的 aml）
+*.raw binary
+*.aml binary

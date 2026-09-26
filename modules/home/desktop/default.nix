@@ -1,7 +1,7 @@
 {
   imports = [
     ./niri.nix
-    ./noctalia
+    ./clavis
     ./appearance.nix
   ];
 }

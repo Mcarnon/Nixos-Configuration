@@ -8,7 +8,7 @@
 {
   programs.starship = {
     enable = true;
-    # SHORiN 原版 starship 配置（含 noctalia 配色 palette）
+    # SHORiN 原版 starship 配置（含深色 palette；壁纸取色由 Clavis 写 zsh/starship）
     settings = builtins.fromTOML (builtins.readFile ../../../home/files/starship.toml);
   };
 
