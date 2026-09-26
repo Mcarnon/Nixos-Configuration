@@ -41,7 +41,10 @@ let
     exec ${toneScanPython}/bin/python3 "${scriptsDir}/scan-tones.py" "${wallpaperDir}" "${wallpaperTonesFile}" "$@"
   '';
 
-  sessionEnv = pkgs.writeShellScript "clavis-session-env" (builtins.readFile ./bin/clavis-session-env);
+  # 必须是 writeShellScriptBin（产出带 /bin 的目录）：这脚本进 home.packages，
+  # 而 home-manager-path 用 buildEnv 合并 sessionPath，file 类型的 store path
+  # 会直接让 buildEnv 报 "is a file and cannot be added to a directory"。
+  sessionEnv = pkgs.writeShellScriptBin "clavis-session-env" (builtins.readFile ./bin/clavis-session-env);
 
   # clavis-theme-sync：把 Clavis 的 theme.mode 同步给 dconf / GTK3 / GTK4 / Kvantum
   # （Clavis 只重画自己的模板，不管这些；见 bin/clavis-theme-sync 头部说明）。

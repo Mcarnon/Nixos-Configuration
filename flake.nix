@@ -50,12 +50,6 @@
       url = "github:xy1092/keytop";
       flake = false;
     };
-
-    # AIRI — self-hosted Grok/Neuro-sama companion (Electron "tamagotchi" desktop)
-    airi = {
-      url = "github:moeru-ai/airi";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs =

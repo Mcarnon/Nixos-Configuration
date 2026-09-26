@@ -54,7 +54,7 @@
 
     # -- Daily Apps --
     zed-editor # IDE
-    obsidian # note-taking
+    # obsidian # note-taking
     obs-studio # screen recording
     blender # 3D modeling
     splayer-next # netease music player

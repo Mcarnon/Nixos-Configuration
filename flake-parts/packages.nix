@@ -8,13 +8,11 @@
       pkgs = import inputs.nixpkgs {
         inherit system;
         overlays = [ (import ../pkgs/default.nix inputs) ];
-        # AIRI is built on EOL electron_41; exempt it here too so `.#airi` builds.
-        config.permittedInsecurePackages = [ "electron-41.10.6" ];
       };
     in
     {
       packages = {
-        inherit (pkgs) miyu airi clavisShell keyCli keytop libcava;
+        inherit (pkgs) miyu clavisShell keyCli keytop libcava;
       };
       formatter = pkgs.nixfmt;
     };

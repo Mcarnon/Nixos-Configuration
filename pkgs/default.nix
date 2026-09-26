@@ -10,10 +10,6 @@ in
 {
   miyu = prev.callPackage ./miyu { };
 
-  # AIRI 用本仓库 nixpkgs 构建（airi 自带 flake 内部对 electron_41 无 insecure 豁免；
-  # 豁免见 modules/nixos/core/nix.nix 的 permittedInsecurePackages）。
-  airi = prev.callPackage "${inputs.airi}/nix/package.nix" { };
-
   # cava 的分析核心（cavacore）单独打包成库：Clavis 通过 pkg-config 链接它，
   # 而 nixpkgs 的 `cava` 只构建 autotools 的可执行文件。
   libcava = prev.callPackage ./libcava { };
