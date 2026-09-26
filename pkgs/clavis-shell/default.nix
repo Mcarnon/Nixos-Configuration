@@ -69,7 +69,10 @@ stdenv.mkDerivation {
     "-DCMAKE_BUILD_WITH_INSTALL_RPATH=ON"
     "-DCMAKE_INSTALL_RPATH=\$ORIGIN"
     "-DCMAKE_INSTALL_RPATH_USE_LINK_PATH=OFF"
-    "-DCLAVIS_QML_INSTALL_DIR=${placeholder "out"}/lib/qt6/qml"
+    # nixpkgs 的 Qt6 把 QML 模块装在 lib/qt-6/qml（qtbase 的 qtQmlPrefix），
+    # 不是发行版常见的 lib/qt6/qml。用错目录的话 Clavis.* 只能靠自己被写进
+    # QML_IMPORT_PATH 才找得到，而 key-cli 那边的合并路径会指向空目录。
+    "-DCLAVIS_QML_INSTALL_DIR=${placeholder "out"}/lib/qt-6/qml"
     "-DCLAVIS_CONFIG_INSTALL_DIR=${placeholder "out"}/etc/xdg/quickshell/clavis"
     "-DCLAVIS_SYSTEMD_USER_INSTALL_DIR=${placeholder "out"}/lib/systemd/user"
   ];
@@ -86,7 +89,7 @@ stdenv.mkDerivation {
   postInstall = ''
     test -f $out/etc/xdg/quickshell/clavis/shell.qml \
       || { echo "clavis: shell.qml missing from $out" >&2; exit 1; }
-    test -d $out/lib/qt6/qml/Clavis \
+    test -d $out/lib/qt-6/qml/Clavis \
       || { echo "clavis: native QML modules missing from $out" >&2; exit 1; }
     test -x $out/etc/xdg/quickshell/clavis/scripts/theme/generate_matugen_colors.sh \
       || { echo "clavis: theme scripts missing from $out" >&2; exit 1; }

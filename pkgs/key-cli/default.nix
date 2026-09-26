@@ -23,6 +23,18 @@
   src,
   ...
 }:
+let
+  # nixpkgs 的 Qt6 把 QML 模块装在 lib/qt-6/qml（qtbase 的 qtQmlPrefix），
+  # 不是 lib/qt6/qml。手写路径拼 QML_IMPORT_PATH 时用错目录的后果是静默的：
+  # qs 启动后才报 `module "Qt5Compat.GraphicalEffects" is not installed`，
+  # 整机表现就是黑屏（服务起来、外壳一个面板都不画）。
+  # 用 makeSearchPathOutput 合并各包的 QML 根目录，目录名只写一次。
+  qmlImportPath = lib.makeSearchPathOutput "lib/qt-6/qml" [
+    clavisShell # Clavis.* / M3Shapes（clavis-shell 自建）
+    qt5compat # Qt5Compat.GraphicalEffects：模糊/阴影等效果
+    qtlottie # Qt.labs.lottieqt：天气动画
+  ];
+in
 python3Packages.buildPythonApplication {
   pname = "key-cli";
   version = "0.2.0";
@@ -46,6 +58,15 @@ python3Packages.buildPythonApplication {
   #   - awww       -> wallpaper backend used by the shell
   # Without qt5compat/qtlottie on QML_IMPORT_PATH the shell dies at load time.
   postFixup = ''
+    # 在构建期就断言 QML 模块真的在合并目录里：以前这类路径写错只会在登录后
+    # 变成"服务活着但全黑"，排查成本极高。
+    for d in Clavis Qt5Compat/GraphicalEffects; do
+      if [ ! -e "$qmlImportPath/$d" ]; then
+        echo "key-cli: missing QML module dir: $qmlImportPath/$d" >&2
+        exit 1
+      fi
+    done
+
     wrapProgram "$out/bin/key" \
       --prefix PATH : "${
         lib.makeBinPath [
@@ -60,7 +81,7 @@ python3Packages.buildPythonApplication {
           awww
         ]
       }" \
-      --prefix QML_IMPORT_PATH : "${clavisShell}/lib/qt6/qml:${qt5compat}/lib/qt6/qml:${qtlottie}/lib/qt6/qml" \
+      --prefix QML_IMPORT_PATH : "${qmlImportPath}" \
       --prefix XDG_CONFIG_DIRS : "${clavisShell}/etc/xdg"
   '';
 
