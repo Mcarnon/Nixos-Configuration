@@ -8,7 +8,8 @@
 {
   programs.starship = {
     enable = true;
-    # SHORiN 原版 starship 配置（含深色 palette；壁纸取色由 Clavis 写 zsh/starship）
+    # SHORiN 原版 starship 配置（含深色 palette；iNiR 的 starship 模板会在
+    # appearance.wallpaperTheming.terminals.starship 打开时按壁纸覆写它）
     settings = builtins.fromTOML (builtins.readFile ../../../home/files/starship.toml);
   };
 

@@ -1,10 +1,9 @@
 # Desktop look & feel: cursor theme + GTK icons/dark mode + 输入法桥接。
 # 基础外观走 dconf（DB，没有文件冲突）；仍然【不用】home-manager 的 gtk 模块，
-# 因为它会把 gtk.css / settings.ini 做成只读 store 软链，而后者的可写副本由
-# clavis-theme-sync 维护（见 modules/home/desktop/clavis/bin/clavis-theme-sync：
-# Clavis 设置中心切深/浅色 -> dconf + gtk-3.0/gtk-4.0/settings.ini + Kvantum）。
-# 壁纸取色只影响 Clavis 自己的模板输出（niri/kitty/cava/zsh/... ），不再重染
-# GTK：Clavis 没有 GTK 模板，硬塞会和我们手改的 gtk.css 抢同一个文件。
+# 因为它会把 gtk.css / settings.ini 做成只读 store 软链，而后两者要留给
+# iNiR 写：它按壁纸渲染 gtk-3.0/gtk.css + gtk-4.0/gtk.css，并且随设置里的
+# 深/浅色切 gtk-*-4.0/settings.ini、dconf 和 Kvantum（见
+# modules/home/desktop/inir）。这里只给一份一致的初值。
 {
   config,
   pkgs,
@@ -22,7 +21,7 @@
     size = 24;
   };
 
-  # 基础 GTK 外观（主题/图标/深色/输入法）。深浅色跟随由 clavis-theme-sync 覆盖。
+  # 基础 GTK 外观（主题/图标/深色/输入法）。深浅色跟随由 iNiR 覆盖。
   dconf = {
     enable = true;
     settings = {
@@ -41,9 +40,9 @@
   # fontconfig 用户级微调（抗锯齿/hinting + monospace 优先 Maple Mono NF）
   xdg.configFile."fontconfig/fonts.conf".source = ../../../home/files/fonts.conf;
 
-  # Adwaita 图标主题是 Adwaita-Matugen 的继承源；必须存在，否则生成主题
-  # 的图标会显示为缺失/错误图标（紫黑棋盘格）。
-  # adw-gtk3（GTK 主题包）与 Papirus-Dark（初始图标主题）也由这里安装。
+  # adw-gtk3（GTK 主题包）+ adwaita-icon-theme（图标回退链：Papirus 找不到的
+  # 图标落到 adwaita）+ Papirus-Dark（初始图标主题）由这里安装。
+  # 曾经依赖的 Adwaita-Matugen-* 生成主题已随 matugen 一起删除。
   home.packages = with pkgs; [
     adw-gtk3
     papirus-icon-theme

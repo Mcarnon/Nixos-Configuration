@@ -1,40 +1,11 @@
 # Overlay aggregator for custom packages (performance: single eval path;
 # security: all custom binaries audited in one place via `nix flake check`).
-# Consumers use `pkgs.clavisShell` / `pkgs.keyCli` / `pkgs.keytop` instead of
-# ad-hoc `callPackage` at call sites.
-# Takes `inputs` so the source trees come from pinned flake inputs.
-inputs: final: prev:
-let
-  lib = prev.lib;
-in
-{
+# Consumers use `pkgs.miyu` instead of ad-hoc `callPackage` at call sites.
+# `inputs` is kept in the signature so future source trees can come from
+# pinned flake inputs without touching the call sites.
+#
+# iNiR 桌面壳不再走这里：它自带 flake（NixOS/Home Manager 模块 + 打包），
+# 由 modules/home/desktop/inir 直接导入 `inputs.inir.homeManagerModules.default`。
+inputs: _final: prev: {
   miyu = prev.callPackage ./miyu { };
-
-  # cava 的分析核心（cavacore）单独打包成库：Clavis 通过 pkg-config 链接它，
-  # 而 nixpkgs 的 `cava` 只构建 autotools 的可执行文件。
-  libcava = prev.callPackage ./libcava { };
-
-  clavisShell = prev.callPackage ./clavis-shell {
-    src = inputs."clavis-shell";
-  };
-
-  keyCli = prev.callPackage ./key-cli {
-    src = inputs."key-cli";
-    clavisShell = final.clavisShell;
-    quickshell = final.quickshell;
-    qt5compat = final.qt6.qt5compat; # Qt5Compat.GraphicalEffects（clavis QML 大量使用）
-    qtlottie = final.qt6.qtlottie; # Qt.labs.lottieqt（天气动画）
-    matugen = final.matugen;
-    cliphist = final.cliphist;
-    wl-clipboard = final.wl-clipboard;
-    gpu-screen-recorder = final.gpu-screen-recorder;
-    ffmpeg = final.ffmpeg;
-    slurp = final.slurp;
-    pipewire = final.pipewire; # pactl（录音声源解析）
-    awww = final.awww; # 壁纸后端
-  };
-
-  keytop = prev.callPackage ./keytop {
-    src = inputs."keytop";
-  };
 }

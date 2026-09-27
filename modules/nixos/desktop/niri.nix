@@ -13,7 +13,7 @@ let
   # runs inside a systemd --user manager, so niri-session takes its "already
   # managed" shortcut and execs `niri --session` directly — leaving
   # graphical-session.target inactive, which means every user service
-  # `WantedBy=graphical-session.target`（clavis-shell, fcitx5, polkit）永远
+  # `WantedBy=graphical-session.target`（inir, fcitx5, polkit）永远
   # 不会启动。显式启动 niri.service 可修复此问题：它
   # BindsTo=graphical-session.target，目标被激活后会把
   # 所有用户服务一并拉起。`systemctl --wait` 让本进程存活到
@@ -91,16 +91,11 @@ in
     package = niriWithSessionWrapper;
   };
 
-  # Clavis Shell 及其 IPC CLI（`key`）进系统 PATH，方便 niri 快捷键和脚本调用
-  # （home.sessionPath 里也有一份，见 modules/home/desktop/clavis）。
-  # 同时把面板常用的外部命令装进系统 PATH，这样即使手动在终端调试或脚本调用
-  # 时也能找到它们。
-  environment.systemPackages = let
-    pythonWithDeps = pkgs.python3.withPackages (ps: with ps; [ numpy pillow ]);
-  in with pkgs; [
-    clavisShell
-    keyCli
-    keytop
+  # iNiR 本体（`inir`）由 modules/home/desktop/inir 通过上游 flake 的
+  # homeManagerModules 安装（home.packages + inir.service），这里不再重复。
+  # 下面只放 niri 快捷键/脚本会用、且【不属于】外壳运行时（外壳自带的那些在
+  # iNiR 的 wrapper PATH 里）的外部命令，这样手动在终端调试或脚本调用也能找到。
+  environment.systemPackages = with pkgs; [
     brightnessctl
     pamixer
     playerctl
@@ -118,11 +113,14 @@ in
     gawk
     findutils
     procps
-    matugen # Clavis ThemeService 用它按壁纸重生成 niri/kitty/cava/zsh/... 配色
-    pythonWithDeps # scan-tones.py 依赖 (python3 + numpy + pillow)
+    # 裸 python3：Alt+F4 强杀窗口（binds.kdl 解析 niri msg --json）和
+    # thunar 的「粘贴文件」动作（home/files/thunar/uca.xml）都在脚本里
+    # 直接调 python3。以前是 Clavis 的 python3+numpy+pillow 顺带提供的，
+    # 现在只需要解释器本身。
+    python3
   ];
 
-  # Clavis / 终端 / 中文 UI 所需的字体。
+  # iNiR / 终端 / 中文 UI 所需的字体。
   fonts.packages = with pkgs; [
     adwaita-fonts
     lxgw-wenkai
@@ -150,7 +148,7 @@ in
     };
   };
 
-  # Clavis / GTK 主题切换依赖 gsettings 写 dconf。
+  # iNiR / GTK 主题切换依赖 gsettings 写 dconf。
   programs.dconf.enable = true;
 
   # Fix graphical-session.target so systemd user services can use it

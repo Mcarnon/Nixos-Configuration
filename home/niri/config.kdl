@@ -1,4 +1,4 @@
-// niri main config - laptop + Clavis (Quickshell) desktop shell
+// niri main config - laptop + iNiR (Quickshell) desktop shell
 // Sub-configs are split via include into *.kdl files in the same directory.
 
 // Hide window title bars (no CSD).
@@ -53,7 +53,7 @@ environment {
     GSK_RENDERER "gl"
     // 默认文本编辑器
     EDITOR "vim"
-    // 解决 quickshell 图标主题缺失问题（Clavis/Qt 图标有时不显示）
+    // 解决 quickshell 图标主题缺失问题（iNiR/Qt 图标有时不显示）
     QS_ICON_THEME "Adwaita"
 }
 
@@ -63,23 +63,15 @@ hotkey-overlay {
 }
 
 // 把 niri 启动后设置的 WAYLAND_DISPLAY/XDG_SESSION_TYPE 导入到用户 systemd 环境
-// （关键：clavis-shell / fcitx5 / polkit 都是 systemd user 服务，niri 不会自动
-// 把会话变量透传过去，不补这一行 clavis 启动会找不到 wayland socket 而崩，
-// 表现就是"桌面全黑"——clavis 服务另有 clavis-session-env 兜底等待 socket）
+// （关键：inir / fcitx5 / polkit 都是 systemd user 服务，niri 不会自动
+// 把会话变量透传过去，不补这一行 inir 启动会找不到 wayland socket 而崩，
+// 表现就是"桌面全黑"——inir 服务另有 inir-session-env 兜底等待 socket）
 spawn-sh-at-startup "systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_RUNTIME_DIR"
 
 include "niri-hardware.kdl"
 include "startup.kdl"
 include "blur.kdl" // global opacity/blur baseline — before windowrule.kdl so per-app rules win
-include "clavis-static.kdl" // SHORiN 默认 niri 配色（会被 matugen 生成的动态配色覆盖）
-// Clavis 自己生成的三块片段，全部在 ~/.config/niri/clavis/ 下。
-// 必须【提前】写好这几行 include：Clavis 启动时的 manage-niri-fragment.sh /
-// write_niri_cursor_config.sh 用 grep 找它们，找不到就往 config.kdl 追加内容——
-// 而 config.kdl 是指向 /nix/store 的只读软链，追加会悄悄把声明式文件变成普通
-// 文件（下次 home-manager switch 又变回软链，include 丢失，来回抖动）。
-include optional=true "clavis/colors.kdl" // matugen 按壁纸生成的 focus-ring/urgent 色
-include optional=true "clavis/effects.kdl" // xray / wlogout blur，由 Clavis 生成
-include optional=true "clavis/cursor.kdl" // 光标覆盖，由 Clavis 生成
+include "inir-static.kdl" // SHORiN 默认 niri 配色（iNiR 不改 niri 配色，只画自己的层）
 include "windowrule.kdl"
 include "supertab.kdl" // 带缩略图的 Alt/Ctrl+Tab 窗口切换（SHORiN 原版）
 include "binds.kdl"

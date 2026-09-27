@@ -16,12 +16,11 @@
     "niri/startup.kdl".source = ../../../home/niri/startup.kdl;
     "niri/windowrule.kdl".source = ../../../home/niri/windowrule.kdl;
     "niri/supertab.kdl".source = ../../../home/niri/supertab.kdl;
-    "niri/clavis-static.kdl".source = ../../../home/niri/clavis-static.kdl;
+    "niri/inir-static.kdl".source = ../../../home/niri/inir-static.kdl;
     "niri/niri-hardware.kdl".source = hostPath + "/niri-hardware.kdl";
   };
 
-  # ~/.config/niri/clavis/ 是 Clavis 自己的地盘：colors/effects/cursor 三个
-  # kdl 片段由 Clavis 运行时生成，配置文件也是它回写。不能做成 store 软链，
-  # 所以这里只保证父目录存在（xdg.configFile 建的目录本身就够了，Clavis 也会
-  # 自己 mkdir）。
+  # 刻意不管理任何 iNiR 生成物：外壳的配色/壁纸/状态都写在
+  # ~/.local/state/quickshell 和它自己的 template 输出里，niri 侧只有
+  # inir-static.kdl（纯静态、只读软链）。
 }

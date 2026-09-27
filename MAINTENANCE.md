@@ -46,6 +46,9 @@ sudo nixos-rebuild switch --flake .#laptop
 ```
 
 - Home Manager packages update with the same rebuild (`useGlobalPkgs = true`).
+- **桌面壳 (iNiR)**：`nix flake update inir` 即可，它是自带 flake 的上游输入
+  （`inputs.inir.homeManagerModules.default`），本仓库不打包。想看外壳版本/自检：
+  `inir --version` / `inir doctor` / `inir settings`。
 - **Roll back**: `sudo nixos-rebuild switch --rollback`, or pick the previous
   entry in the systemd-boot menu at boot.
 - List generations: `sudo nix-env --list-generations -p /nix/var/nix/profiles/system`.

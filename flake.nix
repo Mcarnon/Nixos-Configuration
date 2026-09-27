@@ -1,5 +1,5 @@
 {
-  description = "NixOS + Home Manager: niri + Clavis Shell on an Intel laptop";
+  description = "NixOS + Home Manager: niri + iNiR shell on an Intel laptop";
 
   # Binary caches: CN mirrors (priority=5 means prefer mirrors
   # over the default cache.nixos.org priority 40).
@@ -33,22 +33,13 @@
       inputs.home-manager.follows = "home-manager";
     };
 
-    # Clavis Shell（niri 的 Quickshell 桌面壳）及其两个伴生仓库。
-    # 这些仓库是纯源码树（无 flake.nix），flake = false 取为 source 路径，
-    # 由 pkgs/{clavis-shell,key-cli,keytop} 消费。
-    "clavis-shell" = {
-      url = "github:xy1092/clavis-shell";
-      flake = false;
-    };
-
-    "key-cli" = {
-      url = "github:xy1092/key-cli";
-      flake = false;
-    };
-
-    "keytop" = {
-      url = "github:xy1092/keytop";
-      flake = false;
+    # iNiR — niri 的 Quickshell 桌面外壳（自带 flake）。
+    # 打包/模块/服务全部走上游：modules/home/desktop/inir 导入它的
+    # homeManagerModules，programs.inir.package 的默认值就是
+    # pkgs.callPackage <inir>/nix/package.nix（用本 flake 的 nixpkgs 构建）。
+    inir = {
+      url = "github:snowarch/iNiR";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 

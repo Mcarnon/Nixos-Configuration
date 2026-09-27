@@ -1,19 +1,22 @@
 // Keybindings
 binds {
-    // ---- Clavis shell (key ipc call) ----
-    Mod+Space hotkey-overlay-title="App launcher" { spawn-sh "key ipc call spotlight toggle"; }
-    Mod+S hotkey-overlay-title="Control center" { spawn-sh "key ipc call control-center toggle"; }
-    Mod+Comma { spawn-sh "key ipc call control-center open"; }
-    Mod+F2 hotkey-overlay-title="Hub (dashboard/media/wallpaper/weather)" { spawn-sh "key ipc call keystone hub"; }
-    // Clavis has no dedicated window switcher; niri's overview is the switcher
-    // and Clavis paints its overview wallpaper into the backdrop layer.
+    // ---- iNiR shell (`inir <target> <function>`) ----
+    // 上游 CLI 直接暴露所有 IPC target，`inir help` 可列全部；
+    // 常用：overview / clipboard / controlPanel / dashboard / settings /
+    //       wallpaperSelector / lock / session / cheatsheet / globalActions。
+    Mod+Space hotkey-overlay-title="Overview / launcher" { spawn-sh "inir overview toggle"; }
+    Mod+S hotkey-overlay-title="Control panel" { spawn-sh "inir controlPanel toggle"; }
+    Mod+Comma { spawn-sh "inir settings open"; }
+    Mod+F2 hotkey-overlay-title="Dashboard (media/weather/calendar)" { spawn-sh "inir dashboard toggle"; }
+    // 命令面板（执行 iNiR 动作注册表里的命令）。
+    Mod+Shift+B hotkey-overlay-title="Command palette" { spawn-sh "inir globalActions open"; }
+    // Alt+Tab 走 niri 原生 overview（见 supertab.kdl 的带缩略图切换）：
+    // iNiR 自己也有 altSwitcher/orbit，但窗口切换交给合成器更稳。
     Alt+Tab hotkey-overlay-title="Switch windows" { toggle-overview; }
-    // NyxNiri wallpaper picker (port of the Noctalia-era picker, talks to `key ipc`).
-    Mod+W hotkey-overlay-title="Wallpaper picker" { spawn-sh "~/.config/niri/scripts/wallpaper-picker.py"; }
-    Mod+V hotkey-overlay-title="Clipboard history" { spawn-sh "key ipc call spotlight openMode clipboard"; }
-    Mod+Shift+B hotkey-overlay-title="Dashboard" { spawn-sh "key ipc call keystone dashboard"; }
+    Mod+W hotkey-overlay-title="Wallpaper picker" { spawn-sh "inir wallpaperSelector toggle"; }
+    Mod+V hotkey-overlay-title="Clipboard history" { spawn-sh "inir clipboard toggle"; }
 
-    // ---- Volume / brightness (pamixer / brightnessctl; Clavis mirrors the level in the bar) ----
+    // ---- Volume / brightness (pamixer / brightnessctl；iNiR 面板会镜像当前值) ----
     XF86AudioRaiseVolume allow-when-locked=true { spawn "pamixer" "-i" "5"; }
     XF86AudioLowerVolume allow-when-locked=true { spawn "pamixer" "-d" "5"; }
     XF86AudioMute allow-when-locked=true { spawn "pamixer" "-t"; }
@@ -21,7 +24,7 @@ binds {
     XF86MonBrightnessDown allow-when-locked=true { spawn "brightnessctl" "set" "5%-"; }
     XF86AudioMicMute allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"; }
 
-    // ---- Media (MPRIS, needs playerctl; Clavis MediaManager picks it up) ----
+    // ---- Media (MPRIS, needs playerctl；iNiR 的 mpris/ytmusic 会接管同一个播放器) ----
     Mod+P { spawn "playerctl" "play-pause"; }
     XF86AudioPlay { spawn "playerctl" "play-pause"; }
     XF86AudioNext { spawn "playerctl" "next"; }
@@ -91,11 +94,11 @@ binds {
     Alt+Print { screenshot-window write-to-disk=false; }
 
     // ---- Lock / quit ----
-    Super+Alt+L { spawn-sh "key ipc call lock open"; }
+    Super+Alt+L { spawn-sh "inir lock activate"; }
     Mod+Shift+E { quit; }
     Mod+Shift+P { power-off-monitors; }
     // Suspend combo: turn off monitors, lock, then suspend (shorin pattern).
-    Mod+Alt+P hotkey-overlay-title="Suspend" { spawn-sh "niri msg action power-off-monitors && key ipc call lock open && systemctl suspend"; }
+    Mod+Alt+P hotkey-overlay-title="Suspend" { spawn-sh "niri msg action power-off-monitors && inir lock activate && systemctl suspend"; }
 
     // ---- Power user picks (shorin-derived, non-conflicting) ----
     // Drop-down floating terminal (uses kitty class; falls back to foot if
@@ -103,10 +106,12 @@ binds {
     Mod+Slash hotkey-overlay-title="Quick terminal" { spawn-sh "kitty --class quickterminal 2>/dev/null || foot --class quickterminal"; }
     // Force-kill a stuck window (sends SIGTERM via niri IPC then escalates).
     Alt+F4 hotkey-overlay-title="Force kill window" { spawn-sh "niri msg action close-window --id $(niri msg --json focused-window | python3 -c 'import json,sys;print(json.load(sys.stdin)[\"id\"])')"; }
-    // Random wallpaper (Clavis wallpaper IPC: set + regenerate matugen theme).
-    Mod+F10 hotkey-overlay-title="Random wallpaper" { spawn-sh "key ipc call wallpaper random"; }
-    // Download a random anime wallpaper and apply it through Clavis.
-    Mod+Shift+F10 hotkey-overlay-title="Random download wallpaper" { spawn-sh "random-anime-wallpaper-clavis"; }
+    // Random wallpaper (iNiR picks from the current wallpaper folder and
+    // re-runs its own wallpaper palette pass).
+    Mod+F10 hotkey-overlay-title="Random wallpaper" { spawn-sh "inir wallpaperSelector random"; }
+    // Online anime wallpapers: open the picker's "live" source (replaces the
+    // old hand-rolled download-and-apply script).
+    Mod+Shift+F10 hotkey-overlay-title="Online anime wallpaper" { spawn-sh "inir wallpaperSelector browse live -"; }
     // Screenshot → edit (opens satty with the last screenshot from clipboard).
     Mod+Shift+S hotkey-overlay-title="Edit last screenshot" { spawn-sh "wl-paste | satty -f -"; }
     // Wheel scroll to change workspace (cooldown prevents runaway).

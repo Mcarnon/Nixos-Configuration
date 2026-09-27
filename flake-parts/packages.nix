@@ -12,7 +12,11 @@
     in
     {
       packages = {
-        inherit (pkgs) miyu clavisShell keyCli keytop libcava;
+        inherit (pkgs) miyu;
+        # iNiR 自带 flake，直接暴露上游的 package 输出，给 `nix build` 一个入口。
+        # 本仓库的 inputs.inir.inputs.nixpkgs.follows = "nixpkgs"，所以这里
+        # 和 Home Manager 模块用的其实是同一份 nixpkgs 解析结果。
+        inir = inputs.inir.packages.${system}.inir;
       };
       formatter = pkgs.nixfmt;
     };
