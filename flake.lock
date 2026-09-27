@@ -102,6 +102,26 @@
         "type": "github"
       }
     },
+    "inir": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1789849958,
+        "narHash": "sha256-Zu4FrR/vn+Pq81hLkR5n3XXt+ja7m0my6ml+4IJotn4=",
+        "owner": "snowarch",
+        "repo": "iNiR",
+        "rev": "9574fa424c0d1008e927454e933a7fbe292f9fb2",
+        "type": "github"
+      },
+      "original": {
+        "owner": "snowarch",
+        "repo": "iNiR",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1754028485,
@@ -154,6 +174,7 @@
         "agenix": "agenix",
         "flake-parts": "flake-parts",
         "home-manager": "home-manager_2",
+        "inir": "inir",
         "nixpkgs": "nixpkgs_2",
         "systems": "systems_2",
         "zen-browser": "zen-browser"

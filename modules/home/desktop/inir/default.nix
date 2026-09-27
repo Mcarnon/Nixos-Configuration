@@ -4,8 +4,7 @@
 #   - 走上游 flake：导入 `inputs.inir.homeManagerModules.default`，于是
 #     programs.inir 的打包、服务、dbus 名称都由上游维护，本机不重复实现。
 #     programs.inir.package 的默认值是 pkgs.callPackage <inir>/nix/package.nix，
-#     也就是用【本 flake 的 nixpkgs】构建（上游自己 pin 的 nixpkgs 只在
-#     `nix build .#inir` 那条路上用到）。
+#     也就是用【本 flake 的 nixpkgs】构建。
 #     万一上游 package.nix 依赖的某个 python 包在本机 nixpkgs 里缺失，
 #     逃生口是显式指定 programs.inir.package = inputs.inir.packages.${system}.inir。
 #   - systemd 用户服务 inir.service：上游已按 niri 生命周期挂载
@@ -31,12 +30,59 @@
 # 壁纸取色主题（gtk3/gtk4/fuzzel/kde/firefox/steam/kitty/foot/starship/btop/
 # yazi/lazygit/oh-my-posh + OSC 序列）、剪贴板历史、电源/锁屏/音量面板、
 # 系统监视（原来的 keytop）、AI 侧栏、命令面板。
-inputs: {
+# `inputs` 与 config/pkgs/lib 并列，走 lib/mkHost 的 specialArgs → _module.args。
+# 注意不要写成 `inputs: { config, ... }:`：模块系统（nixpkgs lib/modules.nix 的
+# applyModuleArgsIfFunction）只应用一次函数，双层参数会剩下一个函数值，然后被
+# unifyModuleSyntax 以 "does not look like a module" 拒掉。
+{
   config,
   pkgs,
   lib,
+  inputs,
   ...
-}: {
+}:
+let
+  home = config.home.homeDirectory;
+
+  # 必须是 writeShellScriptBin（产出带 /bin 的目录）：这脚本进 home.packages，
+  # 而 home-manager-path 用 buildEnv 合并 sessionPath，file 类型的 store path
+  # 会直接让 buildEnv 报 "is a file and cannot be added to a directory"。
+  sessionEnv = pkgs.writeShellScriptBin "inir-session-env" (builtins.readFile ./bin/inir-session-env);
+
+  # 「首次部署种子、之后永不覆盖」的可写文件。
+  # 刻意不用 home.file：它只会把 /nix/store 里的只读文件软链过去，而这些文件
+  # 都要被应用自己回写（qt6ct 的 GUI 保存、iNiR 的配色生成）—— 指向 store 的
+  # 软链两者都写不进去。
+  seedFile =
+    name: src:
+    lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      target="''${HOME:-${home}}/${name}"
+      if [ ! -e "$target" ]; then
+        install -Dm644 ${src} "$target"
+        echo "inir: seeded ${name}"
+      fi
+    '';
+
+  # 种子配置 ~/.config/inir/config.json = 上游 defaults/config.json 加上本机
+  # 需要的两处修正（用 jq 在构建期改，构建产物，不是 IFD）：
+  #   * terminals.starship = false —— 我们的 starship.toml 由 home-manager
+  #     声明式管理（只读 store 软链），iNiR 的 starship 模板会试图往里追加
+  #     format 行，写不进去；更糟的是它和 kitty/foot/btop 共用一次生成进程，
+  #     一个 terminal 抛错就可能让后面的都不落地。直接关掉最省事。
+  #   * 其余保持上游默认（壁纸取色、面板、mascot 等全部开箱可用）。
+  # 上游 installer 也是「把 defaults 拷成用户配置」的做法；种子不加 force，
+  # 用户之后在设置界面/手改的偏好必须能活过下一次 home-manager switch。
+  inirConfigSeed =
+    pkgs.runCommand "inir-config.json"
+      {
+        nativeBuildInputs = [ pkgs.jq ];
+        src = "${config.programs.inir.package}/share/quickshell/inir/defaults/config.json";
+      }
+      ''
+        jq '.appearance.wallpaperTheming.terminals.starship = false' "$src" > "$out"
+      '';
+in
+{
   imports = [ inputs.inir.homeManagerModules.default ];
 
   programs.inir = {
@@ -53,79 +99,39 @@ inputs: {
     ];
   };
 
-  let
-    home = config.home.homeDirectory;
+  # 用包装脚本替换上游的 ExecStart（其余 unit 设置保持上游原样）。
+  systemd.user.services.inir = {
+    Unit.StartLimitIntervalSec = lib.mkForce 0;
+    Service.ExecStart = lib.mkForce "${sessionEnv}/bin/inir-session-env ${lib.getExe config.programs.inir.package} run --session";
+  };
 
-    # 必须是 writeShellScriptBin（产出带 /bin 的目录）：这脚本进 home.packages，
-    # 而 home-manager-path 用 buildEnv 合并 sessionPath，file 类型的 store path
-    # 会直接让 buildEnv 报 "is a file and cannot be added to a directory"。
-    sessionEnv = pkgs.writeShellScriptBin "inir-session-env" (builtins.readFile ./bin/inir-session-env);
+  # inir-session-env 本身要在 PATH 里（niri 快捷键/调试脚本可能直接调）。
+  # wtype/qt6ct/qtsvg 原来是靠旧桌面壳模块的 sessionPath 带进来的。
+  home.packages = with pkgs; [
+    sessionEnv
+    wtype
+    qt6Packages.qt6ct
+    qt6Packages.qtsvg # Qt SVG 图像插件（壁纸/图标里的 .svg）
+  ];
 
-    # 「首次部署种子、之后永不覆盖」的可写文件。
-    # 刻意不用 home.file：它只会把 /nix/store 里的只读文件软链过去，而这些文件
-    # 都要被应用自己回写（qt6ct 的 GUI 保存、iNiR 的配色生成）—— 指向 store 的
-    # 软链两者都写不进去。
-    seedFile =
-      name: src:
-      lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        target="''${HOME:-${home}}/${name}"
-        if [ ! -e "$target" ]; then
-          install -Dm644 ${src} "$target"
-          echo "inir: seeded ${name}"
-        fi
-      '';
+  home.activation.inirSeedQt6ct = seedFile ".config/qt6ct/qt6ct.conf" ../../../../home/files/qt6ct/qt6ct.conf;
+  home.activation.inirSeedConfig = seedFile ".config/inir/config.json" inirConfigSeed;
+  # iNiR 的终端配色写 ~/.config/kitty/themes/current-theme.conf，kitty.conf
+  # include 它；首次部署（iNiR 还没跑过配色生成）时先种一份静态兜底。
+  home.activation.inirSeedKittyTheme = seedFile ".config/kitty/themes/current-theme.conf" ../../../../home/files/kitty/current-theme.conf;
 
-    # 种子配置 ~/.config/inir/config.json = 上游 defaults/config.json 加上本机
-    # 需要的两处修正（用 jq 在构建期改，构建产物，不是 IFD）：
-    #   * terminals.starship = false —— 我们的 starship.toml 由 home-manager
-    #     声明式管理（只读 store 软链），iNiR 的 starship 模板会试图往里追加
-    #     format 行，写不进去；更糟的是它和 kitty/foot/btop 共用一次生成进程，
-    #     一个 terminal 抛错就可能让后面的都不落地。直接关掉最省事。
-    #   * 其余保持上游默认（壁纸取色、面板、mascot 等全部开箱可用）。
-    # 上游 installer 也是「把 defaults 拷成用户配置」的做法；种子不加 force，
-    # 用户之后在设置界面/手改的偏好必须能活过下一次 home-manager switch。
-    inirConfigSeed = pkgs.runCommand "inir-config.json"
-      {
-        nativeBuildInputs = [ pkgs.jq ];
-        src = "${config.programs.inir.package}/share/quickshell/inir/defaults/config.json";
-      } ''
-      jq '.appearance.wallpaperTheming.terminals.starship = false' "$src" > "$out"
-    '';
-  in
-  {
-    # 用包装脚本替换上游的 ExecStart（其余 unit 设置保持上游原样）。
-    systemd.user.services.inir = {
-      Unit.StartLimitIntervalSec = lib.mkForce 0;
-      Service.ExecStart = lib.mkForce "${sessionEnv}/bin/inir-session-env ${lib.getExe config.programs.inir.package} run --session";
-    };
+  # 默认壁纸 + 用户头像。
+  home.file."Pictures/Wallpapers/wallhaven-d88d53.png".source =
+    ../../../../wallpapers/wallhaven-d88d53.png;
+  home.file.".face".source = ../../../../wallpapers/wallhaven-d88d53.png;
 
-    # inir-session-env 本身要在 PATH 里（niri 快捷键/调试脚本可能直接调）。
-    # wtype/qt6ct/qtsvg 原来是靠旧桌面壳模块的 sessionPath 带进来的。
-    home.packages = with pkgs; [
-      sessionEnv
-      wtype
-      qt6Packages.qt6ct
-      qt6Packages.qtsvg # Qt SVG 图像插件（壁纸/图标里的 .svg）
-    ];
-
-    home.activation.inirSeedQt6ct = seedFile ".config/qt6ct/qt6ct.conf" ../../../../home/files/qt6ct/qt6ct.conf;
-    home.activation.inirSeedConfig = seedFile ".config/inir/config.json" inirConfigSeed;
-    # iNiR 的终端配色写 ~/.config/kitty/themes/current-theme.conf，kitty.conf
-    # include 它；首次部署（iNiR 还没跑过配色生成）时先种一份静态兜底。
-    home.activation.inirSeedKittyTheme = seedFile ".config/kitty/themes/current-theme.conf" ../../../../home/files/kitty/current-theme.conf;
-
-    # 默认壁纸 + 用户头像。
-    home.file."Pictures/Wallpapers/wallhaven-d88d53.png".source = ../../../../wallpapers/wallhaven-d88d53.png;
-    home.file.".face".source = ../../../../wallpapers/wallhaven-d88d53.png;
-
-    # 输入法 / Qt 主题变量（Qt6 应用与 fcitx5 需要）。
-    home.sessionVariables = {
-      "QT_QPA_PLATFORM" = "wayland;xcb";
-      "QT_QPA_PLATFORMTHEME" = "qt6ct";
-      "QT_AUTO_SCREEN_SCALE_FACTOR" = "1";
-      "XMODIFIERS" = "@im=fcitx";
-      "GTK_IM_MODULE" = "fcitx";
-      "QT_IM_MODULE" = "fcitx";
-    };
-  }
+  # 输入法 / Qt 主题变量（Qt6 应用与 fcitx5 需要）。
+  home.sessionVariables = {
+    "QT_QPA_PLATFORM" = "wayland;xcb";
+    "QT_QPA_PLATFORMTHEME" = "qt6ct";
+    "QT_AUTO_SCREEN_SCALE_FACTOR" = "1";
+    "XMODIFIERS" = "@im=fcitx";
+    "GTK_IM_MODULE" = "fcitx";
+    "QT_IM_MODULE" = "fcitx";
+  };
 }

@@ -1,7 +1,7 @@
 {
   imports = [
     ./niri.nix
-    ./inir
+    ./inir/default.nix
     ./appearance.nix
   ];
 }
