@@ -1,9 +1,9 @@
 #!/bin/sh
-# inir-session-env — 在启动 iNiR 之前把 Wayland 会话环境补齐。
+# clavis-session-env — 在启动 Clavis 之前把 Wayland 会话环境补齐。
 #
-# 为什么需要：inir.service 是 systemd --user 服务，它继承的是 user manager 的
-# 环境。niri 由 ly 拉起后作为 user service 运行，WAYLAND_DISPLAY 只有 niri 自己
-# 知道；niri 的 spawn-sh-at-startup 会把它 import 进 user manager，但那要等
+# 为什么需要：clavis-shell.service 是 systemd --user 服务，它继承的是 user
+# manager 的环境。niri 由 ly 拉起后作为 user service 运行，WAYLAND_DISPLAY 只有
+# niri 自己知道；niri 的 spawn-sh-at-startup 会把它 import 进 user manager，但那要等
 # niri 的启动脚本跑到那一行。服务本身被 niri.service 拉起来时可能还拿不到
 # socket —— 这正是以前"切到 Quickshell 桌面壳直接黑屏"的根因。
 #
@@ -13,14 +13,14 @@
 #      最后才试 wayland-0 —— 那是常见的 X11/其它会话占用的名字）；
 #   3. 顺手 `systemctl --user import-environment`，让 fcitx5 / 截图 / 剪贴板
 #      之类的其他 user 服务也拿到同一个 socket；
-#   4. exec 真正的命令（通常是 `inir run --session`）。
+#   4. exec 真正的命令（通常是 `key shell --foreground --no-duplicate`）。
 #
-# 用法: inir-session-env <command> [args...]
+# 用法: clavis-session-env <command> [args...]
 
 set -eu
 
 if [ "$#" -lt 1 ]; then
-    echo "usage: inir-session-env <command> [args...]" >&2
+    echo "usage: clavis-session-env <command> [args...]" >&2
     exit 2
 fi
 
@@ -49,7 +49,7 @@ if ! usable_socket "${WAYLAND_DISPLAY:-}"; then
         sleep 0.5
     done
     if [ -z "$found" ]; then
-        echo "inir-session-env: no wayland socket under $runtime_dir" >&2
+        echo "clavis-session-env: no wayland socket under $runtime_dir" >&2
         exit 3
     fi
     WAYLAND_DISPLAY="$found"
@@ -58,7 +58,7 @@ if ! usable_socket "${WAYLAND_DISPLAY:-}"; then
     systemctl --user import-environment WAYLAND_DISPLAY XDG_RUNTIME_DIR >/dev/null 2>&1 || true
 fi
 
-# Qt/桌面约定：iNiR（Quickshell/Qt6）与 niri 环境块保持一致。
+# Qt/桌面约定：Clavis（Quickshell/Qt6）与 niri 环境块保持一致。
 export XDG_CURRENT_DESKTOP="${XDG_CURRENT_DESKTOP:-niri}"
 export XDG_SESSION_TYPE="${XDG_SESSION_TYPE:-wayland}"
 export QT_QPA_PLATFORM="${QT_QPA_PLATFORM:-wayland}"

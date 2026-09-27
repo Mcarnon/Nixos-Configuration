@@ -1,4 +1,4 @@
-// niri main config - laptop + iNiR (Quickshell) desktop shell
+// niri main config - laptop + Clavis (Quickshell) desktop shell
 // Sub-configs are split via include into *.kdl files in the same directory.
 
 // Hide window title bars (no CSD).
@@ -53,18 +53,11 @@ environment {
     GSK_RENDERER "gl"
     // 默认文本编辑器
     EDITOR "vim"
-    // 解决 quickshell 图标主题缺失问题（iNiR/Qt 图标有时不显示）
+    // 解决 quickshell 图标主题缺失问题（Clavis/Qt 图标有时不显示）
     QS_ICON_THEME "Adwaita"
-    // 【不要删】iNiR 的 apply_niri_app_environment() 会 sed 本文件，依次取
-    // XDG_MENU_PREFIX / QT_QPA_PLATFORM / QT_QPA_PLATFORMTHEME /
-    // QT_STYLE_OVERRIDE / ELECTRON_OZONE_PLATFORM_HINT，循环体最后一行是
-    // `[[ -n "$value" ]] && export "${name}=${value}"`。列表里【最后那个】
-    // 缺失时该函数返回 1，launcher 脚本在 `set -euo pipefail` 下静默
-    // exit 1：inir.service 起来 ~0.2s 就死、journal 一条日志都没有、
-    // 桌面全黑只剩光标。注意必须是【非空】值，`VAR ""` 同样触发。
-    // 语义上 auto = 有 Wayland 就用 Wayland（niri 只有 Wayland），
-    // 对 Electron 应用（QQ/微信等）也是想要的行为。
-    // checks/niri-config.nix 会从 iNiR 包里解析这个变量列表并断言末位存在。
+    // Electron 应用（QQ/微信等）的 Ozone 平台提示。auto = 有 Wayland 就用
+    // Wayland（niri 只有 Wayland），这也是 Clavis 侧 QML/Electron 混合场景想要的
+    // 行为。checks/niri-config.nix 断言这一段的关键变量都带非空值。
     ELECTRON_OZONE_PLATFORM_HINT "auto"
 }
 
@@ -74,15 +67,18 @@ hotkey-overlay {
 }
 
 // 把 niri 启动后设置的 WAYLAND_DISPLAY/XDG_SESSION_TYPE 导入到用户 systemd 环境
-// （关键：inir / fcitx5 / polkit 都是 systemd user 服务，niri 不会自动
-// 把会话变量透传过去，不补这一行 inir 启动会找不到 wayland socket 而崩，
-// 表现就是"桌面全黑"——inir 服务另有 inir-session-env 兜底等待 socket）
+// （关键：clavis-shell / fcitx5 / polkit 都是 systemd user 服务，niri 不会自动
+// 把会话变量透传过去，不补这一行 clavis 启动会找不到 wayland socket 而崩，
+// 表现就是"桌面全黑"——clavis 服务另有 clavis-session-env 兜底等待 socket）
 spawn-sh-at-startup "systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_RUNTIME_DIR"
 
 include "niri-hardware.kdl"
 include "startup.kdl"
 include "blur.kdl" // global opacity/blur baseline — before windowrule.kdl so per-app rules win
-include "inir-static.kdl" // SHORiN 默认 niri 配色（iNiR 不改 niri 配色，只画自己的层）
+include "clavis-static.kdl" // SHORiN 默认 niri 配色（Clavis 不改 niri 配色，只画自己的层）
+// Clavis 自己写的层效果片段（模糊/xray 等开关）。optional：第一次登录时外壳
+// 还没起来，这个文件还不存在，硬 include 会让 niri 启动失败。
+include optional=true "clavis/effects.kdl"
 include "windowrule.kdl"
 include "supertab.kdl" // 带缩略图的 Alt/Ctrl+Tab 窗口切换（SHORiN 原版）
 include "binds.kdl"

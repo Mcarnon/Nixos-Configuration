@@ -13,7 +13,7 @@ let
   # runs inside a systemd --user manager, so niri-session takes its "already
   # managed" shortcut and execs `niri --session` directly — leaving
   # graphical-session.target inactive, which means every user service
-  # `WantedBy=graphical-session.target`（inir, fcitx5, polkit）永远
+  # `WantedBy=graphical-session.target`（clavis-shell, fcitx5, polkit）永远
   # 不会启动。显式启动 niri.service 可修复此问题：它
   # BindsTo=graphical-session.target，目标被激活后会把
   # 所有用户服务一并拉起。`systemctl --wait` 让本进程存活到
@@ -91,10 +91,18 @@ in
     package = niriWithSessionWrapper;
   };
 
-  # iNiR 本体（`inir`）由 modules/home/desktop/inir 通过上游 flake 的
-  # homeManagerModules 安装（home.packages + inir.service），这里不再重复。
+  # Clavis 本体由 modules/home/desktop/clavis 安装（home.packages +
+  # clavis-shell.service / clavis-clipboard.service）。这里只补两件只有
+  # 系统侧能做的事：
+  #   1. 键盘 LED 授权：key 读 evdev 的 Caps/Num Lock 灯要 udev 规则
+  #      （pkgs/key-cli 装在 $out/lib/udev/rules.d，不是 root daemon，
+  #      所以只是给设备节点加 ACL）。
+  #   2. key-cpu-power 的 RAPL 能耗读取是可选能力，需要额外的文件 capabilities，
+  #      默认不开：Clavis 的系统监视在拿不到时只是少一个功耗读数。
+  services.udev.packages = [ pkgs.keyCli ];
+
   # 下面只放 niri 快捷键/脚本会用、且【不属于】外壳运行时（外壳自带的那些在
-  # iNiR 的 wrapper PATH 里）的外部命令，这样手动在终端调试或脚本调用也能找到。
+  # key 的 wrapper PATH 里）的外部命令，这样手动在终端调试或脚本调用也能找到。
   environment.systemPackages = with pkgs; [
     brightnessctl
     pamixer
@@ -120,7 +128,9 @@ in
     python3
   ];
 
-  # iNiR / 终端 / 中文 UI 所需的字体。
+  # Clavis / 终端 / 中文 UI 所需的字体。
+  # material-symbols：Clavis 的设置/Keystone 面板大量使用 Material Symbols
+  # 图标（它自带字体文件，但把字体交给 fontconfig 更稳，也省一份重复下载）。
   fonts.packages = with pkgs; [
     adwaita-fonts
     lxgw-wenkai
@@ -128,6 +138,7 @@ in
     nerd-fonts.jetbrains-mono
     noto-fonts-cjk-sans
     noto-fonts-color-emoji
+    material-symbols
   ];
 
   # xdg-desktop-portal routing（对齐 SHORiN 的 niri-portals.conf：
@@ -148,7 +159,7 @@ in
     };
   };
 
-  # iNiR / GTK 主题切换依赖 gsettings 写 dconf。
+  # Clavis / GTK 主题切换依赖 gsettings 写 dconf。
   programs.dconf.enable = true;
 
   # Fix graphical-session.target so systemd user services can use it

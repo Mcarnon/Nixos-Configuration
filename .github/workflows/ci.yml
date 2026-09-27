@@ -13,5 +13,10 @@ jobs:
       - uses: DeterminateSystems/magic-nix-cache-action@v8
       - name: nix flake check (all checks + VM tests; security + performance regressions)
         run: nix flake check --accept-flake-config --all-systems --show-trace
+      - name: build the desktop shell packages
+        # `nix flake check` only *evaluates* packages. Clavis/key-cli are
+        # hand-written derivations (own CMake invocation, QML install layout,
+        # PAM patch), so they need a real build to prove anything.
+        run: nix build .#clavisShell .#keyCli .#m3shapes --accept-flake-config
       - name: formatter check (nixfmt-rfc-style)
         run: nix fmt . -- --check

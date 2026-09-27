@@ -1,31 +1,33 @@
 // Startup commands for niri session.
-// iNiR (the Quickshell desktop shell) is NOT started here — it runs as a
-// systemd user service (`inir.service`, see modules/home/desktop/inir), pulled
-// in by niri.service upstream-style, so it survives shell crashes and restarts
-// on failure. Its clipboard history is part of the shell itself (cliphist +
-// wl-copy/wl-paste inside the iNiR runtime), so there is no separate watcher
-// unit any more. fcitx5 is also a systemd service (see
-// modules/nixos/desktop/niri.nix) — the systemd service and this spawn race to
-// own the DBus name, and the winner runs.
+// Clavis (the Quickshell desktop shell) is NOT started here — it runs as a
+// systemd user service (`clavis-shell.service`, see
+// modules/home/desktop/clavis), pulled in by niri.service upstream-style, so
+// it survives shell crashes and restarts on failure. Its clipboard history is
+// a *separate* long-lived watcher (`clavis-clipboard.service`, `key clipboard
+// watch`) so history survives shell restarts too. fcitx5 is also a systemd
+// service (see modules/nixos/desktop/niri.nix) — the systemd service and this
+// spawn race to own the DBus name, and the winner runs.
 //
 // systemd --user is started by the wayland-session script (ly), so
-// polkit/fcitx5/inir services are available.
+// polkit/fcitx5/clavis services are available.
 
 // 环境传播（关键）：niri 自己设置 WAYLAND_DISPLAY，但 systemd 用户服务
-// （inir 等）的环境来自 systemd user manager，拿不到。不传播的话
-// inir 启动找不到 wayland socket 会直接崩溃（桌面全黑）。必须在 niri 启动后
+// （clavis-shell 等）的环境来自 systemd user manager，拿不到。不传播的话
+// clavis 启动找不到 wayland socket 会直接崩溃（桌面全黑）。必须在 niri 启动后
 // 立刻把 WAYLAND_DISPLAY 写进 systemd 用户环境。
-// inir.service 额外用 inir-session-env 等 socket（双保险，见该脚本）。
+// clavis-shell.service 额外用 clavis-session-env 等 socket（双保险，见该脚本）。
 spawn-sh-at-startup "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=niri"
 spawn-sh-at-startup "systemctl --user set-environment WAYLAND_DISPLAY=$WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=niri"
 
 // 兜底看门狗：systemd 之外再守一次，只救"服务彻底死掉"的场景。
-// 30s 后开始：inir.service 是 active 就退出（Type=dbus，active 就意味着
-// org.kde.StatusNotifierWatcher 已经被外壳拿到，即界面真的起来了）；
-// 服务还活着（在重启中）就继续等；只有服务已经不在了才 restart 它
-// （服务本身 Restart=on-failure 且 StartLimitIntervalSec=0，正常不会走到
-// 这条分支，这里防的是 unit 被 start-limit 打死后永久黑屏）。约 10 分钟后放弃。
-spawn-sh-at-startup "setsid nohup bash -c 'sleep 30; for i in $(seq 1 40); do systemctl --user is-active --quiet inir.service && exit 0; systemctl --user restart inir.service; sleep 15; done' >/dev/null 2>&1 &"
+// 30s 后开始：unit 处于 active/activating/reloading 都直接退出（慢启动中的
+// Qt 加载期是 activating，绝不能在那时把它 restart 掉）；只有 failed /
+// inactive / unknown（服务本身 Restart=on-failure 且 StartLimitIntervalSec=0，
+// 正常走不到这里，这里防的是 unit 被 start-limit 打死后永久黑屏）才拉起来。
+// 约 10 分钟后放弃。
+// 注意：unit 是 Type=simple（上游就是），active 只保证进程活着，不再像旧的
+// Type=dbus 那样能顺带证明界面真的画出来了。
+spawn-sh-at-startup "setsid nohup bash -c 'sleep 30; for i in $(seq 1 40); do state=$(systemctl --user show -p ActiveState --value clavis-shell.service 2>/dev/null); case \"$state\" in active|activating|reloading) exit 0 ;; esac; systemctl --user restart clavis-shell.service; sleep 15; done' >/dev/null 2>&1 &"
 
 // XWayland-on-demand for legacy X11 apps (QQ, WeChat, older electron apps).
 // niri 25.08+ auto-spawns this on demand, but starting it explicitly is safer.

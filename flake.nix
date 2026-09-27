@@ -1,5 +1,5 @@
 {
-  description = "NixOS + Home Manager: niri + iNiR shell on an Intel laptop";
+  description = "NixOS + Home Manager: niri + Clavis shell on an Intel laptop";
 
   # Binary caches: CN mirrors (priority=5 means prefer mirrors
   # over the default cache.nixos.org priority 40).
@@ -33,12 +33,27 @@
       inputs.home-manager.follows = "home-manager";
     };
 
-    # iNiR — niri 的 Quickshell 桌面外壳（自带 flake）。
-    # 打包/模块/服务全部走上游：modules/home/desktop/inir 导入它的
-    # homeManagerModules，programs.inir.package 的默认值就是
-    # pkgs.callPackage <inir>/nix/package.nix（用本 flake 的 nixpkgs 构建）。
-    inir = {
-      url = "github:snowarch/iNiR";
+    # Clavis Shell — niri 的 Quickshell 桌面外壳（QML + Qt6 + 自建 C++ plugin）。
+    # 上游【没有 flake.nix】，所以 flake = false 取成纯源码树，由
+    # pkgs/clavis-shell 消费（自己决定 QML 模块/QML 树的安装路径）。
+    "clavis-shell" = {
+      url = "github:StatIndet/quickshell";
+      flake = false;
+    };
+
+    # key — Clavis 的生命周期/IPC/剪贴板/系统指标 CLI（PEP 517，纯 Python +
+    # 两个原生小工具 key-sysmon / key-cpu-power）。同样是纯源码树，由
+    # pkgs/key-cli 消费。
+    "key-cli" = {
+      url = "github:StatIndet/key-cli";
+      flake = false;
+    };
+
+    # M3Shapes — Clavis 的 QML 里有 `import M3Shapes`，但上游明确不打包它
+    # （见它 AGENTS.md：外部 QML 运行时模块），Arch 上是 AUR 包。这里用
+    # M3Shapes 自带的 nix 打包（inputs.m3shapes.packages.<system>.default）。
+    m3shapes = {
+      url = "github:soramanew/m3shapes";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };

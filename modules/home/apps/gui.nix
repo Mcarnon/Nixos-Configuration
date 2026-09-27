@@ -1,6 +1,6 @@
 # GUI / desktop applications — 基础桌面工具：
 # foot 终端、satty 截图标注、imv 图片查看（mimeapps 默认）。
-# 通知/电源菜单由 iNiR 提供（不再需要 mako/wlogout）。
+# 通知/电源/媒体面板由 Clavis 提供（不再需要 mako/wlogout）。
 {
   config,
   pkgs,
@@ -12,7 +12,7 @@
 
     # -- 终端 / 字体 --
     foot # Wayland 终端（foot.ini 见下方 xdg.configFile）
-    maple-mono.NF-CN # Maple Mono NF（含中文字形；foot/iNiR 主字体）
+    maple-mono.NF-CN # Maple Mono NF（含中文字形；foot/Clavis 主字体）
     adwaita-fonts # Adwaita Sans（fontconfig 回退）
 
     # -- 文件管理器 --
@@ -50,7 +50,7 @@
     xdg-utils # xdg-open & friends
     xwayland-satellite # X11 support (started by spawn-at-startup)
     networkmanagerapplet # nm-applet tray icon
-    nwg-look # GTK 主题/图标设置 GUI（配合 iNiR 设置里的主题项微调 GTK）
+    nwg-look # GTK 主题/图标设置 GUI（配合 Clavis 设置里的主题项微调 GTK）
 
     # -- Daily Apps --
     zed-editor # IDE
@@ -62,9 +62,9 @@
   ];
 
   # 应用配置文件（raw 部署，Shorin 原版或裁剪版）。
-  # 注意：~/.config/kitty/themes/current-theme.conf 由 iNiR 按壁纸重写，
+  # 注意：~/.config/kitty/current-theme.conf 由 Clavis 的 matugen 覆写，
   # 所以 kitty.conf 只 include 它、自身保持只读 store 软链没问题；那份主题由
-  # modules/home/desktop/inir 以可写副本种子部署（首次配色生成前的静态兜底）。
+  # modules/home/desktop/clavis 以可写副本种子部署（首次配色生成前的静态兜底）。
   xdg.configFile = {
     "satty/config.toml".source = ../../../home/files/satty.toml;
     "kitty/kitty.conf".source = ../../../home/files/kitty.conf;
@@ -75,10 +75,10 @@
     "xfce4/xfconf/xfce-perchannel-xml/thunar-volman.xml".source =
       ../../../home/files/thunar/thunar-volman.xml;
     "mimeapps.list".source = ../../../home/files/mimeapps.list;
-    # foot.ini 由本配置管理；colors.ini 由 iNiR 生成，include 行提前写好
+    # foot.ini 纯静态：Clavis 的 matugen 不生成 foot 配色，文件里也没有
+    # include colors.ini。
     "foot/foot.ini".source = ../../../home/files/foot.ini;
-    # 基配置：iNiR 接管后由 kitty/themes/current-theme.conf 这类生成物做覆盖，
-    # fuzzel.ini 只是兜底，不做挡板
+    # fuzzel.ini 纯静态兜底：fuzzel 没装，也没有外壳会调用它。
     "fuzzel/fuzzel.ini".source = ../../../home/files/fuzzel.ini;
     "xsettingsd/xsettingsd.conf".source = ../../../home/files/xsettingsd.conf;
   };

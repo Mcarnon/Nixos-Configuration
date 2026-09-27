@@ -16,11 +16,13 @@
     "niri/startup.kdl".source = ../../../home/niri/startup.kdl;
     "niri/windowrule.kdl".source = ../../../home/niri/windowrule.kdl;
     "niri/supertab.kdl".source = ../../../home/niri/supertab.kdl;
-    "niri/inir-static.kdl".source = ../../../home/niri/inir-static.kdl;
+    "niri/clavis-static.kdl".source = ../../../home/niri/clavis-static.kdl;
     "niri/niri-hardware.kdl".source = hostPath + "/niri-hardware.kdl";
   };
 
-  # 刻意不管理任何 iNiR 生成物：外壳的配色/壁纸/状态都写在
-  # ~/.local/state/quickshell 和它自己的 template 输出里，niri 侧只有
-  # inir-static.kdl（纯静态、只读软链）。
+  # 刻意不管理任何 Clavis 生成物：外壳的配色/壁纸/模糊开关都写在
+  # ~/.config/clavis、~/.local/state/clavis 和它自己的 matugen 输出里，
+  # niri 侧只有 clavis-static.kdl（纯静态、只读软链）。
+  # 另有一段 Clavis 自己写的 ~/.config/niri/clavis/effects.kdl，由
+  # home/niri/config.kdl 以 include optional=true 引入。
 }

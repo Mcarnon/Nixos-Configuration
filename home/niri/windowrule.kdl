@@ -11,12 +11,14 @@ window-rule {
     clip-to-geometry true
 }
 
-// ---- iNiR surfaces ----
-// iNiR 的面板/概览/壁纸都是 layer-shell 层表面（不是 toplevel），不需要
+// ---- Clavis surfaces ----
+// Clavis 的面板/概览/壁纸都是 layer-shell 层表面（不是 toplevel），不需要
 // open-floating 规则；它自己的圆角/透明度由 QML 负责。只有独立窗口模式
-// （设置窗口、剪贴板独立窗口等）才落到 toplevel，这里给它圆角浮窗观感。
+// （设置窗口、地图窗口等）才落到 toplevel，这里给它圆角浮窗观感。
+// app-id 是 quickshell 起的（`qs -c clavis`），窗口标题/应用 id 都可能带
+// clavis 前缀，所以两个都匹配。
 window-rule {
-    match app-id=r#"^(quickshell|inir)"#
+    match app-id=r#"^(quickshell|clavis)"#
     geometry-corner-radius 20
     clip-to-geometry true
     open-floating true
@@ -115,17 +117,18 @@ window-rule {
 }
 
 // ---- Layer rules ----
-// 允许 iNiR 的通知按钮触发动作、以及 XDG activation 拉起窗口
+// 允许 Clavis 的通知按钮触发动作、以及 XDG activation 拉起窗口
 debug {
     honor-xdg-activation-with-invalid-serial
 }
 
-// iNiR 桌面壁纸画在 quickshell 的 layer surface 上。这条规则告诉 niri 把
-// 它放进 backdrop 层：这样窗口移动/overview 时合成器能直接重绘背景，而
+// Clavis 桌面壁纸（Modules/Wallpaper/DesktopWallpaper.qml）画在
+// WlrLayer.Background + namespace "clavis-wallpaper" 上。这条规则告诉 niri
+// 把它放进 backdrop 层：这样窗口移动/overview 时合成器能直接重绘背景，而
 // 不是把整块背景缓存住（否则拖窗口会露出旧帧）。opacity 1.0 是因为
 // place-within-backdrop 会让 niri 忽略 layer surface 自带的 alpha。
 layer-rule {
-    match namespace="^quickshell:iiBackground$"
+    match namespace="^clavis-wallpaper$"
     place-within-backdrop true
     opacity 1.0
 }

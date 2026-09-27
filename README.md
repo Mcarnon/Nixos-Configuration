@@ -8,7 +8,7 @@
 - hardware HAL (`hardware.intel.enable`)
 - **agenix** secrets management (age-encrypted, decrypt only on the target host)
 - **roles/** host composition (base/desktop) — cross-host reuse without double-eval
-- **niri** scrollable-tiling Wayland compositor + **iNiR**（Quickshell 桌面壳，自带 NixOS/Home Manager 模块）：ly 登录 + 概览/启动器 + 快捷面板 + 锁屏/电源菜单 + 剪贴板历史 + 壁纸选择器 + 按壁纸取色的 M3 主题 + niri 动态模糊
+- **niri** scrollable-tiling Wayland compositor + **Clavis Shell**（Quickshell 桌面壳，本仓库自打包 `pkgs/{clavis-shell,key-cli}`）：ly 登录 + Spotlight 搜索/启动器 + 侧栏（通知/天气/快捷设置）+ 锁屏/电源菜单 + 剪贴板历史 + 壁纸 + M3 主题 + niri 动态模糊
 - **Intel Iris Xe** graphics acceleration (VA-API) via `modules/hardware/intel.nix`
 - **Chinese environment** (locale + fonts + Fcitx5 input method)
 - **Miyu** terminal AI assistant via overlay `pkgs.miyu` + `home/modules/miyu.nix`
@@ -44,7 +44,7 @@ git add -A && sudo nixos-rebuild switch --flake .#laptop
 │   │   └── i18n/ -> ../../locales                    # locale框架垫片
 │   ├── home/
 │   │   ├── shell/{fish.nix,tools.nix} # fish 含 SHORiN 风格函数（y/cat/ls/lt/la/sl/f）
-│   │   ├── desktop/{niri.nix,appearance.nix,inir/} # iNiR 桌面壳（上游 flake）
+│   │   ├── desktop/{niri.nix,appearance.nix,clavis/} # Clavis 桌面壳（本仓库自打包）
 │   │   ├── apps/{cli,gui,media,network,ai,neovim}.nix
 │   │   └── services/{miyu,cliphist}.nix
 │   └── _templates/{enable-option.nix,nested-import.nix,example-simple.nix}
@@ -53,7 +53,7 @@ git add -A && sudo nixos-rebuild switch --flake .#laptop
 │   └── home/{common.nix,desktop.nix}
 ├── hosts/laptop/{default.nix,hardware-configuration.nix,disko-fs.nix,niri-hardware.kdl}
 ├── locales/{default.nix,zh-cn.nix}                   # locale/输入法/字体框架（canonical）
-├── home/{default.nix,files/{miyu.fish,f.fish,fwatch.fish,foot.ini,...},niri/{config,binds,blur,startup,windowrule}.kdl}
+├── home/{default.nix,files/{miyu.fish,f.fish,fwatch.fish,foot.ini,...},niri/{config,binds,blur,clavis-static,startup,supertab,windowrule}.kdl}
 ├── wallpapers/                                       # 登录界面背景
 ├── docs/{QUICK_START,STRUCTURE,MIGRATION,DESKTOP,FAQ}.md
 ├── checks/miyu.nix  .github/workflows/ci.yml  scripts/sync.sh
@@ -173,7 +173,8 @@ Reinstalling later is the same flow — disko's `destroy` step handles the wipe.
 | `modules/nixos/network/openssh.nix` | remote IP / user |
 | `modules/nixos/network/firewall.nix` | `allowedTCPPorts` (default only 22) |
 | `modules/nixos/security/hardening.nix` | `boot.kernel.sysctl` BBR/fq, `zramSwap` |
-| `modules/home/desktop/inir/default.nix` | iNiR 桌面壳（上游 `homeManagerModules` + `inir-session-env` 包装 + 配置/主题种子） |
+| `modules/home/desktop/clavis/default.nix` | Clavis 桌面壳（自建 systemd unit + `clavis-session-env` 包装 + Qt 环境 + 可写主题种子） |
+| `pkgs/clavis-shell/default.nix`, `pkgs/key-cli/default.nix` | Clavis QML 树 / `key` 命令 + 运行时 wrapper（PATH、QML_IMPORT_PATH、XDG_CONFIG_DIRS） |
 | `modules/nixos/desktop/ly.nix` | 登录界面（ly，TUI 显示管理器） |
 | `modules/home/services/miyu.nix` | Miyu TUI (`miyu config`); no prefill needed |
 | `locales/zh-cn.nix` | input method (e.g. Rime) |
@@ -186,6 +187,6 @@ Reinstalling later is the same flow — disko's `destroy` step handles the wipe.
 - **Performance**: `flake-parts` perSystem 缓存，`nix.gc` weekly，`zramSwap` zstd，`BBR/fq`，`services.resolved` 缓存。
 - **Security**: `agenix` `/run/agenix.d` tmpfs，`networking.firewall` 默认关，`PermitRootLogin no`。
 - **XWayland**: off by default; configure `xwayland-satellite` per the niri docs if you need X11 apps.
-- **Lock screen**: iNiR 锁屏 bound to `Super+Alt+L`；suspend combo `Mod+Alt+P` 先锁后挂。
-- **Wallpaper**: 图片丢进 `~/Pictures/Wallpapers/`，`Mod+F10` 随机切换、`Mod+W` 打开 iNiR 选择器、`Mod+Shift+F10` 在线动漫壁纸（都走 `inir wallpaperSelector` + iNiR 自带的按壁纸取色）；GIF/视频壁纸由 iNiR 自己渲染。详见 `docs/DESKTOP.md`。
+- **Lock screen**: Clavis 锁屏 bound to `Super+Alt+L`；suspend combo `Mod+Alt+P` 先锁后挂。
+- **Wallpaper**: 图片丢进 `~/Pictures/Wallpapers/`，`Mod+Alt+W` 打开 Spotlight 的 wallpapers 模式（`key ipc call spotlight openMode wallpapers`）；目录在 `Mod+Comma` 设置中心里改。GIF/视频壁纸由 Clavis 自己渲染（shaders）。详见 `docs/DESKTOP.md`。
 - **键位教程**: `Mod+Shift+Slash`（niri 内置 hotkey-overlay）。

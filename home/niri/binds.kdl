@@ -1,22 +1,33 @@
 // Keybindings
 binds {
-    // ---- iNiR shell (`inir <target> <function>`) ----
-    // 上游 CLI 直接暴露所有 IPC target，`inir help` 可列全部；
-    // 常用：overview / clipboard / controlPanel / dashboard / settings /
-    //       wallpaperSelector / lock / session / cheatsheet / globalActions。
-    Mod+Space hotkey-overlay-title="Overview / launcher" { spawn-sh "inir overview toggle"; }
-    Mod+S hotkey-overlay-title="Control panel" { spawn-sh "inir controlPanel toggle"; }
-    Mod+Comma { spawn-sh "inir settings open"; }
-    Mod+F2 hotkey-overlay-title="Dashboard (media/weather/calendar)" { spawn-sh "inir dashboard toggle"; }
-    // 命令面板（执行 iNiR 动作注册表里的命令）。
-    Mod+Shift+B hotkey-overlay-title="Command palette" { spawn-sh "inir globalActions open"; }
+    // ---- Clavis shell (`key ipc call <target> <method> [args...]`) ----
+    // 旧键位 → 新动作：Mod+S/F2/W/V/Shift+F10（iNiR 的 controlPanel /
+    // dashboard / wallpaperSelector / clipboard / random+live wallpaper）
+    // 没有一一对应项：Clavis 对应功能都收在 Spotlight 的 openMode 模式里，
+    // 而且 key-cli 不提供 random/live 壁纸的命令行入口。
+    // 刻意不写裸 `quickshell ipc`：`key` 的 wrapper（pkgs/key-cli）已经把
+    // PATH / QML_IMPORT_PATH / XDG_CONFIG_DIRS 钉死了，niri 的 spawn 直连
+    // PATH（不过 shell），所以 ~/.local/bin/key 是唯一可靠的入口。
+    // 全部动作目录：`key ipc show`；Clavis 设置 → 快捷键页里没绑定的动作
+    // （shortcut-map、lyrics、drawer/weather 侧栏…）可以在那里自己绑。
+    // repeat=false：面板类动作连按会自己 toggle 回来。
+    Mod+Space repeat=false hotkey-overlay-title="Spotlight (search / apps / web)" { spawn "key" "ipc" "call" "spotlight" "toggle"; }
+    Mod+Shift+Space repeat=false hotkey-overlay-title="Web search" { spawn "key" "ipc" "call" "spotlight" "web"; }
+    // 剪贴板/壁纸都从 Spotlight 进（Ctrl+1/2/3/4 在模式间切换）。
+    Mod+Alt+V repeat=false hotkey-overlay-title="Clipboard history" { spawn "key" "ipc" "call" "spotlight" "openMode" "clipboard"; }
+    Mod+Alt+W repeat=false hotkey-overlay-title="Wallpapers" { spawn "key" "ipc" "call" "spotlight" "openMode" "wallpapers"; }
+    Mod+N repeat=false hotkey-overlay-title="Dashboard (notifications / weather / widgets)" { spawn "key" "ipc" "call" "sidebar" "toggle" "dashboard"; }
+    Mod+A repeat=false hotkey-overlay-title="Quick settings (volume / brightness)" { spawn "key" "ipc" "call" "sidebar" "toggle" "quicksettings"; }
+    Mod+Comma repeat=false hotkey-overlay-title="Settings" { spawn "key" "ipc" "call" "control-center" "toggle" "general"; }
+    Mod+Shift+W repeat=false hotkey-overlay-title="Keystone panel" { spawn "key" "ipc" "call" "keystone" "hub"; }
+    Mod+Shift+T repeat=false hotkey-overlay-title="Tools (record / screenshot)" { spawn "key" "ipc" "call" "keystone" "tools"; }
+    // 命令面板：/calc、/fx、/time、/settings… 全在这里（Spotlight 里打 > 也行）。
+    Mod+Shift+B repeat=false hotkey-overlay-title="Command palette" { spawn "key" "ipc" "call" "spotlight" "commands"; }
     // Alt+Tab 走 niri 原生 overview（见 supertab.kdl 的带缩略图切换）：
-    // iNiR 自己也有 altSwitcher/orbit，但窗口切换交给合成器更稳。
+    // Clavis 也有自己的 altSwitcher/orbit，但窗口切换交给合成器更稳。
     Alt+Tab hotkey-overlay-title="Switch windows" { toggle-overview; }
-    Mod+W hotkey-overlay-title="Wallpaper picker" { spawn-sh "inir wallpaperSelector toggle"; }
-    Mod+V hotkey-overlay-title="Clipboard history" { spawn-sh "inir clipboard toggle"; }
 
-    // ---- Volume / brightness (pamixer / brightnessctl；iNiR 面板会镜像当前值) ----
+    // ---- Volume / brightness (pamixer / brightnessctl；Clavis 快捷设置侧栏会镜像当前值) ----
     XF86AudioRaiseVolume allow-when-locked=true { spawn "pamixer" "-i" "5"; }
     XF86AudioLowerVolume allow-when-locked=true { spawn "pamixer" "-d" "5"; }
     XF86AudioMute allow-when-locked=true { spawn "pamixer" "-t"; }
@@ -24,7 +35,7 @@ binds {
     XF86MonBrightnessDown allow-when-locked=true { spawn "brightnessctl" "set" "5%-"; }
     XF86AudioMicMute allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"; }
 
-    // ---- Media (MPRIS, needs playerctl；iNiR 的 mpris/ytmusic 会接管同一个播放器) ----
+    // ---- Media (MPRIS, needs playerctl；Clavis 的媒体模块接管同一个播放器) ----
     Mod+P { spawn "playerctl" "play-pause"; }
     XF86AudioPlay { spawn "playerctl" "play-pause"; }
     XF86AudioNext { spawn "playerctl" "next"; }
@@ -94,11 +105,11 @@ binds {
     Alt+Print { screenshot-window write-to-disk=false; }
 
     // ---- Lock / quit ----
-    Super+Alt+L { spawn-sh "inir lock activate"; }
+    Super+Alt+L repeat=false { spawn "key" "ipc" "call" "lock" "open"; }
     Mod+Shift+E { quit; }
     Mod+Shift+P { power-off-monitors; }
     // Suspend combo: turn off monitors, lock, then suspend (shorin pattern).
-    Mod+Alt+P hotkey-overlay-title="Suspend" { spawn-sh "niri msg action power-off-monitors && inir lock activate && systemctl suspend"; }
+    Mod+Alt+P hotkey-overlay-title="Suspend" { spawn-sh "niri msg action power-off-monitors && key ipc call lock open && systemctl suspend"; }
 
     // ---- Power user picks (shorin-derived, non-conflicting) ----
     // Drop-down floating terminal (uses kitty class; falls back to foot if
@@ -106,12 +117,6 @@ binds {
     Mod+Slash hotkey-overlay-title="Quick terminal" { spawn-sh "kitty --class quickterminal 2>/dev/null || foot --class quickterminal"; }
     // Force-kill a stuck window (sends SIGTERM via niri IPC then escalates).
     Alt+F4 hotkey-overlay-title="Force kill window" { spawn-sh "niri msg action close-window --id $(niri msg --json focused-window | python3 -c 'import json,sys;print(json.load(sys.stdin)[\"id\"])')"; }
-    // Random wallpaper (iNiR picks from the current wallpaper folder and
-    // re-runs its own wallpaper palette pass).
-    Mod+F10 hotkey-overlay-title="Random wallpaper" { spawn-sh "inir wallpaperSelector random"; }
-    // Online anime wallpapers: open the picker's "live" source (replaces the
-    // old hand-rolled download-and-apply script).
-    Mod+Shift+F10 hotkey-overlay-title="Online anime wallpaper" { spawn-sh "inir wallpaperSelector browse live -"; }
     // Screenshot → edit (opens satty with the last screenshot from clipboard).
     Mod+Shift+S hotkey-overlay-title="Edit last screenshot" { spawn-sh "wl-paste | satty -f -"; }
     // Wheel scroll to change workspace (cooldown prevents runaway).

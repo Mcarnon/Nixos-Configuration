@@ -1,9 +1,9 @@
 # Desktop look & feel: cursor theme + GTK icons/dark mode + 输入法桥接。
 # 基础外观走 dconf（DB，没有文件冲突）；仍然【不用】home-manager 的 gtk 模块，
-# 因为它会把 gtk.css / settings.ini 做成只读 store 软链，而后两者要留给
-# iNiR 写：它按壁纸渲染 gtk-3.0/gtk.css + gtk-4.0/gtk.css，并且随设置里的
-# 深/浅色切 gtk-*-4.0/settings.ini、dconf 和 Kvantum（见
-# modules/home/desktop/inir）。这里只给一份一致的初值。
+# 因为它会把 gtk.css / settings.ini 做成只读 store 软链，留给按需生成它们的
+# 桌面壳更安全。Clavis 的 matugen 模板只覆盖 btop / cava / kitty / yazi /
+# quickshell-colors，不写 GTK 配色，所以这份初值就是最终值（深/浅色在 Clavis
+# 设置里切 GTK 主题时由 GTK 自己接管）。见 modules/home/desktop/clavis。
 {
   config,
   pkgs,
@@ -21,7 +21,7 @@
     size = 24;
   };
 
-  # 基础 GTK 外观（主题/图标/深色/输入法）。深浅色跟随由 iNiR 覆盖。
+  # 基础 GTK 外观（主题/图标/深色/输入法）。
   dconf = {
     enable = true;
     settings = {
