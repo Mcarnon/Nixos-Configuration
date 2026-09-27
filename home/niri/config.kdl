@@ -55,6 +55,17 @@ environment {
     EDITOR "vim"
     // 解决 quickshell 图标主题缺失问题（iNiR/Qt 图标有时不显示）
     QS_ICON_THEME "Adwaita"
+    // 【不要删】iNiR 的 apply_niri_app_environment() 会 sed 本文件，依次取
+    // XDG_MENU_PREFIX / QT_QPA_PLATFORM / QT_QPA_PLATFORMTHEME /
+    // QT_STYLE_OVERRIDE / ELECTRON_OZONE_PLATFORM_HINT，循环体最后一行是
+    // `[[ -n "$value" ]] && export "${name}=${value}"`。列表里【最后那个】
+    // 缺失时该函数返回 1，launcher 脚本在 `set -euo pipefail` 下静默
+    // exit 1：inir.service 起来 ~0.2s 就死、journal 一条日志都没有、
+    // 桌面全黑只剩光标。注意必须是【非空】值，`VAR ""` 同样触发。
+    // 语义上 auto = 有 Wayland 就用 Wayland（niri 只有 Wayland），
+    // 对 Electron 应用（QQ/微信等）也是想要的行为。
+    // checks/niri-config.nix 会从 iNiR 包里解析这个变量列表并断言末位存在。
+    ELECTRON_OZONE_PLATFORM_HINT "auto"
 }
 
 hotkey-overlay {
