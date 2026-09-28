@@ -1,8 +1,3 @@
-// 静态 niri 配色（SHORiN 默认值）。
-//
-// Clavis 不像以前的桌面壳那样往 niri 配置里注入 focus-ring / urgent 色：它的取色
-// 只作用于自己画的层和它自己的模板输出（kitty 主题等）。所以这里的颜色
-// 就是最终值，纯声明式，永远是只读 store 软链，不需要任何运行时生成物。
 layout {
 
     focus-ring {

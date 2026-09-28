@@ -1,33 +1,15 @@
 // Startup commands for niri session.
-// Clavis (the Quickshell desktop shell) is NOT started here — it runs as a
-// systemd user service (`clavis-shell.service`, see
-// modules/home/desktop/clavis), pulled in by niri.service upstream-style, so
-// it survives shell crashes and restarts on failure. Its clipboard history is
-// a *separate* long-lived watcher (`clavis-clipboard.service`, `key clipboard
-// watch`) so history survives shell restarts too. fcitx5 is also a systemd
-// service (see modules/nixos/desktop/niri.nix) — the systemd service and this
-// spawn race to own the DBus name, and the winner runs.
-//
-// systemd --user is started by the wayland-session script (ly), so
-// polkit/fcitx5/clavis services are available.
+// Noctalia v5 (the desktop shell) runs as a user systemd service
+// (`noctalia.service`, via the official home-manager module under
+// niri.service), and fcitx5 as another
+// (`systemd.user.services.fcitx5` in modules/nixos/desktop/niri.nix).
 
 // 环境传播（关键）：niri 自己设置 WAYLAND_DISPLAY，但 systemd 用户服务
-// （clavis-shell 等）的环境来自 systemd user manager，拿不到。不传播的话
-// clavis 启动找不到 wayland socket 会直接崩溃（桌面全黑）。必须在 niri 启动后
-// 立刻把 WAYLAND_DISPLAY 写进 systemd 用户环境。
-// clavis-shell.service 额外用 clavis-session-env 等 socket（双保险，见该脚本）。
+// （noctalia 等）的环境来自 systemd user manager，拿不到。不传播的话
+// noctalia 启动找不到 wayland socket 会直接崩溃（桌面只剩灰屏）。必须在
+// niri 启动后立刻把 WAYLAND_DISPLAY 写进 systemd 用户环境。
 spawn-sh-at-startup "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=niri"
 spawn-sh-at-startup "systemctl --user set-environment WAYLAND_DISPLAY=$WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=niri"
-
-// 兜底看门狗：systemd 之外再守一次，只救"服务彻底死掉"的场景。
-// 30s 后开始：unit 处于 active/activating/reloading 都直接退出（慢启动中的
-// Qt 加载期是 activating，绝不能在那时把它 restart 掉）；只有 failed /
-// inactive / unknown（服务本身 Restart=on-failure 且 StartLimitIntervalSec=0，
-// 正常走不到这里，这里防的是 unit 被 start-limit 打死后永久黑屏）才拉起来。
-// 约 10 分钟后放弃。
-// 注意：unit 是 Type=simple（上游就是），active 只保证进程活着，不再像旧的
-// Type=dbus 那样能顺带证明界面真的画出来了。
-spawn-sh-at-startup "setsid nohup bash -c 'sleep 30; for i in $(seq 1 40); do state=$(systemctl --user show -p ActiveState --value clavis-shell.service 2>/dev/null); case \"$state\" in active|activating|reloading) exit 0 ;; esac; systemctl --user restart clavis-shell.service; sleep 15; done' >/dev/null 2>&1 &"
 
 // XWayland-on-demand for legacy X11 apps (QQ, WeChat, older electron apps).
 // niri 25.08+ auto-spawns this on demand, but starting it explicitly is safer.
@@ -35,3 +17,5 @@ spawn-at-startup "xwayland-satellite"
 
 // Network manager tray applet.
 spawn-at-startup "nm-applet" "--indicator"
+
+

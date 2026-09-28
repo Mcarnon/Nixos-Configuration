@@ -46,13 +46,6 @@ sudo nixos-rebuild switch --flake .#laptop
 ```
 
 - Home Manager packages update with the same rebuild (`useGlobalPkgs = true`).
-- **桌面壳 (Clavis)**：`clavis-shell` / `key-cli` / `m3shapes` 都是
-  `nix flake update` 覆盖的输入（`--update-input clavis-shell` 可单独升）。
-  三个都没给 NixOS/Home Manager 模块，所以**升级时要顺带检查
-  `pkgs/{clavis-shell,key-cli}/default.nix`**：版本号是手写的（不是
-  `git describe`），上游改了 CMake 变量名/QML import/安装布局就得跟着改。
-  自检：`key version` / `key doctor --json` / `key ipc show`，
-  上游变更记录在 `docs/architecture/`、`docs/dependencies.md`。
 - **Roll back**: `sudo nixos-rebuild switch --rollback`, or pick the previous
   entry in the systemd-boot menu at boot.
 - List generations: `sudo nix-env --list-generations -p /nix/var/nix/profiles/system`.

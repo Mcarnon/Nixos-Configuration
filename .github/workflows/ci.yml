@@ -7,23 +7,11 @@ on:
 jobs:
   flake-check:
     runs-on: ubuntu-latest
-    env:
-      # Every `github:` input is fetched as an api.github.com tarball, which
-      # counts against the 60/hour unauthenticated limit *per IP* — and
-      # Actions runners share IPs. The built-in GITHUB_TOKEN raises it to
-      # 5000/hour. Without this the job fails at random with
-      # "API rate limit exceeded" while locking/fetching inputs.
-      NIX_CONFIG: access-tokens = github.com = ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@v14
       - uses: DeterminateSystems/magic-nix-cache-action@v8
       - name: nix flake check (all checks + VM tests; security + performance regressions)
         run: nix flake check --accept-flake-config --all-systems --show-trace
-      - name: build the desktop shell packages
-        # `nix flake check` only *evaluates* packages. Clavis/key-cli are
-        # hand-written derivations (own CMake invocation, QML install layout,
-        # PAM patch), so they need a real build to prove anything.
-        run: nix build .#clavisShell .#keyCli .#m3shapes --accept-flake-config
       - name: formatter check (nixfmt-rfc-style)
         run: nix fmt . -- --check

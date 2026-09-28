@@ -1,46 +1,29 @@
 // Keybindings
 binds {
-    // ---- Clavis shell (`key ipc call <target> <method> [args...]`) ----
-    // 旧键位 → 新动作：Mod+S/F2/W/V/Shift+F10（iNiR 的 controlPanel /
-    // dashboard / wallpaperSelector / clipboard / random+live wallpaper）
-    // 没有一一对应项：Clavis 对应功能都收在 Spotlight 的 openMode 模式里，
-    // 而且 key-cli 不提供 random/live 壁纸的命令行入口。
-    // 刻意不写裸 `quickshell ipc`：`key` 的 wrapper（pkgs/key-cli）已经把
-    // PATH / QML_IMPORT_PATH / XDG_CONFIG_DIRS 钉死了，niri 的 spawn 直连
-    // PATH（不过 shell），所以 ~/.local/bin/key 是唯一可靠的入口。
-    // 全部动作目录：`key ipc show`；Clavis 设置 → 快捷键页里没绑定的动作
-    // （shortcut-map、lyrics、drawer/weather 侧栏…）可以在那里自己绑。
-    // repeat=false：面板类动作连按会自己 toggle 回来。
-    Mod+Space repeat=false hotkey-overlay-title="Spotlight (search / apps / web)" { spawn "key" "ipc" "call" "spotlight" "toggle"; }
-    Mod+Shift+Space repeat=false hotkey-overlay-title="Web search" { spawn "key" "ipc" "call" "spotlight" "web"; }
-    // 剪贴板/壁纸都从 Spotlight 进（Ctrl+1/2/3/4 在模式间切换）。
-    Mod+Alt+V repeat=false hotkey-overlay-title="Clipboard history" { spawn "key" "ipc" "call" "spotlight" "openMode" "clipboard"; }
-    Mod+Alt+W repeat=false hotkey-overlay-title="Wallpapers" { spawn "key" "ipc" "call" "spotlight" "openMode" "wallpapers"; }
-    Mod+N repeat=false hotkey-overlay-title="Dashboard (notifications / weather / widgets)" { spawn "key" "ipc" "call" "sidebar" "toggle" "dashboard"; }
-    Mod+A repeat=false hotkey-overlay-title="Quick settings (volume / brightness)" { spawn "key" "ipc" "call" "sidebar" "toggle" "quicksettings"; }
-    Mod+Comma repeat=false hotkey-overlay-title="Settings" { spawn "key" "ipc" "call" "control-center" "toggle" "general"; }
-    Mod+Shift+W repeat=false hotkey-overlay-title="Keystone panel" { spawn "key" "ipc" "call" "keystone" "hub"; }
-    Mod+Shift+T repeat=false hotkey-overlay-title="Tools (record / screenshot)" { spawn "key" "ipc" "call" "keystone" "tools"; }
-    // 命令面板：/calc、/fx、/time、/settings… 全在这里（Spotlight 里打 > 也行）。
-    Mod+Shift+B repeat=false hotkey-overlay-title="Command palette" { spawn "key" "ipc" "call" "spotlight" "commands"; }
-    // Alt+Tab 走 niri 原生 overview（见 supertab.kdl 的带缩略图切换）：
-    // Clavis 也有自己的 altSwitcher/orbit，但窗口切换交给合成器更稳。
-    Alt+Tab hotkey-overlay-title="Switch windows" { toggle-overview; }
+    // ---- Noctalia v5 (noctalia msg) ----
+    Mod+Space hotkey-overlay-title="App launcher" { spawn-sh "noctalia msg panel-toggle launcher"; }
+    Mod+S hotkey-overlay-title="Control center" { spawn-sh "noctalia msg panel-toggle control-center"; }
+    Mod+Comma { spawn-sh "noctalia msg panel-toggle control-center"; }
+    Alt+Tab hotkey-overlay-title="Switch windows" { spawn-sh "noctalia msg window-switcher"; }
+    Mod+F2 hotkey-overlay-title="Settings" { spawn-sh "noctalia msg settings-toggle"; }
+    Mod+W hotkey-overlay-title="Wallpaper picker" { spawn-sh "~/.config/niri/scripts/wallpaper-picker.py"; }
+    Mod+V hotkey-overlay-title="Clipboard history" { spawn-sh "noctalia msg panel-toggle clipboard"; }
+    Mod+Shift+B hotkey-overlay-title="Toggle bar" { spawn-sh "noctalia msg bar-toggle"; }
 
-    // ---- Volume / brightness (pamixer / brightnessctl；Clavis 快捷设置侧栏会镜像当前值) ----
-    XF86AudioRaiseVolume allow-when-locked=true { spawn "pamixer" "-i" "5"; }
-    XF86AudioLowerVolume allow-when-locked=true { spawn "pamixer" "-d" "5"; }
-    XF86AudioMute allow-when-locked=true { spawn "pamixer" "-t"; }
-    XF86MonBrightnessUp allow-when-locked=true { spawn "brightnessctl" "set" "+5%"; }
-    XF86MonBrightnessDown allow-when-locked=true { spawn "brightnessctl" "set" "5%-"; }
-    XF86AudioMicMute allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"; }
+    // ---- Volume / brightness (via Noctalia IPC so the OSD + bar update) ----
+    XF86AudioRaiseVolume allow-when-locked=true { spawn-sh "noctalia msg volume-up"; }
+    XF86AudioLowerVolume allow-when-locked=true { spawn-sh "noctalia msg volume-down"; }
+    XF86AudioMute allow-when-locked=true { spawn-sh "noctalia msg volume-mute"; }
+    XF86MonBrightnessUp allow-when-locked=true { spawn-sh "noctalia msg brightness-up"; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn-sh "noctalia msg brightness-down"; }
+    XF86AudioMicMute allow-when-locked=true { spawn-sh "noctalia msg mic-mute"; }
 
-    // ---- Media (MPRIS, needs playerctl；Clavis 的媒体模块接管同一个播放器) ----
-    Mod+P { spawn "playerctl" "play-pause"; }
-    XF86AudioPlay { spawn "playerctl" "play-pause"; }
-    XF86AudioNext { spawn "playerctl" "next"; }
-    XF86AudioPrev { spawn "playerctl" "previous"; }
-    XF86AudioStop { spawn "playerctl" "stop"; }
+    // ---- Media (noctalia MPRIS) ----
+    Mod+P { spawn-sh "noctalia msg media toggle"; }
+    XF86AudioPlay { spawn-sh "noctalia msg media toggle"; }
+    XF86AudioNext { spawn-sh "noctalia msg media next"; }
+    XF86AudioPrev { spawn-sh "noctalia msg media previous"; }
+    XF86AudioStop { spawn-sh "noctalia msg media stop"; }
 
     // ---- Launch / help ----
     Mod+Return hotkey-overlay-title="Terminal" { spawn "foot"; }
@@ -105,11 +88,11 @@ binds {
     Alt+Print { screenshot-window write-to-disk=false; }
 
     // ---- Lock / quit ----
-    Super+Alt+L repeat=false { spawn "key" "ipc" "call" "lock" "open"; }
+    Super+Alt+L { spawn-sh "noctalia msg session lock"; }
     Mod+Shift+E { quit; }
     Mod+Shift+P { power-off-monitors; }
     // Suspend combo: turn off monitors, lock, then suspend (shorin pattern).
-    Mod+Alt+P hotkey-overlay-title="Suspend" { spawn-sh "niri msg action power-off-monitors && key ipc call lock open && systemctl suspend"; }
+    Mod+Alt+P hotkey-overlay-title="Suspend" { spawn-sh "niri msg action power-off-monitors && noctalia msg session lock-and-suspend"; }
 
     // ---- Power user picks (shorin-derived, non-conflicting) ----
     // Drop-down floating terminal (uses kitty class; falls back to foot if
@@ -117,7 +100,11 @@ binds {
     Mod+Slash hotkey-overlay-title="Quick terminal" { spawn-sh "kitty --class quickterminal 2>/dev/null || foot --class quickterminal"; }
     // Force-kill a stuck window (sends SIGTERM via niri IPC then escalates).
     Alt+F4 hotkey-overlay-title="Force kill window" { spawn-sh "niri msg action close-window --id $(niri msg --json focused-window | python3 -c 'import json,sys;print(json.load(sys.stdin)[\"id\"])')"; }
-    // Screenshot → edit (opens satty with the last screenshot from clipboard).
+    // Random wallpaper (Noctalia native wallpaper rotation).
+    Mod+F10 hotkey-overlay-title="Random wallpaper" { spawn-sh "noctalia msg wallpaper-random"; }
+    // Random wallpaper from the API + save to Wallpapers (SHORiN script).
+    Mod+Shift+F10 hotkey-overlay-title="Random download wallpaper" { spawn-sh "random-anime-wallpaper-noctalia"; }
+    // Screenshot -> edit (opens satty with the last screenshot from clipboard).
     Mod+Shift+S hotkey-overlay-title="Edit last screenshot" { spawn-sh "wl-paste | satty -f -"; }
     // Wheel scroll to change workspace (cooldown prevents runaway).
     Mod+Shift+WheelScrollDown cooldown-ms=150 { focus-workspace-down; }

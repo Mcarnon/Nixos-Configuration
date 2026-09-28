@@ -1,7 +1,7 @@
 {
   imports = [
     ./niri.nix
-    ./clavis/default.nix
+    ./noctalia
     ./appearance.nix
   ];
 }

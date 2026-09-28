@@ -34,8 +34,8 @@ let
 in
 {
   # 主题数据：只软链四个主题目录，`~/.local/share/fcitx5/themes` 本身保持真实
-  # 目录——以后往 themes/ 里加主题（手工放、或某个生成式主题工具写进去）都
-  # 不会撞上只读 store 路径（同 modules/home/apps/gui.nix 的说明）。
+  # 目录——Noctalia 的 fcitx5 模板还要往 themes/Matugen/ 写文件，软链整个
+  # themes/ 会把它变成只读 store 路径（同 modules/home/apps/gui.nix 的说明）。
   xdg.dataFile = {
     "fcitx5/themes/macOS-Light".source = "${macosTheme}/themes/macOS-Light";
     "fcitx5/themes/macOS-Light-Blur".source = "${macosTheme}/themes/macOS-Light-Blur";

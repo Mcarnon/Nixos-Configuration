@@ -3,9 +3,12 @@
   config,
   pkgs,
   lib,
+  inputs,
   ...
 }:
 let
+  noctaliaPkg = inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default;
+
   # Wayland session entry point (replaces the default niri-session).
   #
   # niri-session only activates graphical-session.target when it launches
@@ -13,7 +16,7 @@ let
   # runs inside a systemd --user manager, so niri-session takes its "already
   # managed" shortcut and execs `niri --session` directly — leaving
   # graphical-session.target inactive, which means every user service
-  # `WantedBy=graphical-session.target`（clavis-shell, fcitx5, polkit）永远
+  # `WantedBy=graphical-session.target`（noctalia, fcitx5, polkit）永远
   # 不会启动。显式启动 niri.service 可修复此问题：它
   # BindsTo=graphical-session.target，目标被激活后会把
   # 所有用户服务一并拉起。`systemctl --wait` 让本进程存活到
@@ -91,19 +94,13 @@ in
     package = niriWithSessionWrapper;
   };
 
-  # Clavis 本体由 modules/home/desktop/clavis 安装（home.packages +
-  # clavis-shell.service / clavis-clipboard.service）。这里只补两件只有
-  # 系统侧能做的事：
-  #   1. 键盘 LED 授权：key 读 evdev 的 Caps/Num Lock 灯要 udev 规则
-  #      （pkgs/key-cli 装在 $out/lib/udev/rules.d，不是 root daemon，
-  #      所以只是给设备节点加 ACL）。
-  #   2. key-cpu-power 的 RAPL 能耗读取是可选能力，需要额外的文件 capabilities，
-  #      默认不开：Clavis 的系统监视在拿不到时只是少一个功耗读数。
-  services.udev.packages = [ pkgs.keyCli ];
-
-  # 下面只放 niri 快捷键/脚本会用、且【不属于】外壳运行时（外壳自带的那些在
-  # key 的 wrapper PATH 里）的外部命令，这样手动在终端调试或脚本调用也能找到。
-  environment.systemPackages = with pkgs; [
+  # Noctalia v5 及其 IPC CLI（noctalia msg）进系统 PATH，方便 niri 快捷键和脚本调用。
+  # 同时把 Noctalia 各面板常用的外部命令装进系统 PATH，这样即使手动在终端
+  # 调试或脚本调用时也能找到它们。
+  environment.systemPackages = let
+    pythonWithDeps = pkgs.python3.withPackages (ps: with ps; [ numpy pillow ]);
+  in with pkgs; [
+    noctaliaPkg
     brightnessctl
     pamixer
     playerctl
@@ -121,24 +118,11 @@ in
     gawk
     findutils
     procps
-    # gsettings 的 org.gnome.desktop.interface schema（color-scheme /
-    # gtk-theme / icon-theme）。两个来源都要求它：
-    #   * modules/home/desktop/appearance.nix 的 dconf 写入；
-    #   * Clavis 的 scripts/theme/set_system_color_scheme.sh —— 它先跑
-    #     `gsettings writable org.gnome.desktop.interface color-scheme`，
-    #     schema 缺失时返回 false，脚本按设计**静默退出 0**，于是「Clavis 切
-    #     深/浅色不生效」而且没有任何日志。
-    gsettings-desktop-schemas
-    # 裸 python3：Alt+F4 强杀窗口（binds.kdl 解析 niri msg --json）和
-    # thunar 的「粘贴文件」动作（home/files/thunar/uca.xml）都在脚本里
-    # 直接调 python3。以前是 Clavis 的 python3+numpy+pillow 顺带提供的，
-    # 现在只需要解释器本身。
-    python3
+    matugen # v4 遗留下来的壁纸配色工具；v5 原生生成配色，仅当自建模板需要时保留
+    pythonWithDeps # scan-tones.py 依赖 (python3 + numpy + pillow)
   ];
 
-  # Clavis / 终端 / 中文 UI 所需的字体。
-  # material-symbols：Clavis 的设置/Keystone 面板大量使用 Material Symbols
-  # 图标（它自带字体文件，但把字体交给 fontconfig 更稳，也省一份重复下载）。
+  # Noctalia / 终端 / 中文 UI 所需的字体。
   fonts.packages = with pkgs; [
     adwaita-fonts
     lxgw-wenkai
@@ -146,7 +130,6 @@ in
     nerd-fonts.jetbrains-mono
     noto-fonts-cjk-sans
     noto-fonts-color-emoji
-    material-symbols
   ];
 
   # xdg-desktop-portal routing（对齐 SHORiN 的 niri-portals.conf：
@@ -167,16 +150,10 @@ in
     };
   };
 
-  # Clavis / GTK 主题切换依赖 gsettings 写 dconf。
+  # Noctalia / GTK 主题切换依赖 gsettings 写 dconf。
   programs.dconf.enable = true;
 
   # Fix graphical-session.target so systemd user services can use it
-  #
-  # 注意 schema：这里是 NixOS 的 `systemd.user.services`（nixpkgs 经典写法：
-  # description / wantedBy / after / unitConfig / serviceConfig），不是
-  # home-manager 自己的 `home-manager.users.<name>.systemd.user.services`
-  # （那个才是 Unit/Service/Install 指令式写法）。写错会被 modulesystem 报
-  # "The option `systemd.user.services.fcitx5.Install' does not exist"。
   systemd.user.targets.graphical-session = {
     unitConfig = {
       RefuseManualStart = false;
