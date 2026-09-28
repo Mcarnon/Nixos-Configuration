@@ -22,7 +22,7 @@
 # 配置模块（旧的 inir/default.nix 也是），谁 import 角色谁就得到这套接线。
 # 换包就改 pkgs overlay（pkgs.keyCli），别在这里加一层 opt-in —— 上一次
 # 留了 programs.clavis.enable 却没有人在任何地方置 true，整个外壳是死的。
-# 剪贴板 watcher 想关掉就写 systemd.user.services.clavis-clipboard.wantedBy = [];
+# 剪贴板 watcher 想关掉就写 systemd.user.services.clavis-clipboard.Install.WantedBy = [];
 #
 # 刻意【不】管理的东西：
 #   * ~/.config/clavis/**：外壳自己的设置（主题/壁纸目录/布局），首次启动
@@ -85,26 +85,31 @@ let
 
   # 外壳类 unit 的公共部分。session 生命周期归 niri：niri 停，外壳跟着停；
   # 没有合成器时也不必启动外壳。
+  #
+  # 【schema】本仓库锁定的 home-manager 用的是「systemd 指令」写法：
+  #   systemd.user.services.<name> = { Unit = {...}; Service = {...}; Install = {...}; }
+  # 旧的 description / serviceConfig / unitConfig 三段式已经没有了（写成那样
+  # 报 "A definition for option ...description is not of type attribute set"）。
   mkUnit =
     description: execStart: {
-      inherit description;
-      wantedBy = [ "niri.service" ];
-      after = [ "niri.service" ];
-      unitConfig = {
-        PartOf = "niri.service";
-        Requisite = "niri.service";
+      Unit = {
+        Description = description;
+        After = [ "niri.service" ];
         # 本仓库对「桌面壳服务」的固定要求：不给 systemd 的 start-limit
         # 打死的机会。unit 自己 Restart=on-failure，这条只是删掉
         # 「30s 内 5 次失败 → 永久不再启动」那个悬崖（那次之后就是黑屏）。
+        PartOf = "niri.service";
+        Requisite = "niri.service";
         StartLimitIntervalSec = 0;
       };
-      serviceConfig = {
+      Service = {
         Type = "simple";
-        inherit execStart;
+        ExecStart = execStart;
         Environment = unitEnvironment;
         Restart = "on-failure";
         RestartSec = 2;
       };
+      Install.WantedBy = [ "niri.service" ];
     };
 in
 {
@@ -127,10 +132,13 @@ in
   # 剪贴板历史是【独立的 watcher】：Clavis 重启/崩溃时历史要活下来，所以
   # 不能塞进外壳进程里。cliphist + wl-copy/wl-paste 在 key 的 wrapper
   # PATH 里。
-  systemd.user.services.clavis-clipboard = mkUnit
-    "Clavis clipboard watcher"
-    "${sessionEnv}/bin/clavis-session-env ${lib.getExe pkgs.keyCli} clipboard watch";
-  systemd.user.services.clavis-clipboard.serviceConfig.TimeoutStopSec = 5;
+  systemd.user.services.clavis-clipboard =
+    (mkUnit
+      "Clavis clipboard watcher"
+      "${sessionEnv}/bin/clavis-session-env ${lib.getExe pkgs.keyCli} clipboard watch")
+    // {
+      Service.TimeoutStopSec = 5;
+    };
 
   # 会话级 Qt/IM 变量（niri 拉起的进程由 home/niri/config.kdl 的
   # environment {} 覆盖，这里管的是 systemd user 服务和终端/手动启动的

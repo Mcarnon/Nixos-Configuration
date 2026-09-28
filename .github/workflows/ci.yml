@@ -7,6 +7,13 @@ on:
 jobs:
   flake-check:
     runs-on: ubuntu-latest
+    env:
+      # Every `github:` input is fetched as an api.github.com tarball, which
+      # counts against the 60/hour unauthenticated limit *per IP* — and
+      # Actions runners share IPs. The built-in GITHUB_TOKEN raises it to
+      # 5000/hour. Without this the job fails at random with
+      # "API rate limit exceeded" while locking/fetching inputs.
+      NIX_CONFIG: access-tokens = github.com = ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@v14

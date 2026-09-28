@@ -22,6 +22,7 @@
   pkg-config,
   patchelf,
   python3,
+  gnutar, # provides `tar` for the Meteocons unpacking in preBuild
   qt6,
   qt6Packages,
   pam,
@@ -48,13 +49,16 @@ let
   # archive, and explicitly does no runtime download. A plain `git clone` has
   # no icons, so pull them in here — otherwise every weather card renders
   # blank. Layout/directories come from upstream packaging/dependencies.json.
+  # Digests verified against the published tarballs. `sha256:<hex>` rather than
+  # SRI `sha256-<base32>`: the hex form needs no re-encoding, and Nix's
+  # non-SRI fallback parses `algo:value` directly.
   meteoconsSvg = fetchurl {
     url = "https://registry.npmjs.org/@meteocons/svg/-/svg-0.1.0.tgz";
-    hash = "sha256-91b48d1f8497d9e8f4ed1d5bcc32d306aaa5050de99c38467c2a58f7add5a501";
+    hash = "sha256:91b48d1f8497d9e8f4ed1d5bcc32d306aaa5050de99c38467c2a58f7add5a501";
   };
   meteoconsLottie = fetchurl {
     url = "https://registry.npmjs.org/@meteocons/lottie/-/lottie-0.1.0.tgz";
-    hash = "sha256-43ea2732abde8e429c4fc56a27bb2cefd853f8c34a904b57f86a4b5a2bf1a13d";
+    hash = "sha256:43ea2732abde8e429c4fc56a27bb2cefd853f8c34a904b57f86a4b5a2bf1a13d";
   };
 in
 stdenv.mkDerivation {
@@ -72,7 +76,7 @@ stdenv.mkDerivation {
     pkg-config
     patchelf
     python3
-    tar
+    gnutar # nixpkgs 里 tar 的属性名是 gnutar
     wayland-scanner
     pam # only for $out/lib/security/pam_unix.so (see pamUnixModule)
     qt6.wrapQtAppsHook
@@ -138,7 +142,7 @@ stdenv.mkDerivation {
   preBuild = ''
     # The build tree is a copy of the read-only store checkout, and the search
     # catalog generator writes Common/generated/SearchCatalog.js *into the
-    # source tree* (CMakeLists.txt: OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/...").
+    # source tree* (CMakeLists.txt: OUTPUT "$CMAKE_CURRENT_SOURCE_DIR/...").
     # Without this the generator dies on EACCES and the build fails.
     chmod -R u+w .
 

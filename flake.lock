@@ -21,6 +21,23 @@
         "type": "github"
       }
     },
+    "clavis-shell": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1790423285,
+        "narHash": "sha256-T/ivQEu3UTS/kX5WI1/pk2wQ2/LS5aqQnM26z9tK7Ac=",
+        "owner": "StatIndet",
+        "repo": "quickshell",
+        "rev": "dff9d038aaca9159d129be25af3a2994f171c6b3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "StatIndet",
+        "repo": "quickshell",
+        "rev": "dff9d038aaca9159d129be25af3a2994f171c6b3",
+        "type": "github"
+      }
+    },
     "darwin": {
       "inputs": {
         "nixpkgs": [
@@ -102,23 +119,41 @@
         "type": "github"
       }
     },
-    "inir": {
+    "key-cli": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1790312042,
+        "narHash": "sha256-lm5jFfOcLMNQc3fa2s2L+BSer/fwOPeKqTKbHrMvRGE=",
+        "owner": "StatIndet",
+        "repo": "key-cli",
+        "rev": "31e644e069c811d35b96498eb2c3de80a11e2ab0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "StatIndet",
+        "repo": "key-cli",
+        "rev": "31e644e069c811d35b96498eb2c3de80a11e2ab0",
+        "type": "github"
+      }
+    },
+    "m3shapes": {
       "inputs": {
         "nixpkgs": [
           "nixpkgs"
         ]
       },
       "locked": {
-        "lastModified": 1789849958,
-        "narHash": "sha256-Zu4FrR/vn+Pq81hLkR5n3XXt+ja7m0my6ml+4IJotn4=",
-        "owner": "snowarch",
-        "repo": "iNiR",
-        "rev": "9574fa424c0d1008e927454e933a7fbe292f9fb2",
+        "lastModified": 1789658020,
+        "narHash": "sha256-VsztSn0D8sxAFNcwnHCCR3lNf8+3qgcHiYurgYhsKcE=",
+        "owner": "soramanew",
+        "repo": "m3shapes",
+        "rev": "8a6fe8961749887d677700b6508e0c9249968b7e",
         "type": "github"
       },
       "original": {
-        "owner": "snowarch",
-        "repo": "iNiR",
+        "owner": "soramanew",
+        "repo": "m3shapes",
+        "rev": "8a6fe8961749887d677700b6508e0c9249968b7e",
         "type": "github"
       }
     },
@@ -172,9 +207,11 @@
     "root": {
       "inputs": {
         "agenix": "agenix",
+        "clavis-shell": "clavis-shell",
         "flake-parts": "flake-parts",
         "home-manager": "home-manager_2",
-        "inir": "inir",
+        "key-cli": "key-cli",
+        "m3shapes": "m3shapes",
         "nixpkgs": "nixpkgs_2",
         "systems": "systems_2",
         "zen-browser": "zen-browser"

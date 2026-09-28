@@ -163,8 +163,9 @@ in
   programs.dconf.enable = true;
 
   # Fix graphical-session.target so systemd user services can use it
+  # (schema: pinned home-manager takes raw systemd directives — Unit/Service/Install)
   systemd.user.targets.graphical-session = {
-    unitConfig = {
+    Unit = {
       RefuseManualStart = false;
       StopWhenUnneeded = false;
     };
@@ -178,17 +179,19 @@ in
   # "pkexec must be setuid root" 并以 127 退出——菜单点了没任何反应。
   security.polkit.enablePkexecWrapper = true;
   systemd.user.services.polkit-gnome-authentication-agent-1 = {
-    description = "polkit-gnome authentication agent";
-    wantedBy = [ "graphical-session.target" ];
-    wants = [ "graphical-session.target" ];
-    after = [ "graphical-session.target" ];
-    serviceConfig = {
+    Unit = {
+      Description = "polkit-gnome authentication agent";
+      After = [ "graphical-session.target" ];
+      Wants = [ "graphical-session.target" ];
+    };
+    Service = {
       Type = "simple";
       ExecStart = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
       Restart = "on-failure";
       RestartSec = 1;
       TimeoutStopSec = 10;
     };
+    Install.WantedBy = [ "graphical-session.target" ];
   };
 
   # fcitx5 input method daemon.
@@ -201,11 +204,12 @@ in
   # fcitx5-rime never load (rime silently missing until a manual `fcitx5 -r`
   # from a shell that has the wrapped binary on PATH).
   systemd.user.services.fcitx5 = {
-    description = "Fcitx5 input method";
-    wantedBy = [ "graphical-session.target" ];
-    wants = [ "graphical-session.target" ];
-    after = [ "graphical-session.target" ];
-    serviceConfig = {
+    Unit = {
+      Description = "Fcitx5 input method";
+      After = [ "graphical-session.target" ];
+      Wants = [ "graphical-session.target" ];
+    };
+    Service = {
       Type = "simple";
       ExecStart = "${fcitx5Launch}/bin/fcitx5-launch";
       Restart = "always";
@@ -218,5 +222,6 @@ in
       # produces no candidates.
       Environment = [ "RIME_USER_DIR=%h/.config/fcitx5/rime" ];
     };
+    Install.WantedBy = [ "graphical-session.target" ];
   };
 }
