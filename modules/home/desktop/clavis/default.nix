@@ -78,6 +78,16 @@ let
     "XMODIFIERS=@im=fcitx"
     # Quickshell 找不到图标主题时 QIcon 返回空图（紫黑棋盘格）。
     "QS_ICON_THEME=Adwaita"
+    # 【图标缺失的真正原因】Clavis 的启动器/dock/spotlight 图标不是自带的 SVG，
+    # 而是走系统图标主题（ApplicationService.qml 用 Quickshell.iconPath 解析
+    # desktop 文件里的 Icon=）。NixOS 的图标主题只在系统 profile 的
+    # share/icons 下，Qt 在 XDG_DATA_DIRS 为空时只回退 /usr/local/share 和
+    # /usr/share（本机都不存在）→ 整个图标主题不可见 → 图标一片空白且无报错。
+    # 完整的推理和双布局回退见 bin/clavis-session-env 的同名段落；这里必须
+    # 重复一遍，因为 systemd user unit 不会经过那个脚本之外的任何一处。
+    "XDG_DATA_DIRS=/run/current-system/sw/share:/nix/var/nix/profiles/default/share:/run/current-system/share"
+    "XDG_DATA_HOME=%h/.local/share"
+    "XDG_CACHE_HOME=%h/.cache"
     # 上游 unit 的 jemalloc 参数。注释说得很清楚：必须赶在 qs 启动前设置，
     # QML 里的 Env pragma 是在分配器初始化之后才跑的。
     "MALLOC_CONF=thp:never,narenas:4,dirty_decay_ms:3000"
@@ -148,6 +158,10 @@ in
     "QT_QPA_PLATFORMTHEME" = "qt6ct";
     "QT_AUTO_SCREEN_SCALE_FACTOR" = "1";
     "QS_ICON_THEME" = "Adwaita";
+    # 同上：终端里手动跑 Clavis / 任何 GTK-Qt 应用都要能找到图标主题。
+    # 这里不判断目录是否存在（sessionVariables 只是写文件），不存在的项 Qt 会
+    # 忽略；带 include 的服务环境在 bin/clavis-session-env 里做存在性过滤。
+    "XDG_DATA_DIRS" = "/run/current-system/sw/share:/nix/var/nix/profiles/default/share:/run/current-system/share";
     "XMODIFIERS" = "@im=fcitx";
     "GTK_IM_MODULE" = "fcitx";
     "QT_IM_MODULE" = "fcitx";

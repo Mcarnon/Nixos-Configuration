@@ -50,8 +50,14 @@
     # key — Clavis 的生命周期/IPC/剪贴板/系统指标 CLI（PEP 517，纯 Python +
     # 两个原生小工具 key-sysmon / key-cpu-power）。同样是纯源码树，由
     # pkgs/key-cli 消费。rev 写死的理由同 clavis-shell。
+    #
+    # rev 必须是 v2026.9.25 或更新：Clavis 的
+    # packaging/dependencies.json 把 `key-cli>=2026.9.25` 列为 runtime 硬依赖
+    # （外壳通过 `key ipc` / `key sysmon` / `key tool` 调用它）。之前的
+    # 31e644e 是 v2026.9.12，低于这个下限：外壳会调到当时还不存在的子命令，
+    # 表现为「部分卡片/按钮点了没反应」而不是任何构建错误。
     "key-cli" = {
-      url = "github:StatIndet/key-cli?rev=31e644e069c811d35b96498eb2c3de80a11e2ab0";
+      url = "github:StatIndet/key-cli?rev=f91a7aed7da1d3b37d1a722a7a85493053378755";
       flake = false;
     };
 

@@ -13,7 +13,7 @@
 |---|---|
 | `modules/nixos/desktop/ly.nix` | 登录界面（ly，TUI 显示管理器） |
 | `modules/nixos/desktop/niri.nix` | niri 会话 wrapper（关键：激活 graphical-session.target）+ polkit + fcitx5 + `services.udev.packages = [ pkgs.keyCli ]`（键盘 LED 授权）+ xdg portal 路由 + 字体 + 快捷键/脚本要用的外部命令进系统 PATH |
-| `home/niri/config.kdl` | niri 主配置（环境变量/光标/输入/布局/动画 + include `clavis-static.kdl` + `include optional=true "clavis/effects.kdl"`） |
+| `home/niri/config.kdl` | niri 主配置（环境变量/光标/输入/布局/动画 + include `clavis-static.kdl` + Clavis 的 6 个 `include optional=true "clavis/*.kdl"` 托管片段） |
 | `home/niri/binds.kdl` | 全部快捷键（Clavis 走 `key ipc call`，音量/媒体/窗口走原生动作） |
 | `home/niri/blur.kdl` | 全局毛玻璃基线（blur + 窗口透明度） |
 | `home/niri/windowrule.kdl` | 逐应用透明度/悬浮/中文应用规则 + layer 规则（Clavis 壁纸层 `clavis-wallpaper`） |
@@ -148,19 +148,36 @@ Clavis 设置 → 快捷键 里绑）：`shortcut-map toggle`、`keystone lyrics
   但它的 nixpkgs `follows` 本 flake 的 nixpkgs，避免同一台机器两套 Qt。
   版本号在两个 derivation 里写死（不是 `git describe`）：升级要手改
   `version`。
-- **MapLibre 天气地图不打包**：`pkgs/key-cli` 的 `QML_IMPORT_PATH` 里刻意没有
-  `maplibre-native-qt`（它会把 QtLocation + MapLibre C++ 核心全拖进闭包，而天气
-  地图没人天天开）。QML 里 import 不到 `MapLibreNative` 时会退到
-  `Modules/Map/MapFallback.qml`，不会拖垮外壳。
+- **MapLibre 天气地图现在打包了**：`pkgs/key-cli` 的 `QML_IMPORT_PATH` 里有
+  `maplibre-native-qt`（nixpkgs 里正好是 3.0.0，对上 QML 的
+  `import MapLibre 3.0`）。之前是刻意不打包，代价是天气卡片永远停在
+  `Modules/Map/MapFallback.qml`。QtLocation + MapLibre 核心确实会进闭包，但上游
+  `packaging/dependencies.json` 把 `maplibre-native-qt` 标成
+  `defaultInstall: true`，它本来就是标配。构建时会断言 `MapLibre` 目录存在 ——
+  万一安装前缀变了就是构建报错，而不是登录后天气卡片静默变回 fallback。
 - **quickshell 版本比上游验证基线低一格**：本 flake 锁的 nixpkgs 里 quickshell 是
   0.3.0，上游 `packaging/dependencies.json` 标的验证基线是 0.3.1。跑起来没问题，
   但看到 QML 层的诡异行为时先 `nix flake update nixpkgs` 排除版本因素。
 - **niri 片段要 26.4**（只有 effects 那一片）：本 flake 锁的 nixpkgs 里 niri 是
-  26.04，够用。Clavis 会管 `~/.config/niri/clavis/` 下六个片段（effects / cursor /
-  layer-rules / binds / outputs / minimize-animation），但它的 "Set up" 要往
+  26.04，够用。Clavis 会管 `~/.config/niri/clavis/` 下**六个**片段（effects /
+  cursor / layer-rules / binds / outputs / minimize-animation），但它的 "Set up" 要往
   `config.kdl` 里写 include —— 我们的 config.kdl 是 store 软链、只读，所以
   `home/niri/config.kdl` 已经手动 `include optional=true` 了，缺失的文件由
   Clavis 自己创建，不用点 Set up。
+  **这六个名字要照着 `scripts/system/niri_config.py:24` 的 `FRAGMENTS` 元组抄，
+  不要照着 `docs/architecture/config-isolation.md` 的表格抄**：那张表只列了
+  4 行，第 14 行还写着「没有内置 outputs/colors 片段注册或模板」，已经过期
+  （同一行末尾自己也承认 colors.kdl 的说明被撤下了）。少 include 一个，那一项
+  设置就存下去没人读，而且不报错。
+- **图标主题靠 systemd unit 里的 `XDG_DATA_DIRS`**：Clavis 启动器 / dock /
+  spotlight 的图标走系统图标主题解析（`ApplicationService.qml` 的
+  `Quickshell.iconPath`），而 NixOS 的图标主题只存在于
+  `/run/current-system/sw/share/icons` 和
+  `/nix/var/nix/profiles/default/share/icons`。Qt 自己兜底的
+  `/usr/local/share:/usr/share` 在这里不存在，所以 `XDG_DATA_DIRS` 一空就等于
+  **完全没有图标主题**：启动器/dock/spotlight 全是空白，而且零报错。三处都要设：
+  `niri` 配置的 `environment`（给 niri 拉起的进程）、Clavis 的 systemd
+  `unitEnvironment`、以及 `key` wrapper（给 IPC 拉起的进程）。
 - **壁纸取色不覆盖 niri 配色**（`clavis-static.kdl` 是最终值），也不覆盖
   GTK/starship/foot。
 - 壁纸轮换（每半小时）+ `scan-tones` 色调库 + iNiR 的 `wallpaperSelector`

@@ -60,13 +60,27 @@ let
     url = "https://registry.npmjs.org/@meteocons/lottie/-/lottie-0.1.0.tgz";
     hash = "sha256:43ea2732abde8e429c4fc56a27bb2cefd853f8c34a904b57f86a4b5a2bf1a13d";
   };
+
+  # nixpkgs' cmake setup hook (pkgs/by-name/cm/cmake/setup-hook.sh) runs
+  # `preConfigure`, then `mkdir -p $cmakeBuildDir; cd $cmakeBuildDir` and
+  # configures from there. Two consequences this derivation has to respect:
+  #   * asset staging must run in `preConfigure` — that is the *last* hook still
+  #     executing with cwd = the source root. From `preBuild` onwards cwd is the
+  #     build dir, so `chmod`/`tar` would hit the wrong tree (and the store copy
+  #     of the source is read-only).
+  #   * the build/install steps need an explicit path, not the inherited cwd.
+  srcRoot = "$NIX_BUILD_TOP/source";
+
+  # Kept in sync with the upstream VERSION file (asserted in preConfigure)
+  # instead of `git describe`: the flake input is a branch-less source tree,
+  # and dependencies.json names VERSION as the canonical versionFile. Bound in
+  # a `let` (not as a derivation attr) because preConfigure interpolates it —
+  # only a `rec` attrset would make that work.
+  version = "2026.9.12";
 in
 stdenv.mkDerivation {
   pname = "clavis-shell";
-  # Kept in sync with the upstream VERSION file (asserted in preBuild) instead
-  # of `git describe`: the flake input is a branch-less source tree, and
-  # dependencies.json names VERSION as the canonical versionFile.
-  version = "2026.9.12";
+  inherit version;
 
   inherit src;
 
@@ -80,8 +94,10 @@ stdenv.mkDerivation {
     wayland-scanner
     pam # only for $out/lib/security/pam_unix.so (see pamUnixModule)
     qt6.wrapQtAppsHook
-    meteoconsSvg
-    meteoconsLottie
+    # The Meteocons tarballs are deliberately NOT in nativeBuildInputs: stdenv's
+    # setup hooks treat a non-directory input as a file to `source`, so a .tgz
+    # there dies with "cannot execute binary file". Referencing them from
+    # preBuild (`tar -xzf ${meteoconsSvg}`) already makes them build inputs.
   ];
 
   buildInputs = [
@@ -139,18 +155,20 @@ stdenv.mkDerivation {
     "-DCLAVIS_SYSTEMD_USER_INSTALL_DIR=${placeholder "out"}/lib/systemd/user"
   ];
 
-  preBuild = ''
+  # Runs at the top of cmakeConfigurePhase, i.e. with cwd = $srcRoot (see the
+  # srcRoot comment above).
+  preConfigure = ''
     # The build tree is a copy of the read-only store checkout, and the search
     # catalog generator writes Common/generated/SearchCatalog.js *into the
     # source tree* (CMakeLists.txt: OUTPUT "$CMAKE_CURRENT_SOURCE_DIR/...").
     # Without this the generator dies on EACCES and the build fails.
-    chmod -R u+w .
+    chmod -R u+w "${srcRoot}"
 
     # `nix flake update clavis-shell` silently keeps our hand-written version
     # label; make that a build failure instead of a store path that lies.
-    if [ -f VERSION ] && ! grep -qF "$version" VERSION; then
+    if [ -f VERSION ] && ! grep -qF "${version}" VERSION; then
       echo "clavis: upstream VERSION is '$(tr -d '\n' < VERSION)' but this" >&2
-      echo "        derivation declares version = $version" >&2
+      echo "        derivation declares version = ${version}" >&2
       echo "        -> update version in pkgs/clavis-shell/default.nix" >&2
       exit 1
     fi
@@ -159,26 +177,45 @@ stdenv.mkDerivation {
     # everything in a single `package/` directory, hence --strip-components=1;
     # upstream's manifest expects svg/{fill,flat,line,monochrome} and
     # lottie/fill, which is what the archives contain once stripped.
-    mkdir -p assets/icons/weather/meteocons/svg assets/icons/weather/meteocons/lottie
-    tar -xzf ${meteoconsSvg} -C assets/icons/weather/meteocons/svg --strip-components=1
-    tar -xzf ${meteoconsLottie} -C assets/icons/weather/meteocons/lottie --strip-components=1
+    mkdir -p "${srcRoot}/assets/icons/weather/meteocons/svg" \
+             "${srcRoot}/assets/icons/weather/meteocons/lottie"
+    tar -xzf ${meteoconsSvg} -C "${srcRoot}/assets/icons/weather/meteocons/svg" --strip-components=1
+    tar -xzf ${meteoconsLottie} -C "${srcRoot}/assets/icons/weather/meteocons/lottie" --strip-components=1
+  '';
+
+  # The generic buildPhase runs `make`, which does nothing here — the hook only
+  # replaces configurePhase. Compile explicitly, with a path (not the cwd, which
+  # the hook left inside $cmakeBuildDir).
+  buildPhase = ''
+    runHook preBuild
+    # ${srcRoot} is Nix-time; $cmakeBuildDir is set by the cmake hook at
+    # configure time and must stay a shell expansion.
+    cmake --build "${srcRoot}/$cmakeBuildDir"
+    runHook postBuild
   '';
 
   installPhase = ''
     runHook preInstall
     mkdir -p $out
-    cmake --install .
+    cmake --install "${srcRoot}/$cmakeBuildDir"
+    # The `postInstall` hook is only invoked *by* a phase script — overriding
+    # installPhase drops the generic trailing `runHook postInstall`. It has to be
+    # called here; putting it inside the postInstall hook recurses forever.
+    runHook postInstall
   '';
 
   # Sanity checks: a silently empty $out is the failure mode that produced a
   # black screen before (service started, every QML import missing).
   postInstall = ''
-    runHook postInstall
-
     test -f $out/etc/xdg/quickshell/clavis/shell.qml \
       || { echo "clavis: shell.qml missing from $out" >&2; exit 1; }
     test -d "$out/${qt6.qtbase.qtQmlPrefix}/Clavis" \
       || { echo "clavis: native QML modules missing from $out" >&2; exit 1; }
+    # `test -d` also passes for an *empty* Clavis/, which is the black-screen
+    # failure mode: every `import Clavis.*` fails at runtime with no build error.
+    # Require an actual plugin.
+    find "$out/${qt6.qtbase.qtQmlPrefix}/Clavis" -name '*.so' -print -quit | grep -q . \
+      || { echo "clavis: no native QML plugin (*.so) under $out/${qt6.qtbase.qtQmlPrefix}/Clavis — the C++ plugins were never built" >&2; exit 1; }
     test -x $out/etc/xdg/quickshell/clavis/scripts/theme/generate_matugen_colors.sh \
       || { echo "clavis: theme scripts missing from $out" >&2; exit 1; }
     test -f $out/etc/xdg/quickshell/clavis/matugen/config.toml \

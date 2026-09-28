@@ -122,17 +122,16 @@
     "key-cli": {
       "flake": false,
       "locked": {
-        "lastModified": 1790312042,
-        "narHash": "sha256-lm5jFfOcLMNQc3fa2s2L+BSer/fwOPeKqTKbHrMvRGE=",
+        "lastModified": 1790283350,
         "owner": "StatIndet",
         "repo": "key-cli",
-        "rev": "31e644e069c811d35b96498eb2c3de80a11e2ab0",
+        "rev": "f91a7aed7da1d3b37d1a722a7a85493053378755",
         "type": "github"
       },
       "original": {
         "owner": "StatIndet",
         "repo": "key-cli",
-        "rev": "31e644e069c811d35b96498eb2c3de80a11e2ab0",
+        "rev": "f91a7aed7da1d3b37d1a722a7a85493053378755",
         "type": "github"
       }
     },

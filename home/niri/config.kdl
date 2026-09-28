@@ -55,6 +55,12 @@ environment {
     EDITOR "vim"
     // 解决 quickshell 图标主题缺失问题（Clavis/Qt 图标有时不显示）
     QS_ICON_THEME "Adwaita"
+    // 图标主题的查找路径。NixOS 的图标主题只在系统 profile 的 share/icons
+    // 下；缺这一行时 niri 拉起的 GUI 应用（以及 Clavis 自己）拿到的
+    // XDG_DATA_DIRS 为空，Qt 只回退 /usr/local/share + /usr/share（本机不存在）
+    // → 启动器/dock/spotlight 图标全空白且无报错。
+    // 三个根目录覆盖新旧系统 profile 布局，不存在的会被 Qt 忽略。
+    XDG_DATA_DIRS "/run/current-system/sw/share:/nix/var/nix/profiles/default/share:/run/current-system/share"
     // Electron 应用（QQ/微信等）的 Ozone 平台提示。auto = 有 Wayland 就用
     // Wayland（niri 只有 Wayland），这也是 Clavis 侧 QML/Electron 混合场景想要的
     // 行为。checks/niri-config.nix 断言这一段的关键变量都带非空值。
@@ -73,12 +79,33 @@ hotkey-overlay {
 spawn-sh-at-startup "systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_RUNTIME_DIR"
 
 include "niri-hardware.kdl"
+// Clavis 托管片段。**数量和名字以代码为准**，不是以文档为准：
+// scripts/system/niri_config.py:24
+//   FRAGMENTS = ('effects', 'cursor', 'layer-rules', 'binds', 'outputs',
+//                'minimize-animation')
+// 上游 docs/architecture/config-isolation.md 的表格只列了前四个，14 行还明说
+// 「没有内置 outputs 片段」—— 那段文档已经过期了（它自己 14 行末尾承认
+// colors.kdl 说明已撤下）。少 include 一个，那一项设置就永远存不下去没人读。
+//
+// Clavis 的设置界面**只会创建文件并把缺失的顶层 include 追加到主配置末尾**；
+// 片段没被 include 时，对应设置页直接不工作 —— 不是报错，是设置存下去也没人读。
+//
+// 全部 optional=true：文件由外壳在用户点开对应设置页时才生成，第一次登录时
+// 还不存在。硬 include 会让 niri 起不来（= 第一次开机黑屏）。
+//
+// 顺序：Clavis 的片段放在本仓库自己的 binds.kdl 之前。上游明确「后续 include
+// 可以再次覆盖 Clavis 项」，也就是本仓库显式写的绑定优先，不被 Clavis 抢走。
+// cursor.kdl 同理要排在本文件上面那个 `cursor {}` 之后（niri 同名块是「后者
+// 逐属性覆盖」，不是整体替换）。
+include optional=true "clavis/outputs.kdl" // 显示/分辨率 → 设置 → 通用 → 显示
+include optional=true "clavis/cursor.kdl" // 光标主题/尺寸/隐藏 → 设置 → 主题
+include optional=true "clavis/layer-rules.kdl" // Overview 背景规则 → 设置 → 壁纸
+include optional=true "clavis/effects.kdl" // X-Ray/模糊开关 → 设置 → 透明与模糊
+include optional=true "clavis/minimize-animation.kdl" // 窗口最小化动画 → 设置 → 动画
+include optional=true "clavis/binds.kdl" // 外壳托管的 IPC 快捷键 → 设置 → 快捷键
 include "startup.kdl"
 include "blur.kdl" // global opacity/blur baseline — before windowrule.kdl so per-app rules win
 include "clavis-static.kdl" // SHORiN 默认 niri 配色（Clavis 不改 niri 配色，只画自己的层）
-// Clavis 自己写的层效果片段（模糊/xray 等开关）。optional：第一次登录时外壳
-// 还没起来，这个文件还不存在，硬 include 会让 niri 启动失败。
-include optional=true "clavis/effects.kdl"
 include "windowrule.kdl"
 include "supertab.kdl" // 带缩略图的 Alt/Ctrl+Tab 窗口切换（SHORiN 原版）
 include "binds.kdl"

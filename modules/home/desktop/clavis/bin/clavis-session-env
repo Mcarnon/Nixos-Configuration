@@ -66,4 +66,27 @@ export QS_ICON_THEME="${QS_ICON_THEME:-Adwaita}"
 export XMODIFIERS="${XMODIFIERS:-@im=fcitx}"
 export QT_IM_MODULES="${QT_IM_MODULES:-wayland;fcitx}"
 
+# XDG_DATA_DIRS —— 图标主题的唯一入口。
+# Clavis 的一大半图标不是自带的 SVG，而是走系统图标主题解析的：
+#   Services/ApplicationService.qml  Quickshell.iconPath(<desktop 文件的 Icon=>, ...)
+#   Modules/Dock/DockItem.qml        同上（dock 条目）
+#   Components/FileThemeIcon.qml     Quickshell.hasThemeIcon(...)
+# NixOS 上 adwaita-icon-theme / papirus-icon-theme 只存在于系统 profile 的
+# /run/current-system/sw/share/icons，而 Qt 找不到 XDG_DATA_DIRS 时只回退到
+# /usr/local/share:/usr/share（这两个目录在本机不存在）—— 结果是整个图标
+# 主题"不存在"，启动器/dock/spotlight 的图标全部空白，而且**没有任何报错**。
+#
+# 注意：niri 的 `environment {}` 块和 home.sessionVariables 都管不到 systemd
+# --user 服务（前者只影响 niri 拉起的子进程，后者要等 environment.d 导入），
+# 所以这一段必须在这里自己补。两个根目录分别对应新旧两种系统 profile 布局，
+# 只前置存在的，并且保留会话原有的值。
+for dir in /run/current-system/sw/share /nix/var/nix/profiles/default/share; do
+    if [ -d "$dir" ]; then
+        XDG_DATA_DIRS="$dir${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
+    fi
+done
+export XDG_DATA_DIRS
+export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+export XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
+
 exec "$@"

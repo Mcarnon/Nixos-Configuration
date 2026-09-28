@@ -1,6 +1,24 @@
-// Output config: the laptop's built-in panel is usually eDP-1; auto-detected if unset.
-// Uncomment to pin a resolution/scale:
-/-output "eDP-1" {
-    // mode "1920x1080@120"
-    // scale 1
-}
+// Per-host hardware config: panel, scale, and anything machine-specific.
+//
+// ── 显示分辨率：交给 niri 默认 ──────────────────────────────────────────────
+// 这里【故意】不写 `output {}` 块。niri 在没有 output 配置时的默认行为是：
+// 每个输出用 EDID 里标记 preferred 的模式、scale 1、原点居中。这台笔记本的内屏
+// 只有这样才是原生分辨率。
+//
+// 之前这里留着一个被注释掉的 `/-output "eDP-1" { mode "1920x1080@120" }`。
+// 两个问题：
+//   1. `1920x1080@120` 是猜的，不是面板的 preferred 模式。哪天真取消注释，
+//      合成器就会强制一个非默认模式，反而是"分辨率不对"的来源；
+//   2. Clavis 的设置 → 通用 → 显示 会把用户选的模式写进它自己托管的
+//      `clavis/outputs.kdl`（见 home/niri/config.kdl 的 include），主配置不该
+//      再抢一遍。
+//
+// 确实需要固定时（例如外接显示器 EDID 不可靠），用下面这个模板，mode 字符串
+// 先用 `niri msg outputs` 查 preferred 模式填：
+//
+//   output "DP-1" {
+//       mode "<w>x<h>@<refresh>"
+//       scale 1.00
+//   }
+
+// 触摸屏/触控板等纯硬件差异按需在本文件追加；不放 Clavis 托管片段。

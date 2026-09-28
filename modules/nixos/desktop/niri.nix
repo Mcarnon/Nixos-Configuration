@@ -121,6 +121,14 @@ in
     gawk
     findutils
     procps
+    # gsettings 的 org.gnome.desktop.interface schema（color-scheme /
+    # gtk-theme / icon-theme）。两个来源都要求它：
+    #   * modules/home/desktop/appearance.nix 的 dconf 写入；
+    #   * Clavis 的 scripts/theme/set_system_color_scheme.sh —— 它先跑
+    #     `gsettings writable org.gnome.desktop.interface color-scheme`，
+    #     schema 缺失时返回 false，脚本按设计**静默退出 0**，于是「Clavis 切
+    #     深/浅色不生效」而且没有任何日志。
+    gsettings-desktop-schemas
     # 裸 python3：Alt+F4 强杀窗口（binds.kdl 解析 niri msg --json）和
     # thunar 的「粘贴文件」动作（home/files/thunar/uca.xml）都在脚本里
     # 直接调 python3。以前是 Clavis 的 python3+numpy+pillow 顺带提供的，
@@ -163,9 +171,14 @@ in
   programs.dconf.enable = true;
 
   # Fix graphical-session.target so systemd user services can use it
-  # (schema: pinned home-manager takes raw systemd directives — Unit/Service/Install)
+  #
+  # 注意 schema：这里是 NixOS 的 `systemd.user.services`（nixpkgs 经典写法：
+  # description / wantedBy / after / unitConfig / serviceConfig），不是
+  # home-manager 自己的 `home-manager.users.<name>.systemd.user.services`
+  # （那个才是 Unit/Service/Install 指令式写法）。写错会被 modulesystem 报
+  # "The option `systemd.user.services.fcitx5.Install' does not exist"。
   systemd.user.targets.graphical-session = {
-    Unit = {
+    unitConfig = {
       RefuseManualStart = false;
       StopWhenUnneeded = false;
     };
@@ -179,19 +192,17 @@ in
   # "pkexec must be setuid root" 并以 127 退出——菜单点了没任何反应。
   security.polkit.enablePkexecWrapper = true;
   systemd.user.services.polkit-gnome-authentication-agent-1 = {
-    Unit = {
-      Description = "polkit-gnome authentication agent";
-      After = [ "graphical-session.target" ];
-      Wants = [ "graphical-session.target" ];
-    };
-    Service = {
+    description = "polkit-gnome authentication agent";
+    wantedBy = [ "graphical-session.target" ];
+    wants = [ "graphical-session.target" ];
+    after = [ "graphical-session.target" ];
+    serviceConfig = {
       Type = "simple";
       ExecStart = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
       Restart = "on-failure";
       RestartSec = 1;
       TimeoutStopSec = 10;
     };
-    Install.WantedBy = [ "graphical-session.target" ];
   };
 
   # fcitx5 input method daemon.
@@ -204,12 +215,11 @@ in
   # fcitx5-rime never load (rime silently missing until a manual `fcitx5 -r`
   # from a shell that has the wrapped binary on PATH).
   systemd.user.services.fcitx5 = {
-    Unit = {
-      Description = "Fcitx5 input method";
-      After = [ "graphical-session.target" ];
-      Wants = [ "graphical-session.target" ];
-    };
-    Service = {
+    description = "Fcitx5 input method";
+    wantedBy = [ "graphical-session.target" ];
+    wants = [ "graphical-session.target" ];
+    after = [ "graphical-session.target" ];
+    serviceConfig = {
       Type = "simple";
       ExecStart = "${fcitx5Launch}/bin/fcitx5-launch";
       Restart = "always";
@@ -222,6 +232,5 @@ in
       # produces no candidates.
       Environment = [ "RIME_USER_DIR=%h/.config/fcitx5/rime" ];
     };
-    Install.WantedBy = [ "graphical-session.target" ];
   };
 }
