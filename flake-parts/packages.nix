@@ -15,6 +15,10 @@
     {
       packages = {
         inherit (pkgs) miyu airi;
+        # Clavis desktop shell stack. `keyCli` is the interesting one: its wrapper
+        # is what wires the QML import roots together, so building it catches
+        # missing/renamed QML modules and a Clavis install prefix that moved.
+        inherit (pkgs) clavisShell keyCli m3shapes;
       };
       formatter = pkgs.nixfmt;
     };

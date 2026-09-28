@@ -1,6 +1,6 @@
 # GUI / desktop applications — 基础桌面工具：
 # foot 终端、satty 截图标注、imv 图片查看（mimeapps 默认）。
-# 通知/电源菜单由 Noctalia 提供（不再需要 mako/wlogout）。
+# 通知/电源菜单由 Clavis 提供（不再需要 mako/wlogout）。
 {
   config,
   pkgs,
@@ -12,7 +12,7 @@
 
     # -- 终端 / 字体 --
     foot # Wayland 终端（foot.ini 见下方 xdg.configFile）
-    maple-mono.NF-CN # Maple Mono NF（含中文字形；foot/Noctalia 主字体）
+    maple-mono.NF-CN # Maple Mono NF（含中文字形；foot 主字体）
     adwaita-fonts # Adwaita Sans（fontconfig 回退）
 
     # -- 文件管理器 --
@@ -50,7 +50,7 @@
     xdg-utils # xdg-open & friends
     xwayland-satellite # X11 support (started by spawn-at-startup)
     networkmanagerapplet # nm-applet tray icon
-    nwg-look # GTK 主题/图标设置 GUI（Noctalia 配色同步辅助）
+    nwg-look # GTK 主题/图标设置 GUI（Clavis 配色同步辅助）
 
     # -- Daily Apps --
     zed-editor # IDE
@@ -62,9 +62,10 @@
   ];
 
   # 应用配置文件（raw 部署，Shorin 原版或裁剪版）。
-  # 注意：foot.ini 与 kitty 的 themes/noctalia.conf、current-theme.conf 都归
-  # Noctalia 的模板管（模板会覆写它们），不能做成只读 store 软链；foot.ini 由
-  # noctalia 模块激活时以可写副本种子部署。这里只保留不需要被模板改写的文件。
+  # 注意：foot.ini 归本配置管（Clavis 的 matugen 模板不含 foot），做成只读
+  # store 软链没问题。kitty 的 themes/Matugen.conf + current-theme.conf 则是
+  # matugen 的输出目标 / cp 目标，必须是可写副本，由 clavis 模块用 activation
+  # 种（见 modules/home/desktop/clavis/default.nix）。这里只放不会被模板改写的文件。
   xdg.configFile = {
     "satty/config.toml".source = ../../../home/files/satty.toml;
     "Thunar/uca.xml".source = ../../../home/files/thunar/uca.xml;
@@ -74,10 +75,10 @@
     "xfce4/xfconf/xfce-perchannel-xml/thunar-volman.xml".source =
       ../../../home/files/thunar/thunar-volman.xml;
     "mimeapps.list".source = ../../../home/files/mimeapps.list;
-    # foot.ini 由本配置管理（Noctalia v5 不再生成 foot 模板）
+    # foot.ini 由本配置管理（Clavis 的 matugen 模板不含 foot）
     "foot/foot.ini".source = ../../../home/files/foot.ini;
-    # 基配置：Noctalia 模板会生成覆盖物（如 fuzzel/themes/noctalia、
-    # kitty/current-theme.conf），只兜底不做挡板
+    # 基配置：Clavis 的 matugen 模板会生成 kitty 的 themes/Matugen.conf 和
+    # current-theme.conf（这里只兜底 fuzzel 本体，不挡板）
     "fuzzel/fuzzel.ini".source = ../../../home/files/fuzzel.ini;
     "xsettingsd/xsettingsd.conf".source = ../../../home/files/xsettingsd.conf;
   };

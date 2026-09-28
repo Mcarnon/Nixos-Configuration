@@ -7,8 +7,6 @@
   ...
 }:
 let
-  noctaliaPkg = inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default;
-
   # Wayland session entry point (replaces the default niri-session).
   #
   # niri-session only activates graphical-session.target when it launches
@@ -16,7 +14,7 @@ let
   # runs inside a systemd --user manager, so niri-session takes its "already
   # managed" shortcut and execs `niri --session` directly — leaving
   # graphical-session.target inactive, which means every user service
-  # `WantedBy=graphical-session.target`（noctalia, fcitx5, polkit）永远
+  # `WantedBy=graphical-session.target`（clavis-shell, fcitx5, polkit）永远
   # 不会启动。显式启动 niri.service 可修复此问题：它
   # BindsTo=graphical-session.target，目标被激活后会把
   # 所有用户服务一并拉起。`systemctl --wait` 让本进程存活到
@@ -51,7 +49,10 @@ let
       name = "niri-with-session-wrapper";
       # 关键：wrapper 脚本本身必须作为 path 装进最终包，否则 .desktop
       # 引用的 bin/niri-session-wrapper 不存在，会话启动即失败（登录循环）。
-      paths = [ pkgs.niri niriSessionWrapperScript ];
+      paths = [
+        pkgs.niri
+        niriSessionWrapperScript
+      ];
       postBuild = ''
         rm -f "$out/share/wayland-sessions/niri.desktop"
         cat > "$out/share/wayland-sessions/niri.desktop" <<EOF
@@ -74,7 +75,13 @@ let
   # spawn-sh-at-startup 更早启动，会退回无前端状态（托盘无图标、候选框不弹，
   # 症状等同"输入法没加载"）。
   fcitx5Launch = pkgs.writeShellScriptBin "fcitx5-launch" ''
-    PATH="${lib.makeBinPath [ pkgs.systemd pkgs.coreutils pkgs.gnugrep ]}"
+    PATH="${
+      lib.makeBinPath [
+        pkgs.systemd
+        pkgs.coreutils
+        pkgs.gnugrep
+      ]
+    }"
     for i in $(seq 1 60); do
       if systemctl --user show-environment 2>/dev/null | grep -q '^WAYLAND_DISPLAY='; then
         eval "$(${pkgs.systemd}/bin/systemctl --user show-environment 2>/dev/null | \
@@ -94,43 +101,127 @@ in
     package = niriWithSessionWrapper;
   };
 
-  # Noctalia v5 及其 IPC CLI（noctalia msg）进系统 PATH，方便 niri 快捷键和脚本调用。
-  # 同时把 Noctalia 各面板常用的外部命令装进系统 PATH，这样即使手动在终端
+  # Clavis 的 `key` 命令（IPC / 剪贴板 / 录屏 / sysmon）进系统 PATH：niri 键位、
+  # 壁纸脚本和 Clavis 自己都用裸 `key` 调用，必须在任何登录 shell 的环境里可见。
+  # pkgs.clavisShell / pkgs.m3shapes 不需要 PATH 入口 —— 它们只提供 QML 资源，
+  # 由 pkgs.keyCli 的 wrapper 注入 QML_IMPORT_PATH。
+  # 同时把各面板常用的外部命令装进系统 PATH，这样即使手动在终端
   # 调试或脚本调用时也能找到它们。
-  environment.systemPackages = let
-    pythonWithDeps = pkgs.python3.withPackages (ps: with ps; [ numpy pillow ]);
-  in with pkgs; [
-    noctaliaPkg
-    brightnessctl
-    pamixer
-    playerctl
-    cliphist
-    wl-clipboard
-    wlr-randr
-    networkmanager
-    bluez
-    imagemagick
-    xdg-utils
-    wlsunset
-    ddcutil
-    wget
-    gnused
-    gawk
-    findutils
-    procps
-    matugen # v4 遗留下来的壁纸配色工具；v5 原生生成配色，仅当自建模板需要时保留
-    pythonWithDeps # scan-tones.py 依赖 (python3 + numpy + pillow)
-  ];
+  environment.systemPackages =
+    let
+      pythonWithDeps = pkgs.python3.withPackages (
+        ps: with ps; [
+          numpy
+          pillow
+        ]
+      );
+    in
+    with pkgs;
+    [
+      pkgs.keyCli
+      brightnessctl
+      pamixer
+      playerctl
+      cliphist
+      wl-clipboard
+      wlr-randr
+      networkmanager
+      bluez
+      imagemagick
+      xdg-utils
+      wlsunset
+      ddcutil
+      wget
+      gnused
+      gawk
+      findutils
+      procps
+      pythonWithDeps # scan-tones.py 依赖 (python3 + numpy + pillow)
+      # gsettings-desktop-schemas 提供 org.gnome.desktop.interface color-scheme，
+      # Clavis 的 scripts/theme/set_system_color_scheme.sh 写它来切 GTK 深浅色。
+      # 缺 schema 时 dconf 写入静默失败，GTK 应用不会跟着 Clavis 切主题。
+      gsettings-desktop-schemas
+    ];
 
-  # Noctalia / 终端 / 中文 UI 所需的字体。
+  # Clavis / 终端 / 中文 UI 所需的字体。
+  #   - material-symbols：Clavis 的 Components/MaterialSymbol.qml 固定请求
+  #     "Material Symbols Rounded"（Common/Fonts.qml 里写死），缺了整套图标变豆腐块。
+  #   - lxgw-wenkai-screen / jetbrains-mono：Clavis 的默认 UI / 等宽字体族名
+  #     （Common/Fonts.qml: "LXGW WenKai GB Screen" / "JetBrainsMono Nerd Font"）。
+  #     缺字体不会崩，resolveFamily 会退回 generic fallback，但排版会变。
+  #     用屏幕版（-screen）而不是 lxgw-wenkai：GB Screen 字体实际没有单独的
+  #     包，Clavis 请求的族名由下面的 fontconfig 别名映射到 "LXGW WenKai Screen"。
   fonts.packages = with pkgs; [
     adwaita-fonts
-    lxgw-wenkai
+    lxgw-wenkai-screen
     maple-mono.NF-CN
     nerd-fonts.jetbrains-mono
     noto-fonts-cjk-sans
     noto-fonts-color-emoji
+    material-symbols
   ];
+
+  # Clavis 的 Common/Fonts.qml 硬编码 "LXGW WenKai GB Screen"，但发布的只有
+  # "LXGW WenKai Screen"（lxgw-wenkai-screen）。别名让 Qt/文本栈在请求 GB Screen
+  # 时命中同一个族，避免回退到 Noto Sans CJK 造成 UI 字体不统一。
+  fonts.fontconfig.localConf = ''
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+    <fontconfig>
+      <match target="pattern">
+        <test name="family" compare="eq">
+          <string>LXGW WenKai GB Screen</string>
+        </test>
+        <edit name="family" mode="prepend" binding="strong">
+          <string>LXGW WenKai Screen</string>
+        </edit>
+      </match>
+    </fontconfig>
+  '';
+
+  # Clavis 的键盘面板要读 evdev 键盘节点。logind 默认只把节点交给 root，
+  # 所以带键盘背光的设备在 `key doctor` 里会报 keyboard 不可用。
+  # 规则与上游 packaging/udev/71-clavis-keyboard-leds.rules 逐字一致：只给
+  # 「带 LED 能力的键盘」打 uaccess（对应 Arch 的 key-cli-keyboard-access
+  # 分包），而不是放开全部输入设备。
+  #
+  # 注意 extraRules 的类型是 `types.lines`（单个字符串），不是字符串列表；
+  # 传 list 会报 "not of type `strings concatenated with \"\n\"'"。
+  services.udev.extraRules = lib.mkAfter (''
+    SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT_KEYBOARD}=="1", ATTRS{capabilities/led}=="?*", ATTRS{capabilities/led}!="0", TAG+="uaccess"
+  '');
+
+  # 可选授权：给 key-cpu-power 开 cap_dac_read_search，让 Clavis 能读受保护的
+  # RAPL 能耗计数器（Intel 笔记本的 CPU 功率读数）。没有它 CPU 占用率照常可用，
+  # 只有「功率」那一项显示 unavailable。
+  #
+  # 为什么放在 systemd 而不是 build 阶段：目标在 /nix/store 里，路径每次升级都变，
+  # 任何写死路径的声明式做法都会在下次 nixos-rebuild 后指向不存在的文件。
+  # 这里的路径是求值时展开的当前 hash；setcap 失败不致命（|| true）。
+  systemd.services.clavis-key-cpu-power-access = {
+    description = "Grant key-cpu-power read access to RAPL energy counters";
+    wantedBy = [ "multi-user.target" ];
+    before = [ "graphical-session.target" ];
+    after = [ "nix-store-setup.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      # systemd 的 ExecStart 不经过 shell，所以 `|| true` 必须显式借一个 shell。
+      # lib.escapeShellArgs 只接受一个参数（list 或 string），写成两个参数会
+      # 直接求值失败，所以整个 argv 必须放进同一个 list。
+      ExecStart = lib.escapeShellArgs [
+        # pkgs.runtimeShell is the bin *directory* (/nix/store/...-bash/bin),
+        # not the interpreter -- appending /bin/bash to it yields the
+        # nonsensical `.../bin/bash/bin/bash` ExecStart that systemd rejects.
+        "${pkgs.bash}/bin/bash"
+        "-c"
+        ''
+          ${pkgs.libcap}/bin/setcap cap_dac_read_search=ep \
+            ${pkgs.keyCli}/libexec/key-cli/key-cpu-power || true
+        ''
+      ];
+    };
+  };
 
   # xdg-desktop-portal routing（对齐 SHORiN 的 niri-portals.conf：
   # 默认 gnome;gtk，文件选择走 gtk，录屏/截图走 gnome，密钥走 gnome-keyring）
@@ -141,7 +232,10 @@ in
       xdg-desktop-portal-gtk
     ];
     config.niri = {
-      default = [ "gnome" "gtk" ];
+      default = [
+        "gnome"
+        "gtk"
+      ];
       "org.freedesktop.impl.portal.Access" = [ "gtk" ];
       "org.freedesktop.impl.portal.Notification" = [ "gtk" ];
       "org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
@@ -150,7 +244,8 @@ in
     };
   };
 
-  # Noctalia / GTK 主题切换依赖 gsettings 写 dconf。
+  # Clavis 的主题模式同步脚本写 dconf 的 org.gnome.desktop.interface color-scheme
+  # 来切 GTK 深浅色（见 modules/home/desktop/clavis/bin/clavis-theme-sync）。
   programs.dconf.enable = true;
 
   # Fix graphical-session.target so systemd user services can use it

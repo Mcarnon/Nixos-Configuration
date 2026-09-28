@@ -8,7 +8,7 @@
 {
   programs.starship = {
     enable = true;
-    # SHORiN 原版 starship 配置（含 noctalia 配色 palette）
+    # SHORiN 版 starship 配置（配色是当初跟着桌面壳一起换的，现在与 Clavis 无关）
     settings = builtins.fromTOML (builtins.readFile ../../../home/files/starship.toml);
   };
 

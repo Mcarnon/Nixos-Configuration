@@ -16,7 +16,13 @@
     "niri/startup.kdl".source = ../../../home/niri/startup.kdl;
     "niri/windowrule.kdl".source = ../../../home/niri/windowrule.kdl;
     "niri/supertab.kdl".source = ../../../home/niri/supertab.kdl;
-    "niri/noctalia-static.kdl".source = ../../../home/niri/noctalia-static.kdl;
+    "niri/clavis-static.kdl".source = ../../../home/niri/clavis-static.kdl;
     "niri/niri-hardware.kdl".source = hostPath + "/niri-hardware.kdl";
   };
+
+  # 注意：Clavis 托管的片段（effects / cursor / layer-rules / binds / outputs /
+  # minimize-animation）刻意【不】在这里声明。它们由 Clavis 自己写进
+  # ~/.config/niri/clavis/，是运行时生成的普通文件；config.kdl 里已经用
+  # `include optional=true` 预留了位置。做成 home.file 会让 HM 把它们变成指向
+  # /nix/store 的只读软链，Clavis 每次写片段都会失败。
 }

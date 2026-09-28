@@ -1,0 +1,145 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# clavis-theme-sync — 把 Clavis 的 theme.mode 同步给 Clavis 管不到的系统应用
+#
+# 背景：Noctalia 时代这套逻辑在 modules/home/desktop/noctalia/bin/theme-sync.sh，
+# 由 Noctalia 的 GTK 模板 + wallpaper hook 驱动。Clavis 只会重画它自己的模板
+# （niri/kitty/cava/zsh/btop/yazi/fcitx5/keytop + quickshell），不会碰
+# dconf / GTK3 / GTK4 / Kvantum，所以「在 Clavis 设置中心切深浅色」对外部应用
+# 是失效的。这个脚本把那条链路接回来：
+#
+#   ~/.config/clavis/config.json (theme.mode)
+#     -> dconf color-scheme / gtk-theme
+#     -> ~/.config/gtk-3.0/settings.ini + gtk-4.0/settings.ini（原子写）
+#     -> Kvantum kvconfig（仅当主题目录存在）
+#     -> kitty SIGUSR1 热重载
+#
+# 刻意不做的事：不再生成 Adwaita-Matugen-* 图标、不再往 gtk.css 注入壁纸配色。
+# 壁纸取色现在只影响 Clavis 自己的模板输出（niri/kitty/... ），GTK 保持
+# appearance.nix 里的静态 adw-gtk3-dark + Papirus-Dark —— 免得脚本和
+# home-manager / 用户手改的 gtk.css 抢同一个文件。
+#
+# 幂等：模式没变就直接退出，所以 systemd path unit 被 Clavis 每次写 config.json
+# 触发时不会反复去戳 kitty。
+# ==============================================================================
+set -uo pipefail
+
+CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/clavis/config.json"
+STATE="${XDG_RUNTIME_DIR:-/tmp}/clavis-theme-mode"
+
+GTK_THEME_DARK="${CLAVIS_GTK_THEME_DARK:-adw-gtk3-dark}"
+GTK_THEME_LIGHT="${CLAVIS_GTK_THEME_LIGHT:-adw-gtk3}"
+KVANTUM_DARK="${CLAVIS_KVANTUM_DARK:-KvLibadwaitaDark}"
+KVANTUM_LIGHT="${CLAVIS_KVANTUM_LIGHT:-KvLibadwaita}"
+
+read_mode() {
+    local mode=""
+    if [ -r "$CONFIG" ] && command -v jq >/dev/null 2>&1; then
+        mode=$(jq -r '.theme.mode // "dark"' "$CONFIG" 2>/dev/null)
+    fi
+    case "$mode" in
+        light) printf 'light' ;;
+        *) printf 'dark' ;;
+    esac
+}
+
+# kitty 主题是 Clavis 的 matugen 模板写的，脚本管不了它的内容；但可以在它被
+# 重写之后给运行中的 kitty 发个 SIGUSR1 让它重载配置（kitty 只认信号）。
+kitty_theme_stamp() {
+    # 亚秒精度：matugen 偶尔会在同一秒内重写两次主题，秒级 mtime 会漏掉。
+    stat -c %.9Y "$HOME/.config/kitty/themes/Matugen.conf" 2>/dev/null || printf '0'
+}
+
+# 原子 INI 更新：保留文件里其它键与顺序，只替换/追加目标键。
+atomic_update_ini() {
+    local file="$1" key="$2" val="$3"
+    local dir tmp key_found has_settings_header escaped_key
+    dir=$(dirname "$file")
+    mkdir -p "$dir" 2>/dev/null || return 1
+    tmp=$(mktemp "$dir/.ini.XXXXXX") || return 1
+
+    key_found=0
+    has_settings_header=0
+    escaped_key=$(printf '%s' "$key" | sed 's/[][\.^$*+?(){}|/]/\\&/g')
+
+    if [ -f "$file" ]; then
+        while IFS= read -r line || [ -n "$line" ]; do
+            if [[ "$line" =~ ^\[Settings\] ]]; then
+                has_settings_header=1
+                printf '%s\n' "$line" >>"$tmp"
+                continue
+            fi
+            if [[ "$line" =~ ^[[:space:]]*${escaped_key}[[:space:]]*= ]]; then
+                printf '%s=%s\n' "$key" "$val" >>"$tmp"
+                key_found=1
+            else
+                printf '%s\n' "$line" >>"$tmp"
+            fi
+        done <"$file"
+    fi
+
+    if [ "$key_found" -eq 0 ]; then
+        if [ "$has_settings_header" -eq 0 ] && [ ! -s "$tmp" ]; then
+            printf '[Settings]\n' >"$tmp"
+        fi
+        printf '%s=%s\n' "$key" "$val" >>"$tmp"
+    fi
+
+    chmod 644 "$tmp" 2>/dev/null || true
+    mv -f "$tmp" "$file"
+}
+
+main() {
+    local mode scheme gtk kvantum dark signature
+    mode=$(read_mode)
+    # 签名 = 深浅色 + kitty 主题的 mtime。两者都没变就直接退出：Clavis 每次写
+    # config.json（换壁纸等）都会触发 path unit，不能每次都去戳 dconf/kitty。
+    signature="$mode:$(kitty_theme_stamp)"
+    if [ -r "$STATE" ] && [ "$(cat "$STATE" 2>/dev/null)" = "$signature" ]; then
+        return 0
+    fi
+
+    if [ "$mode" = "light" ]; then
+        scheme="prefer-light"
+        gtk="$GTK_THEME_LIGHT"
+        kvantum="$KVANTUM_LIGHT"
+        dark="false"
+    else
+        scheme="prefer-dark"
+        gtk="$GTK_THEME_DARK"
+        kvantum="$KVANTUM_DARK"
+        dark="true"
+    fi
+
+    # dconf 优先：Chromium / libadwaita 等先等这个广播。
+    if command -v gsettings >/dev/null 2>&1; then
+        gsettings set org.gnome.desktop.interface color-scheme "$scheme" 2>/dev/null || true
+        gsettings set org.gnome.desktop.interface gtk-theme "$gtk" 2>/dev/null || true
+    elif command -v dconf >/dev/null 2>&1; then
+        dconf write /org/gnome/desktop/interface/color-scheme "'$scheme'" 2>/dev/null || true
+        dconf write /org/gnome/desktop/interface/gtk-theme "'$gtk'" 2>/dev/null || true
+    fi
+
+    # GTK3 / GTK4：gtk-application-prefer-dark-theme 在 GTK4 已废弃（libadwaita
+    # 会打一条 warning），但 Chromium 系读它来判深色，所以两边都写。
+    atomic_update_ini "$HOME/.config/gtk-3.0/settings.ini" gtk-application-prefer-dark-theme "$dark" || true
+    atomic_update_ini "$HOME/.config/gtk-3.0/settings.ini" gtk-theme-name "$gtk" || true
+    atomic_update_ini "$HOME/.config/gtk-4.0/settings.ini" gtk-application-prefer-dark-theme "$dark" || true
+    atomic_update_ini "$HOME/.config/gtk-4.0/settings.ini" gtk-theme-name "$gtk" || true
+
+    if [ -d "/usr/share/Kvantum/$kvantum" ] || [ -d "$HOME/.config/Kvantum/$kvantum" ]; then
+        atomic_update_ini "$HOME/.config/Kvantum/kvantum.kvconfig" theme "$kvantum" || true
+    fi
+
+    if command -v pkill >/dev/null 2>&1; then
+        pkill -SIGUSR1 -x kitty 2>/dev/null || true
+    fi
+
+    printf '%s' "$signature" >"$STATE" 2>/dev/null || true
+
+    if [ -t 1 ]; then
+        echo "clavis-theme-sync: $mode (dconf $scheme, gtk $gtk)"
+    fi
+}
+
+main "$@"

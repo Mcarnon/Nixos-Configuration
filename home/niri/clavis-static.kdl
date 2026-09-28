@@ -1,0 +1,45 @@
+// SHORiN niri palette — static fallback for the focus ring / borders / shadows.
+//
+// This file is the ONLY source of niri accent colours now: the current Clavis
+// dropped its matugen-driven `clavis/colors.kdl` fragment (the managed fragment
+// set is effects, cursor, layer-rules, binds, outputs, minimize-animation), so
+// nothing will ever overwrite the values below. Edit them by hand, or point
+// Clavis' own theme at a matching palette for the rest of the shell.
+//
+// niri 26 moved the per-window chrome (focus ring, border, shadow, tab
+// indicator, insert hint) under `layout {}`; recent-windows stays top-level.
+
+layout {
+    focus-ring {
+        active-color   "#bec2ff"
+        inactive-color "#131316"
+        urgent-color   "#ffb4ab"
+    }
+
+    border {
+        active-color   "#bec2ff"
+        inactive-color "#131316"
+        urgent-color   "#ffb4ab"
+    }
+
+    shadow {
+        color "#00000070"
+    }
+
+    tab-indicator {
+        active-color   "#bec2ff"
+        inactive-color "#373e90"
+        urgent-color   "#ffb4ab"
+    }
+
+    insert-hint {
+        color "#bec2ff80"
+    }
+}
+
+recent-windows {
+    highlight {
+        active-color "#bec2ff"
+        urgent-color "#ffb4ab"
+    }
+}

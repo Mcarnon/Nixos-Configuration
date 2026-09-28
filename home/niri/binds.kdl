@@ -1,29 +1,41 @@
 // Keybindings
 binds {
-    // ---- Noctalia v5 (noctalia msg) ----
-    Mod+Space hotkey-overlay-title="App launcher" { spawn-sh "noctalia msg panel-toggle launcher"; }
-    Mod+S hotkey-overlay-title="Control center" { spawn-sh "noctalia msg panel-toggle control-center"; }
-    Mod+Comma { spawn-sh "noctalia msg panel-toggle control-center"; }
-    Alt+Tab hotkey-overlay-title="Switch windows" { spawn-sh "noctalia msg window-switcher"; }
-    Mod+F2 hotkey-overlay-title="Settings" { spawn-sh "noctalia msg settings-toggle"; }
+    // ---- Clavis shell (key ipc call) ----
+    // Method signatures are taken from the IpcHandler registrations in the
+    // shell itself (AppShell.qml / Modules/Keystone/Keystone.qml), not guessed:
+    // `control-center open|toggle` take a pageId, and `general` is the valid id
+    // for the main settings page.
+    Mod+Space hotkey-overlay-title="App launcher" { spawn-sh "key ipc call spotlight toggle"; }
+    Mod+S hotkey-overlay-title="Control center" { spawn-sh "key ipc call control-center toggle general"; }
+    Mod+Comma { spawn-sh "key ipc call control-center open general"; }
+    Mod+F2 hotkey-overlay-title="Hub (dashboard/media/wallpaper/weather)" { spawn-sh "key ipc call keystone hub"; }
+    Mod+Shift+B hotkey-overlay-title="Dashboard" { spawn-sh "key ipc call keystone dashboard"; }
+    Mod+Shift+T hotkey-overlay-title="Tool panel" { spawn-sh "key ipc call keystone tools"; }
+    Mod+N hotkey-overlay-title="Notification sidebar" { spawn-sh "key ipc call sidebar toggle dashboard"; }
+    Mod+A hotkey-overlay-title="Quick settings sidebar" { spawn-sh "key ipc call sidebar toggle quicksettings"; }
+    // Clavis has no dedicated window switcher; niri's overview is the switcher
+    // and Clavis paints its overview wallpaper into the backdrop layer.
+    Alt+Tab hotkey-overlay-title="Switch windows" { toggle-overview; }
+    // NyxNiri wallpaper picker (GTK3, talks to `key ipc`; kept instead of
+    // `spotlight openMode wallpapers` because it shows thumbnails + tones).
     Mod+W hotkey-overlay-title="Wallpaper picker" { spawn-sh "~/.config/niri/scripts/wallpaper-picker.py"; }
-    Mod+V hotkey-overlay-title="Clipboard history" { spawn-sh "noctalia msg panel-toggle clipboard"; }
-    Mod+Shift+B hotkey-overlay-title="Toggle bar" { spawn-sh "noctalia msg bar-toggle"; }
+    Mod+V hotkey-overlay-title="Clipboard history" { spawn-sh "key ipc call spotlight openMode clipboard"; }
+    Mod+Shift+Space hotkey-overlay-title="Web search" { spawn-sh "key ipc call spotlight web"; }
 
-    // ---- Volume / brightness (via Noctalia IPC so the OSD + bar update) ----
-    XF86AudioRaiseVolume allow-when-locked=true { spawn-sh "noctalia msg volume-up"; }
-    XF86AudioLowerVolume allow-when-locked=true { spawn-sh "noctalia msg volume-down"; }
-    XF86AudioMute allow-when-locked=true { spawn-sh "noctalia msg volume-mute"; }
-    XF86MonBrightnessUp allow-when-locked=true { spawn-sh "noctalia msg brightness-up"; }
-    XF86MonBrightnessDown allow-when-locked=true { spawn-sh "noctalia msg brightness-down"; }
-    XF86AudioMicMute allow-when-locked=true { spawn-sh "noctalia msg mic-mute"; }
+    // ---- Volume / brightness (pamixer / brightnessctl; Clavis mirrors the level in the bar) ----
+    XF86AudioRaiseVolume allow-when-locked=true { spawn "pamixer" "-i" "5"; }
+    XF86AudioLowerVolume allow-when-locked=true { spawn "pamixer" "-d" "5"; }
+    XF86AudioMute allow-when-locked=true { spawn "pamixer" "-t"; }
+    XF86MonBrightnessUp allow-when-locked=true { spawn "brightnessctl" "set" "+5%"; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn "brightnessctl" "set" "5%-"; }
+    XF86AudioMicMute allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"; }
 
-    // ---- Media (noctalia MPRIS) ----
-    Mod+P { spawn-sh "noctalia msg media toggle"; }
-    XF86AudioPlay { spawn-sh "noctalia msg media toggle"; }
-    XF86AudioNext { spawn-sh "noctalia msg media next"; }
-    XF86AudioPrev { spawn-sh "noctalia msg media previous"; }
-    XF86AudioStop { spawn-sh "noctalia msg media stop"; }
+    // ---- Media (MPRIS, needs playerctl; Clavis MediaManager picks it up) ----
+    Mod+P { spawn "playerctl" "play-pause"; }
+    XF86AudioPlay { spawn "playerctl" "play-pause"; }
+    XF86AudioNext { spawn "playerctl" "next"; }
+    XF86AudioPrev { spawn "playerctl" "previous"; }
+    XF86AudioStop { spawn "playerctl" "stop"; }
 
     // ---- Launch / help ----
     Mod+Return hotkey-overlay-title="Terminal" { spawn "foot"; }
@@ -88,23 +100,24 @@ binds {
     Alt+Print { screenshot-window write-to-disk=false; }
 
     // ---- Lock / quit ----
-    Super+Alt+L { spawn-sh "noctalia msg session lock"; }
+    Super+Alt+L { spawn-sh "key ipc call lock open"; }
     Mod+Shift+E { quit; }
     Mod+Shift+P { power-off-monitors; }
     // Suspend combo: turn off monitors, lock, then suspend (shorin pattern).
-    Mod+Alt+P hotkey-overlay-title="Suspend" { spawn-sh "niri msg action power-off-monitors && noctalia msg session lock-and-suspend"; }
+    Mod+Alt+P hotkey-overlay-title="Suspend" { spawn-sh "niri msg action power-off-monitors && key ipc call lock open && systemctl suspend"; }
 
     // ---- Power user picks (shorin-derived, non-conflicting) ----
-    // Drop-down floating terminal (uses kitty class; falls back to foot if
-    // kitty isn't installed).
-    Mod+Slash hotkey-overlay-title="Quick terminal" { spawn-sh "kitty --class quickterminal 2>/dev/null || foot --class quickterminal"; }
+    // Drop-down floating terminal. Note: kitty is not installed in this config
+    // (gui.nix only ships foot), so the fallback is what actually runs.
+    Mod+Period hotkey-overlay-title="Quick terminal" { spawn-sh "foot --class quickterminal"; }
+    Mod+Slash hotkey-overlay-title="Shortcut map" { spawn-sh "key ipc call shortcut-map toggle"; }
     // Force-kill a stuck window (sends SIGTERM via niri IPC then escalates).
     Alt+F4 hotkey-overlay-title="Force kill window" { spawn-sh "niri msg action close-window --id $(niri msg --json focused-window | python3 -c 'import json,sys;print(json.load(sys.stdin)[\"id\"])')"; }
-    // Random wallpaper (Noctalia native wallpaper rotation).
-    Mod+F10 hotkey-overlay-title="Random wallpaper" { spawn-sh "noctalia msg wallpaper-random"; }
-    // Random wallpaper from the API + save to Wallpapers (SHORiN script).
-    Mod+Shift+F10 hotkey-overlay-title="Random download wallpaper" { spawn-sh "random-anime-wallpaper-noctalia"; }
-    // Screenshot -> edit (opens satty with the last screenshot from clipboard).
+    // Random wallpaper (Clavis wallpaper IPC: set + regenerate matugen theme).
+    Mod+F10 hotkey-overlay-title="Random wallpaper" { spawn-sh "key ipc call wallpaper random"; }
+    // Download a random anime wallpaper and apply it through Clavis.
+    Mod+Shift+F10 hotkey-overlay-title="Random download wallpaper" { spawn-sh "random-anime-wallpaper-clavis"; }
+    // Screenshot → edit (opens satty with the last screenshot from clipboard).
     Mod+Shift+S hotkey-overlay-title="Edit last screenshot" { spawn-sh "wl-paste | satty -f -"; }
     // Wheel scroll to change workspace (cooldown prevents runaway).
     Mod+Shift+WheelScrollDown cooldown-ms=150 { focus-workspace-down; }

@@ -1,9 +1,10 @@
 # Desktop look & feel: cursor theme + GTK icons/dark mode + 输入法桥接。
-# 注意：GTK 的 gtk.css / settings.ini 由 Noctalia 的 "gtk" 模板（apply.sh）接管，
-# 这里【不用】 home-manager 的 gtk 模块——它会把文件做成只读 store 软链，
-# 导致 Noctalia 模板处理失败（"模板处理失败"弹窗的根因之一）。
-# 基础外观走 dconf（DB，无文件冲突）；Noctalia 切壁纸时会用 gsettings/dconf
-# 覆盖为 matugen 生成的主题（icon-theme=Adwaita-Matugen-* 等）。
+# 注意：Clavis 只重画自己的模板（kitty/btop/cava/yazi + 它自己的 colors.json），
+# 不接管 GTK 的 gtk.css / settings.ini，所以【不用】 home-manager 的 gtk 模块
+# 就不会和 Clavis 抢文件。基础外观走 dconf（DB，无文件冲突）；Clavis 设置中心的
+# 深/浅色切换由 modules/home/desktop/clavis/bin/clavis-theme-sync 写
+# org.gnome.desktop.interface color-scheme（需要 NixOS 侧的
+# gsettings-desktop-schemas 才有这个 key）。
 {
   config,
   pkgs,
@@ -21,7 +22,7 @@
     size = 24;
   };
 
-  # 基础 GTK 外观（主题/图标/深色/输入法）。动态配色交给 Noctalia 的 GTK 模板。
+  # 基础 GTK 外观（主题/图标/深色/输入法）。动态配色交给 Clavis 的 matugen 产物。
   dconf = {
     enable = true;
     settings = {

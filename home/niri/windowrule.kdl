@@ -11,6 +11,19 @@ window-rule {
     clip-to-geometry true
 }
 
+// ---- Clavis panels: floating, rounded, fixed size ----
+// Clavis 的控制中心/文件选择器是自绘浮层（title 见 clavis/effects.kdl 的
+// window-rule），但 niri 不会自动浮动普通 toplevel，这里显式给尺寸和圆角，
+// 保持"圆角浮窗设置面板"的观感。
+window-rule {
+    match title="^(clavis-control-center|clavis-file-picker)$"
+    geometry-corner-radius 20
+    clip-to-geometry true
+    open-floating true
+    default-column-width { fixed 1100; }
+    default-window-height { fixed 750; }
+}
+
 // ---- Per-app opacity (see-through but legible) ----
 window-rule {
     match app-id="^foot$"
@@ -102,14 +115,17 @@ window-rule {
 }
 
 // ---- Layer rules ----
-// Allow Noctalia notification actions and window activation
+// Allow Clavis notification actions and window activation
 debug {
     honor-xdg-activation-with-invalid-serial
 }
 
-// Noctalia v5 backdrop 壁纸需要画在 niri 的 backdrop 层，否则 overview 会被遮住。
+// Clavis overview 壁纸必须画在 niri 的 backdrop 层，否则 overview 缩略图会被
+// 壁纸盖住（Clavis 自己生成的 clavis/effects.kdl 只管 xray/blur，不管这个）。
+// 只匹配 overview 专用命名空间，不要匹配 clavis-wallpaper（桌面壁纸不在
+// backdrop，否则会压住普通窗口）。
 layer-rule {
-    match namespace="^noctalia-backdrop"
+    match namespace="^clavis-overview-wallpaper$"
     place-within-backdrop true
 }
 

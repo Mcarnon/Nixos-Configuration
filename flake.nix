@@ -1,17 +1,13 @@
 {
-  description = "NixOS + Home Manager: niri + Noctalia v5 on an Intel laptop";
+  description = "NixOS + Home Manager: niri + Clavis Shell on an Intel laptop";
 
   # Binary caches: CN mirrors (priority=5 means prefer mirrors
   # over the default cache.nixos.org priority 40).
   nixConfig = {
     extra-substituters = [
-      "https://noctalia.cachix.org"
       "https://mirrors.ustc.edu.cn/nix-channels/store?priority=5"
       "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store?priority=5"
       "https://mirror.sjtu.edu.cn/nix-channels/store?priority=5"
-    ];
-    extra-trusted-public-keys = [
-      "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4="
     ];
   };
 
@@ -37,10 +33,26 @@
       inputs.home-manager.follows = "home-manager";
     };
 
-    # Noctalia v5 — native C++ desktop shell
-    noctalia = {
-      url = "github:noctalia-dev/noctalia";
-      inputs.nixpkgs.follows = "nixpkgs";
+    # Clavis Shell（niri 的 Quickshell 桌面壳）及其伴生后端 key-cli。
+    # 这两个仓库是纯源码树（无 flake.nix），flake = false 取为 source 路径，
+    # 由 pkgs/{clavis-shell,key-cli,libcava} 消费。
+    clavis-shell = {
+      url = "github:StatIndet/quickshell";
+      flake = false;
+    };
+
+    key-cli = {
+      url = "github:StatIndet/key-cli";
+      flake = false;
+    };
+
+    # M3Shapes — Clavis 的 Material 3 形状 QML 模块。Clavis 全文 import 了 20 次，
+    # 且上游明确「不会内置或 vendor」，缺它就是整屏 QML 加载失败（黑屏）。
+    # 仓库里没有 flake.nix（只有 nix/ 目录），显式 flake = false 拿纯源码树，
+    # 和上面两个 Clavis 输入保持一致。
+    m3shapes = {
+      url = "github:soramanew/m3shapes";
+      flake = false;
     };
 
     # AIRI — self-hosted Grok/Neuro-sama companion (Electron "tamagotchi" desktop)
