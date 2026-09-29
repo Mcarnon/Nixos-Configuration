@@ -27,7 +27,7 @@
     "cursorSize": 24,
     "cursorHideWhenTyping": true,
     "cursorHideAfterInactiveMs": 3000,
-    "iconTheme": "",
+    "iconTheme": "Papirus-Dark",
     "fonts": {
       "ui": "LXGW WenKai"
     }

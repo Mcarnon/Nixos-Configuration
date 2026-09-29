@@ -6,8 +6,13 @@
 // xray-blur baseline in blur.kdl live here.
 
 // ---- All windows: rounded corners, no CSD ----
+// 23 必须等于 Clavis Appearance.qml 的 rounding.large。Clavis 的窗口用
+// anchors.fill: parent 的矩形自绘圆角+1px 描边（ControlCenterWindow.qml
+// 的 outerBackground），niri 的 geometry-corner-radius 必须在该圆角之外或
+// 恰好相等：小于它会裁掉描边最外侧（描边在圆角处断开），大于它则圆角处
+// 露出未裁剪的方角背景。
 window-rule {
-    geometry-corner-radius 12
+    geometry-corner-radius 23
     clip-to-geometry true
 }
 
@@ -15,9 +20,10 @@ window-rule {
 // Clavis 的控制中心/文件选择器是自绘浮层（title 见 clavis/effects.kdl 的
 // window-rule），但 niri 不会自动浮动普通 toplevel，这里显式给尺寸和圆角，
 // 保持"圆角浮窗设置面板"的观感。
+// 圆角 23 = 上面全局值，重复写是为了本规则块自解释；改全局值时这里要同步。
 window-rule {
     match title="^(clavis-control-center|clavis-file-picker)$"
-    geometry-corner-radius 20
+    geometry-corner-radius 23
     clip-to-geometry true
     open-floating true
     default-column-width { fixed 1100; }
@@ -48,8 +54,7 @@ window-rule {
 window-rule {
     match app-id="^brave-browser$"
     opacity 1.0
-    geometry-corner-radius 10
-    clip-to-geometry true
+    // 圆角/裁剪继承上面的全局规则，不再单独覆盖。
 }
 window-rule {
     match app-id="^spotify$"

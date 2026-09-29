@@ -44,15 +44,16 @@
     "clavis-shell": {
       "flake": false,
       "locked": {
-        "lastModified": 1790580958,
-        "narHash": "sha256-x1afb/T4j8n96MD6gvJ1oyuJCNrXirVLxVrGllsuOBQ=",
+        "lastModified": 1790312559,
+        "narHash": "sha256-01UObZg83QiAjRd1UKGIX5pgDGQj45NAk+9w6xzjo9w=",
         "owner": "StatIndet",
         "repo": "quickshell",
-        "rev": "6c7a4e1be729be95f9c8c20ddc7c486ee7807144",
+        "rev": "b54cd7c7fbf284f55234df511b3e4b0b5312fcc9",
         "type": "github"
       },
       "original": {
         "owner": "StatIndet",
+        "ref": "v2026.9.25",
         "repo": "quickshell",
         "type": "github"
       }

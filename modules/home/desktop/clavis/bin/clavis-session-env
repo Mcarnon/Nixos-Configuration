@@ -60,7 +60,10 @@ fi
 export XDG_CURRENT_DESKTOP="${XDG_CURRENT_DESKTOP:-niri}"
 export XDG_SESSION_TYPE="${XDG_SESSION_TYPE:-wayland}"
 export QT_QPA_PLATFORM="${QT_QPA_PLATFORM:-wayland}"
-export QS_ICON_THEME="${QS_ICON_THEME:-Adwaita}"
+# 图标主题默认跟 appearance.nix / qt6ct.conf 对齐（Papirus-Dark）。
+# 原来这里是 Adwaita，反而是「图标不显示」的根因：Adwaita 只带少量 GNOME 图标，
+# application-exit / view-refresh 等只在 breeze 系里，Qt 加载不到就渲染成纯色块。
+export QS_ICON_THEME="${QS_ICON_THEME:-Papirus-Dark}"
 export XMODIFIERS="${XMODIFIERS:-@im=fcitx}"
 export QT_IM_MODULES="${QT_IM_MODULES:-wayland;fcitx}"
 

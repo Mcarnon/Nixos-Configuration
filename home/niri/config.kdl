@@ -53,8 +53,13 @@ environment {
     GSK_RENDERER "gl"
     // 默认文本编辑器
     EDITOR "vim"
-    // 解决 quickshell 图标主题缺失问题（Clavis/Qt 图标有时不显示）
-    QS_ICON_THEME "Adwaita"
+    // Quickshell / Clavis 的图标主题。必须是「覆盖面广」的那个：Adwaita 只带
+    // 一小撮 GNOME 图标，application-exit / view-refresh 这类 freedesktop
+    // action 图标在 Adwaita 里根本没有（只在 breeze 系里），Qt 加载不到就只
+    // 剩下按钮底色 —— 看起来就是一块纯色方块。Papirus-Dark Inherits=
+    // breeze-dark,hicolor，和 appearance.nix 的 dconf icon-theme、
+    // home/files/qt6ct/qt6ct.conf 的 icon_theme 保持一致。
+    QS_ICON_THEME "Papirus-Dark"
 }
 
 hotkey-overlay {

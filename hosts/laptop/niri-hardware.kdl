@@ -1,6 +1,15 @@
-// Output config: the laptop's built-in panel is usually eDP-1; auto-detected if unset.
-// Uncomment to pin a resolution/scale:
-/-output "eDP-1" {
-    // mode "1920x1080@120"
-    // scale 1
+// 内置面板（BOE 0x0877，eDP-1）：原生 1920x1080 @ 60Hz，缩放固定 100%。
+//
+// 不写 mode —— 面板只提供 1920x1080@60.012 这一个模式（也就是 preferred），
+// 让 niri 自己挑最稳；把 60.012 这种精确刷新率钉死反而会在换驱动/换面板后失效。
+// （旧注释里的 "1920x1080@120" 是从别的机器抄来的，本机没有 120Hz 模式，
+//  一旦取消注释 niri 会找不到该 mode。）
+//
+// 必须显式写 scale 1：留空时 niri 会按物理尺寸猜缩放（310x170mm @1920x1080
+// ≈ 157 DPI），本机实测猜出的是 1.25。分数缩放下，不支持
+// wp_fractional_scale_v1 的客户端（部分 Qt / Electron / XWayland 应用）会被
+// 整数倍渲染再拉伸，文字和图标整片发虚 —— 这就是 GUI/图标显示不对的根因。
+// 想要大字号用 fontconfig 的 DPI 设置调，不要动这里的 scale。
+output "eDP-1" {
+    scale 1
 }

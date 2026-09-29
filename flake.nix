@@ -37,7 +37,14 @@
     # 这两个仓库是纯源码树（无 flake.nix），flake = false 取为 source 路径，
     # 由 pkgs/{clavis-shell,key-cli,libcava} 消费。
     clavis-shell = {
-      url = "github:StatIndet/quickshell";
+      # 钉在 v2026.9.25 release tag，而不是 main。
+      # main 与该 tag 已 diverged：main 领先 20 个提交（bar/keystone/dock/settings
+      # 重构），但其中 434d1311f0「feat(bar): simplify controls」把状态栏控件
+      # 包进 BarActionButton，并把 onWheel 换成挂在上一层、被内层 MouseArea
+      # 截断的 WheelHandler —— 状态栏滚轮调节亮度/音量因此全部失效。
+      # v2026.9.25 仍是 MouseArea.onWheel，滚轮可用，故以此 tag 为基线。
+      # 回到 main 的前提是上游修复该回归（或本地 patch 三个 Bar/QuickSettings 文件）。
+      url = "github:StatIndet/quickshell/v2026.9.25";
       flake = false;
     };
 
