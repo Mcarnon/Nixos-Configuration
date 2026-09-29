@@ -1,5 +1,5 @@
 # Desktop look & feel: cursor theme + GTK icons/dark mode + 输入法桥接。
-# 注意：Clavis 只重画自己的模板（kitty/btop/cava/yazi + 它自己的 colors.json），
+# 注意：Clavis 只重画自己的模板（btop/cava/yazi + 它自己的 colors.json），
 # 不接管 GTK 的 gtk.css / settings.ini，所以【不用】 home-manager 的 gtk 模块
 # 就不会和 Clavis 抢文件。基础外观走 dconf（DB，无文件冲突）；Clavis 设置中心的
 # 深/浅色切换由 modules/home/desktop/clavis/bin/clavis-theme-sync 写

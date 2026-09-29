@@ -62,10 +62,10 @@
   ];
 
   # 应用配置文件（raw 部署，Shorin 原版或裁剪版）。
-  # 注意：foot.ini 归本配置管（Clavis 的 matugen 模板不含 foot），做成只读
-  # store 软链没问题。kitty 的 themes/Matugen.conf + current-theme.conf 则是
-  # matugen 的输出目标 / cp 目标，必须是可写副本，由 clavis 模块用 activation
-  # 种（见 modules/home/desktop/clavis/default.nix）。这里只放不会被模板改写的文件。
+  # 注意：foot.ini 归本配置管，做成只读 store 软链没问题。foot 的深浅色两套配色
+  # 常驻在同一个 foot.ini 里（[colors-dark] / [colors-light]），运行中的窗口靠
+  # SIGUSR1/SIGUSR2 切换、新窗口靠 foot-themed 的 -o 覆盖，都不需要写这个文件
+  # —— 而且 foot 1.27 本来就不支持重载配置，写了也没用。
   xdg.configFile = {
     "satty/config.toml".source = ../../../home/files/satty.toml;
     "Thunar/uca.xml".source = ../../../home/files/thunar/uca.xml;
@@ -75,10 +75,8 @@
     "xfce4/xfconf/xfce-perchannel-xml/thunar-volman.xml".source =
       ../../../home/files/thunar/thunar-volman.xml;
     "mimeapps.list".source = ../../../home/files/mimeapps.list;
-    # foot.ini 由本配置管理（Clavis 的 matugen 模板不含 foot）
     "foot/foot.ini".source = ../../../home/files/foot.ini;
-    # 基配置：Clavis 的 matugen 模板会生成 kitty 的 themes/Matugen.conf 和
-    # current-theme.conf（这里只兜底 fuzzel 本体，不挡板）
+    # 兜底 fuzzel 本体，不挡板
     "fuzzel/fuzzel.ini".source = ../../../home/files/fuzzel.ini;
     "xsettingsd/xsettingsd.conf".source = ../../../home/files/xsettingsd.conf;
   };

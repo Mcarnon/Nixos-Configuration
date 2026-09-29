@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+#
+# 拉起 foot，并让它一开局就用当前主题，而不是 foot.ini 里的初始值。
+#
+# 为什么需要这个包装：foot 1.27 不支持重载配置，initial-color-theme 只在进程
+# 启动时读一次。日出日落切换靠 clavis-theme-sync 发 SIGUSR1/SIGUSR2 作用于
+# 「已经在跑的」foot 进程；那么切换之后新开的窗口怎么办？答案是用
+# `foot -o initial-color-theme=<当前模式>` 覆盖，这样新窗口一出生就对了。
+#
+# 这样还顺带避开了两个更麻烦的替代方案：
+#   - 改 foot.ini 里的 initial-color-theme：foot.ini 是 home-manager 管的
+#     只读 store 软链，要改就得把它降级成可写种子文件，丢掉 store 管理；
+#   - 起 foot --server 让信号同时作用于未来的实例：得改 niri 键位的拉起方式
+#     （footclient），还得额外挂一个 server 守护进程。
+#
+# mode 的来源是 Clavis 的 config.json，跟 clavis-theme-sync 是同一个 source of
+# truth：手动在 Clavis 设置中心切深浅色、或日出日落定时器自动切，两条路都会
+# 先落到 config.json，这里自然就跟着对。
+set -uo pipefail
+
+CONFIG="${CLAVIS_CONFIG:-${XDG_CONFIG_HOME:-$HOME/.config}/clavis/config.json}"
+
+mode=dark
+if [ -r "$CONFIG" ] && command -v jq >/dev/null 2>&1; then
+    case "$(jq -r '.theme.mode // "dark"' "$CONFIG" 2>/dev/null)" in
+        light) mode=light ;;
+    esac
+fi
+
+exec foot -o "main.initial-color-theme=$mode" "$@"

@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+#
+# 按日出/日落自动切换 Clavis 的深浅色模式。
+#
+# 为什么需要这个，而不是直接改 config.json 就完事：
+#   Clavis 的 PersonalizationConfig.qml 里 FileView 确实监听 config.json
+#   （onFileChanged -> configReloadDebounce），外部写入会被热重载。但重载路径
+#   只做 `root.themeMode = ...`，不调用 regenerateFromCurrentWallpaper()。
+#   也就是说模式变了、matugen 产物还是旧的深色 —— 必须自己补一次生成。
+#   反过来，PersonalizationConfig.setThemeMode() 会顺带重新生成，那个路径
+#   只能在 QML 内部触发，外部没有对应 IPC（key ipc 的 target 只有
+#   control-center/keystone/lock/power-menu/shortcut-map/sidebar/spotlight/
+#   wallpaper，没有 theme）。所以这里是「写 config + 自己调生成脚本」。
+#
+# 幂等：算出来的模式跟 config.json 里的一样就直接退出，不写盘不生成。
+# 由 systemd timer 定期跑，所以幂等是硬要求。
+#
+# 广州 23.1291N 113.2644E。sunwait 0.9.1 的 poll 用退出码表示结果：
+#   2 = DAY（白天 -> 浅色）  3 = NIGHT（夜里 -> 深色）  其余 = 错误
+# 不用 `list` 解析时间字符串：0.9.1 的 nogmt/gmt 输出在 UTC+8 下对不上
+# （实测 list 1 gmt 给出 14:17，而本地是 06:17），poll 的退出码没这个问题。
+set -uo pipefail
+
+# 广州。N/E 后缀是必须的：sunwait 0.9.1 少了它就退回默认坐标（英国 Bingham），
+# 不会报错，只会安静地按另一个时区判定昼夜 —— 15:27 的白天会被判成夜里。
+LAT="${CLAVIS_SUN_LAT:-23.1291N}"
+LON="${CLAVIS_SUN_LON:-113.2644E}"
+SUNWAIT="${CLAVIS_SUNWAIT:-@SUNWAIT@}"
+GEN="${CLAVIS_MATUGEN_GEN:-@MATUGEN_GEN@}"
+SYNC="${CLAVIS_THEME_SYNC:-@THEME_SYNC@}"
+CONFIG="${CLAVIS_CONFIG:-$HOME/.config/clavis/config.json}"
+
+# 拿不到壁纸（配置损坏、壁纸被删）时用它顶一下，模式切换不能因为没有壁纸就不做。
+FALLBACK_COLOR="${CLAVIS_FALLBACK_COLOR:-#6c7a89}"
+
+log() {
+    printf 'clavis-theme-sunwait: %s\n' "$*" >&2
+}
+
+# 原子写：Clavis 自己也用「临时文件 + rename」写 config.json，path 单元靠
+# inode 变化触发，跟着它的写法才不会漏触发。
+write_config_mode() {
+    local mode="$1" tmp
+    tmp=$(mktemp "${CONFIG}.sunwait.XXXXXX") || { log "mktemp 失败"; return 1; }
+    if ! jq --arg m "$mode" '.theme.mode = $m' "$CONFIG" >"$tmp" 2>/dev/null; then
+        rm -f "$tmp"
+        log "jq 解析 $CONFIG 失败，保持现状"
+        return 1
+    fi
+    chmod 644 "$tmp" 2>/dev/null || true
+    mv -f "$tmp" "$CONFIG" || { rm -f "$tmp"; return 1; }
+}
+
+# 补一次 matugen 生成，参数照抄 Clavis ThemeService.qml 的调用方式。
+regenerate() {
+    local mode="$1" wallpaper scheme templates
+    wallpaper=$(jq -r '.wallpaper.path // ""' "$CONFIG" 2>/dev/null) || wallpaper=""
+    scheme=$(jq -r '.theme.matugenScheme // "scheme-tonal-spot"' "$CONFIG" 2>/dev/null) || scheme="scheme-tonal-spot"
+    # 只带用户勾选的模板，和 Clavis 的 normalizedMatugenTemplates 一致。
+    templates=$(jq -r '(.theme.matugenTemplates // {})
+                   | to_entries | map(select(.value == true) | .key) | join(",")' \
+               "$CONFIG" 2>/dev/null) || templates=""
+
+    [[ -z "$templates" ]] && return 0
+
+    local -a args=(--mode "$mode" --scheme "$scheme" --templates "$templates")
+    if [[ -n "$wallpaper" && -f "$wallpaper" ]]; then
+        args+=(--image "$wallpaper")
+    else
+        args+=(--color "$FALLBACK_COLOR")
+    fi
+    "$GEN" "${args[@]}" >/dev/null 2>&1 || log "matugen 生成失败（模式仍会写入）"
+}
+
+main() {
+    local rc mode current
+
+    "$SUNWAIT" poll "$LAT" "$LON" >/dev/null 2>&1
+    rc=$?
+    case "$rc" in
+        2) mode=light ;;
+        3) mode=dark ;;
+        *) log "sunwait 判定失败 (exit=$rc)，保持现状"; return 0 ;;
+    esac
+
+    if [[ ! -r "$CONFIG" ]]; then
+        log "读不到 $CONFIG，保持现状"
+        return 0
+    fi
+
+    current=$(jq -r '.theme.mode // "dark"' "$CONFIG" 2>/dev/null) || current=""
+    [[ "$mode" == "$current" ]] && return 0
+
+    log "模式 $current -> $mode"
+    write_config_mode "$mode" || return 1
+    regenerate "$mode"
+    # 这里再显式跑一次而不是等 path 单元：clavis-config 是异步的，切换后立刻就
+    # 要看到效果；sync 自身幂等，重复调用无害。foot 的切色信号就在 sync 里发。
+    "$SYNC" --mode "$mode" >/dev/null 2>&1 || true
+}
+
+main "$@"

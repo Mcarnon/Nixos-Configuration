@@ -51,7 +51,7 @@ let
   # clavis-theme-sync：把 Clavis 的 theme.mode 同步给 dconf / GTK3 / GTK4 / Kvantum
   # （Clavis 只重画自己的模板，不管这些；见 bin/clavis-theme-sync 头部说明）。
   themeSync = pkgs.writeShellScriptBin "clavis-theme-sync" ''
-    # procps 提供脚本里给 kitty/其他客户端发信号用的 pkill。
+    # procps 提供脚本里给 foot 发切换信号用的 pkill。
     export PATH=${
       lib.makeBinPath [
         pkgs.bash
@@ -64,6 +64,30 @@ let
     }
     exec ${pkgs.writeShellScript "clavis-theme-sync-script" (builtins.readFile ./bin/clavis-theme-sync)} "$@"
   '';
+
+  # foot-themed：拉起 foot 时用 -o 带上当前深浅色。foot 不支持重载配置，
+  # initial-color-theme 只在进程启动时读一次，所以新开窗口必须自己带上模式，
+  # 而运行中的窗口由 clavis-theme-sync 发 SIGUSR1/SIGUSR2 切。
+  # 从 niri 键位 spawn 出来，跑在用户会话环境里，jq 直接用 PATH 上的（同
+  # themeSync 里 `command -v jq` 的做法，不额外注入 store 路径）。
+  footThemed = pkgs.writeShellScriptBin "foot-themed" (builtins.readFile ./bin/foot-themed);
+
+  # clavis-theme-sunwait：日出/日落自动切 theme.mode。store 路径在这里注入，
+  # 脚本里保留 CLAVIS_* 环境变量覆盖是为了能在不重建的情况下单测。
+  # 刻意不套 writeShellScript：writeShellScriptBin 要的是字符串，套一层就得
+  # 靠 derivation->outPath 的隐式转换才能跑通，不如直接把替换后的文本给它。
+  clavisScriptsDir = "${pkgs.clavisShell}/etc/xdg/quickshell/clavis/scripts/theme";
+  themeSunwait = pkgs.writeShellScriptBin "clavis-theme-sunwait" (
+    lib.strings.replaceStrings [
+      "@SUNWAIT@"
+      "@MATUGEN_GEN@"
+      "@THEME_SYNC@"
+    ] [
+      "${pkgs.sunwait}/bin/sunwait"
+      "${clavisScriptsDir}/generate_matugen_colors.sh"
+      "${themeSync}/bin/clavis-theme-sync"
+    ] (builtins.readFile ./bin/clavis-theme-sunwait)
+  );
 
   # 「首次部署种子、之后永不覆盖」的可写文件。
   # 刻意不用 home.file：它只会把 /nix/store 里的只读文件软链过去，而 Clavis
@@ -131,6 +155,7 @@ let
     ffmpeg
     # ── 主题 / 外观 ──
     matugen
+    sunwait # 日出/日落自动切深浅色（clavis-theme-sunwait 的判定器）
     glib.bin # gsettings/dconf
     libnotify
     # Material Symbols Rounded/Outlined：Clavis 的 Components/MaterialSymbol.qml
@@ -142,6 +167,7 @@ let
     # ── Clavis 面板 ──
     wlogout # 注销对话框（Clavis 电源菜单）
     wlsunset # 夜灯/色温
+    footThemed # 拉起 foot 并带上当前深浅色；niri 的终端键位用它代替 foot
     networkmanagerapplet # nm-applet 托盘（startup.kdl 里拉起）
     zsh # matugen zsh 模板的目标
   ];
@@ -177,14 +203,11 @@ in
   # qt6ct 设置种子（其他 Qt 桌面应用读这个；用 activation 种成可写副本，
   # 因为 qt6ct 在 GUI 里保存设置时要写同一个文件）。
   home.activation.clavisSeedQt6ct = seedFile ".config/qt6ct/qt6ct.conf" ../../../../home/files/qt6ct/qt6ct.conf;
-  # kitty 配色：Clavis 的 matugen 模板（matugen/config.toml [templates.kitty]）
-  # 写 themes/Matugen.conf，然后 post_hook 再把它 cp 成 current-theme.conf，
-  # 而 kitty.conf 里的 `include current-theme.conf` 读的正是后者。
-  # 两个文件都必须是可写副本：一个是 matugen 的输出目标，另一个是 cp 的目标，
-  # 指向 store 的话 matugen 的写入会失败、post_hook 静默跳过。
-  # matugen 首次运行前先种一份静态兜底，否则新开的 kitty 会在 include 缺失时刷警告。
-  home.activation.clavisSeedKittyMatugen = seedFile ".config/kitty/themes/Matugen.conf" ../../../../home/files/kitty/Matugen.conf;
-  home.activation.clavisSeedKittyCurrent = seedFile ".config/kitty/current-theme.conf" ../../../../home/files/kitty/current-theme.conf;
+  # 这里原本还给 kitty 种了 themes/Matugen.conf + current-theme.conf 两份可写副本。
+  # 已删除：kitty 根本没装在本机（实际终端是 foot），那套「matugen 写一份、
+  # 脚本再原子拷成 current-theme.conf、最后发 SIGUSR1」的三段式方案是在给
+  # 一个不存在的终端做工作。foot 走的是原生 [colors-dark]/[colors-light]
+  # + SIGUSR1/SIGUSR2，见 bin/clavis-theme-sync 与 home/files/foot.ini。
 
   # 默认壁纸（选择器/轮换脚本能直接看到）+ 用户头像。
   home.file."Pictures/Wallpapers/wallhaven-d88d53.png".source =
@@ -275,7 +298,7 @@ in
   # Clavis 设置中心切深/浅色 -> 系统应用。两个入口：
   #   - Install.WantedBy=niri.service：每次登录跑一次；
   #   - systemd.user.paths：Clavis 改写 config.json 时再跑一次（脚本自身幂等，
-  #     模式没变就直接退出，所以换壁纸这种无关写入不会反复戳 kitty）。
+  #     模式没变就直接退出，所以换壁纸这种无关写入不会反复戳 foot）。
   systemd.user.services.clavis-theme-sync = {
     Unit = {
       Description = "Sync Clavis theme mode to dconf/GTK/Kvantum";
@@ -302,17 +325,38 @@ in
     };
   };
 
-  # 第二个触发点：Clavis 换壁纸时的顺序是「先写 config.json -> 再跑 matugen」，
-  # 所以只盯 config.json 的话，同步脚本会在 matugen 产物落地之前就跑完，
-  # 第一次运行只会记下签名却不重载 kitty。盯住 matugen 写的 kitty 主题，
-  # 产物落地的瞬间再触发一次，kitty 才能立刻拿到新配色。
-  systemd.user.paths.clavis-kitty-theme = {
-    Unit.Description = "Watch the matugen kitty theme so running kitty reloads it";
-    Path = {
-      PathChanged = "${home}/.config/kitty/themes/Matugen.conf";
-      Unit = "clavis-theme-sync.service";
+  # 这里原本还有个 clavis-kitty-theme path unit，盯 Matugen.conf 的产物落地
+  # 以便给 kitty 发 SIGUSR1。已删除：kitty 未安装；foot 的切换靠信号直接作用
+  # 于运行中的进程，不依赖任何文件产物落地，不需要第二个触发点。
+
+  # 日出/日落自动切深浅色。service 每次跑都重新按 sunwait 判定一次，判定结果
+  # 跟 config.json 一致就直接退出，所以可以放心高频轮询。
+  systemd.user.services.clavis-theme-sunwait = {
+    Unit = {
+      Description = "Switch Clavis theme mode on sunrise/sunset";
+      After = [ "graphical-session.target" ];
+    };
+    Service = {
+      Type = "oneshot";
+      ExecStart = "${themeSunwait}/bin/clavis-theme-sunwait";
     };
     Install.WantedBy = [ "graphical-session.target" ];
+  };
+
+  systemd.user.timers.clavis-theme-sunwait = {
+    Unit = {
+      Description = "Poll sunrise/sunset for Clavis theme mode";
+    };
+    Timer = {
+      # 10 分钟：sunwait 自身的时间误差就有 ±4 分钟，再密没有意义。
+      OnBootSec = "2min";
+      OnUnitActiveSec = "10min";
+      # 随机抖动，避免全网设备/全机器在整点同一秒发起请求。
+      # 不设 Persistent：那只对 OnCalendar 有意义，配单调的 OnUnitActiveSec 是死代码。
+      RandomizedDelaySec = "1min";
+      Unit = "clavis-theme-sunwait.service";
+    };
+    Install.WantedBy = [ "timers.target" ];
   };
 
   # 每半小时自动轮换壁纸，复用 wallpaper_picker 的 backend（key ipc）应用逻辑。

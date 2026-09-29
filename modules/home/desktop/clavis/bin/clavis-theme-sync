@@ -12,15 +12,18 @@
 #     -> dconf color-scheme / gtk-theme
 #     -> ~/.config/gtk-3.0/settings.ini + gtk-4.0/settings.ini（原子写）
 #     -> Kvantum kvconfig（仅当主题目录存在）
-#     -> kitty SIGUSR1 热重载
+#     -> foot：SIGUSR1(暗) / SIGUSR2(亮)，就地切 [colors-dark]/[colors-light]
+#
+# --mode light|dark 可以显式指定模式，供日出日落定时器调用；不带参数时只读
+# config.json，行为与原来一致。
 #
 # 刻意不做的事：不再生成 Adwaita-Matugen-* 图标、不再往 gtk.css 注入壁纸配色。
-# 壁纸取色现在只影响 Clavis 自己的模板输出（niri/kitty/... ），GTK 保持
+# 壁纸取色现在只影响 Clavis 自己的模板输出（niri/... ），GTK 保持
 # appearance.nix 里的静态 adw-gtk3-dark + Papirus-Dark —— 免得脚本和
 # home-manager / 用户手改的 gtk.css 抢同一个文件。
 #
 # 幂等：模式没变就直接退出，所以 systemd path unit 被 Clavis 每次写 config.json
-# 触发时不会反复去戳 kitty。
+# 触发时不会反复去戳 dconf/foot。
 # ==============================================================================
 set -uo pipefail
 
@@ -43,11 +46,38 @@ read_mode() {
     esac
 }
 
-# kitty 主题是 Clavis 的 matugen 模板写的，脚本管不了它的内容；但可以在它被
-# 重写之后给运行中的 kitty 发个 SIGUSR1 让它重载配置（kitty 只认信号）。
-kitty_theme_stamp() {
-    # 亚秒精度：matugen 偶尔会在同一秒内重写两次主题，秒级 mtime 会漏掉。
-    stat -c %.9Y "$HOME/.config/kitty/themes/Matugen.conf" 2>/dev/null || printf '0'
+# foot 切换：SIGUSR1=暗 / SIGUSR2=亮（foot(1) 明文规定）。
+#
+# 为什么信号就够，不需要像 kitty 那样换文件：foot 把两套配色同时写在
+# [colors-dark] / [colors-light] 里常驻，信号只是在两者之间就地切换。而且
+# foot 1.27 压根不支持重载配置（二进制里没有 reload 路径，还明确 ignore
+# SIGHUP），所以「改配置文件让运行中的 foot 变色」这条根本走不通 ——
+# 好在原生信号不需要重载。
+#
+# 本机没跑 foot --server（niri 键位直接 spawn "foot"），所以逐个发给所有
+# foot 进程。新开的窗口靠 binds.kdl 的 foot-themed 包装脚本用
+# `foot -o initial-color-theme=...` 带上当前模式，不依赖这里的信号。
+FOOT_SIGNAL_DARK="${CLAVIS_FOOT_SIGNAL_DARK:-USR1}"
+FOOT_SIGNAL_LIGHT="${CLAVIS_FOOT_SIGNAL_LIGHT:-USR2}"
+
+# 签名只覆盖真正决定外部状态的输入：版本 + 深浅色。刻意不含任何文件 mtime ——
+# 之前把输出文件的 mtime 也算进去，结果每次拷贝都换新 mtime，签名永远不稳定，
+# 幂等保护完全失效，每次 path unit 触发都重做一遍 dconf/GTK/kitty
+# （clavis-theme-sync 撞过的 start-limit-hit 就是这么来的）。
+# 改成纯内容判定后，切换是幂等的，path unit 每次触发都能安全空跑。
+SIGNATURE_VERSION=3
+
+# 切 foot：SIGUSR1/SIGUSR2 是内建动作，重复发同一个信号无副作用，
+# 所以「没变也照发」比判断运行中实例的当前主题更可靠。
+apply_foot_theme() {
+    local mode="$1" sig
+    if [ "$mode" = "light" ]; then
+        sig="$FOOT_SIGNAL_LIGHT"
+    else
+        sig="$FOOT_SIGNAL_DARK"
+    fi
+    command -v pkill >/dev/null 2>&1 || return 0
+    pkill -SIG"$sig" -x foot 2>/dev/null || true
 }
 
 # 原子 INI 更新：保留文件里其它键与顺序，只替换/追加目标键。
@@ -92,9 +122,39 @@ atomic_update_ini() {
 main() {
     local mode scheme gtk kvantum dark signature
     mode=$(read_mode)
-    # 签名 = 深浅色 + kitty 主题的 mtime。两者都没变就直接退出：Clavis 每次写
-    # config.json（换壁纸等）都会触发 path unit，不能每次都去戳 dconf/kitty。
-    signature="$mode:$(kitty_theme_stamp)"
+
+    # --mode 让调用方（日出日落定时器）显式指定模式，不依赖 Clavis 的 config.json。
+    # 不带这个参数时行为与以前完全一致：仍然只读 config.json 的 theme.mode。
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --mode)
+                if [ $# -lt 2 ]; then
+                    echo "clavis-theme-sync: --mode needs an argument" >&2
+                    return 2
+                fi
+                case "$2" in
+                    light | dark) mode="$2" ;;
+                    *)
+                        echo "clavis-theme-sync: --mode must be light or dark" >&2
+                        return 2
+                        ;;
+                esac
+                shift 2
+                ;;
+            -h | --help)
+                echo "usage: clavis-theme-sync [--mode light|dark]"
+                return 0
+                ;;
+            *)
+                echo "clavis-theme-sync: unknown argument: $1" >&2
+                return 2
+                ;;
+        esac
+    done
+
+    # 签名 = 版本 + 深浅色。没变就直接退出：Clavis 每次写 config.json（换壁纸等）
+    # 都会触发 path unit，不能每次都去戳 dconf/GTK/foot。
+    signature="v$SIGNATURE_VERSION:$mode"
     if [ -r "$STATE" ] && [ "$(cat "$STATE" 2>/dev/null)" = "$signature" ]; then
         return 0
     fi
@@ -131,9 +191,7 @@ main() {
         atomic_update_ini "$HOME/.config/Kvantum/kvantum.kvconfig" theme "$kvantum" || true
     fi
 
-    if command -v pkill >/dev/null 2>&1; then
-        pkill -SIGUSR1 -x kitty 2>/dev/null || true
-    fi
+    apply_foot_theme "$mode" || true
 
     printf '%s' "$signature" >"$STATE" 2>/dev/null || true
 

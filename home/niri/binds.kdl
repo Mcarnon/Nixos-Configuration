@@ -38,7 +38,10 @@ binds {
     XF86AudioStop { spawn "playerctl" "stop"; }
 
     // ---- Launch / help ----
-    Mod+Return hotkey-overlay-title="Terminal" { spawn "foot"; }
+    // 用 foot-themed 而不是 foot：它给 foot 带上 -o initial-color-theme=<当前深浅色>。
+    // foot 不支持重载配置，这个值只在进程启动时读一次，所以新窗口必须自己带上模式
+    // （运行中的窗口由 clavis-theme-sync 发 SIGUSR1/SIGUSR2 切）。
+    Mod+Return hotkey-overlay-title="Terminal" { spawn "foot-themed"; }
     Mod+E hotkey-overlay-title="File manager" { spawn-sh "thunar || nautilus"; }
     Mod+B hotkey-overlay-title="Browser" { spawn "zen-beta"; }
     Mod+Shift+Slash { show-hotkey-overlay; }
@@ -109,7 +112,8 @@ binds {
     // ---- Power user picks (shorin-derived, non-conflicting) ----
     // Drop-down floating terminal. Note: kitty is not installed in this config
     // (gui.nix only ships foot), so the fallback is what actually runs.
-    Mod+Period hotkey-overlay-title="Quick terminal" { spawn-sh "foot --class quickterminal"; }
+    // --class 透传给 foot-themed -> foot，窗口规则仍按 app-id=quickterminal 匹配。
+    Mod+Period hotkey-overlay-title="Quick terminal" { spawn-sh "foot-themed --class quickterminal"; }
     Mod+Slash hotkey-overlay-title="Shortcut map" { spawn-sh "key ipc call shortcut-map toggle"; }
     // Force-kill a stuck window (sends SIGTERM via niri IPC then escalates).
     Alt+F4 hotkey-overlay-title="Force kill window" { spawn-sh "niri msg action close-window --id $(niri msg --json focused-window | python3 -c 'import json,sys;print(json.load(sys.stdin)[\"id\"])')"; }
