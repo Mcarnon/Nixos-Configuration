@@ -44,13 +44,24 @@ let
     exec ${toneScanPython}/bin/python3 "${scriptsDir}/scan-tones.py" "${wallpaperDir}" "${wallpaperTonesFile}" "$@"
   '';
 
-  sessionEnv = pkgs.writeShellScript "clavis-session-env" (builtins.readFile ./bin/clavis-session-env);
+  sessionEnv = pkgs.writeShellScriptBin "clavis-session-env" (
+    builtins.readFile ./bin/clavis-session-env
+  );
 
   # clavis-theme-sync：把 Clavis 的 theme.mode 同步给 dconf / GTK3 / GTK4 / Kvantum
   # （Clavis 只重画自己的模板，不管这些；见 bin/clavis-theme-sync 头部说明）。
-  themeSync = pkgs.writeShellScript "clavis-theme-sync" ''
+  themeSync = pkgs.writeShellScriptBin "clavis-theme-sync" ''
     # procps 提供脚本里给 kitty/其他客户端发信号用的 pkill。
-    export PATH=${lib.makeBinPath [ pkgs.bash pkgs.coreutils pkgs.gnused pkgs.glib pkgs.jq pkgs.procps ]}
+    export PATH=${
+      lib.makeBinPath [
+        pkgs.bash
+        pkgs.coreutils
+        pkgs.gnused
+        pkgs.glib
+        pkgs.jq
+        pkgs.procps
+      ]
+    }
     exec ${pkgs.writeShellScript "clavis-theme-sync-script" (builtins.readFile ./bin/clavis-theme-sync)} "$@"
   '';
 
@@ -165,18 +176,15 @@ in
   home.activation.clavisSeedConfig = seedFile ".config/clavis/config.json" ./config.json;
   # qt6ct 设置种子（其他 Qt 桌面应用读这个；用 activation 种成可写副本，
   # 因为 qt6ct 在 GUI 里保存设置时要写同一个文件）。
-  home.activation.clavisSeedQt6ct =
-    seedFile ".config/qt6ct/qt6ct.conf" ../../../../home/files/qt6ct/qt6ct.conf;
+  home.activation.clavisSeedQt6ct = seedFile ".config/qt6ct/qt6ct.conf" ../../../../home/files/qt6ct/qt6ct.conf;
   # kitty 配色：Clavis 的 matugen 模板（matugen/config.toml [templates.kitty]）
   # 写 themes/Matugen.conf，然后 post_hook 再把它 cp 成 current-theme.conf，
   # 而 kitty.conf 里的 `include current-theme.conf` 读的正是后者。
   # 两个文件都必须是可写副本：一个是 matugen 的输出目标，另一个是 cp 的目标，
   # 指向 store 的话 matugen 的写入会失败、post_hook 静默跳过。
   # matugen 首次运行前先种一份静态兜底，否则新开的 kitty 会在 include 缺失时刷警告。
-  home.activation.clavisSeedKittyMatugen =
-    seedFile ".config/kitty/themes/Matugen.conf" ../../../../home/files/kitty/Matugen.conf;
-  home.activation.clavisSeedKittyCurrent =
-    seedFile ".config/kitty/current-theme.conf" ../../../../home/files/kitty/current-theme.conf;
+  home.activation.clavisSeedKittyMatugen = seedFile ".config/kitty/themes/Matugen.conf" ../../../../home/files/kitty/Matugen.conf;
+  home.activation.clavisSeedKittyCurrent = seedFile ".config/kitty/current-theme.conf" ../../../../home/files/kitty/current-theme.conf;
 
   # 默认壁纸（选择器/轮换脚本能直接看到）+ 用户头像。
   home.file."Pictures/Wallpapers/wallhaven-d88d53.png".source =
@@ -361,7 +369,8 @@ in
       # ffmpeg 用于提取动图/视频中间帧进行分析
       Environment = "PATH=${
         lib.makeBinPath (
-          with pkgs; [
+          with pkgs;
+          [
             ffmpeg
             coreutils
           ]
