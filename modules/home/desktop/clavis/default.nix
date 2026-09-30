@@ -95,12 +95,19 @@ let
   # 「首次部署种子、之后永不覆盖」的可写文件。
   # 刻意不用 home.file：它只会把 /nix/store 里的只读文件软链过去，而 Clavis
   # 启动后要回写 config.json（设置中心的 source of truth），qt6ct 在 GUI 里保存
-  # 设置也要写自己的 conf —— 指向 store 的软链两者都写不进去。
+  # 设置也要写自己的 conf，头像更是直接 `cp -- <选中的图> ~/.face`
+  # （见 clavis-shell 的 Services/AvatarService.qml）—— 指向 store 的软链三者都
+  # 写不进去。
+  #
+  # 条件用 `[ ! -e "$target" ] || [ -L "$target" ]` 而不是单纯的 `! -e`：
+  # -e 会跟着软链解析，store 软链指向的文件还在，于是永远判为「已存在」而被跳过，
+  # 软链就永久留着，Clavis 写起来照样 Read-only file system。-L 才认软链本身。
   seedFile =
     name: src:
     lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       target="''${HOME:-/home/mccarnon}/${name}"
-      if [ ! -e "$target" ]; then
+      if [ ! -e "$target" ] || [ -L "$target" ]; then
+        rm -f "$target"
         install -Dm644 ${src} "$target"
         echo "clavis: seeded ${name}"
       fi
@@ -215,7 +222,10 @@ in
   # 默认壁纸（选择器/轮换脚本能直接看到）+ 用户头像。
   home.file."Pictures/Wallpapers/wallhaven-d88d53.png".source =
     ../../../../wallpapers/wallhaven-d88d53.png;
-  home.file.".face".source = ../../../../wallpapers/wallhaven-d88d53.png;
+  # 头像走 seedFile 而不是 home.file：AvatarService.setAvatar() 干的是
+  # `cp -- <选中的图> ~/.face`，而 home.file 给的是指向 store 的只读软链，
+  # cp 直接报 "Read-only file system"，设置中心只能弹「头像更新失败」。
+  home.activation.clavisSeedFace = seedFile ".face" ../../../../wallpapers/wallhaven-d88d53.png;
 
   # NyxNiri 壁纸选择器（Mod+W 唤起，替代 shell 内置选择器）
   home.file.".config/niri/scripts/wallpaper-picker.py" = {

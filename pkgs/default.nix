@@ -11,6 +11,11 @@ inputs: final: prev:
   # 豁免见 modules/nixos/core/nix.nix 的 permittedInsecurePackages）。
   airi = prev.callPackage "${inputs.airi}/nix/package.nix" { };
 
+  # 旧版 SPlayer：解包官方 AppImage（上游 SPlayer-Dev/SPlayer 已归档）。
+  # 有意不用 nixpkgs 的 splayer-next —— 后者是上游指定的后继项目，
+  # 理由见 pkgs/splayer/default.nix 头部注释。
+  splayer = prev.callPackage ./splayer { };
+
   # cava 的分析核心（cavacore）单独打包成库：Clavis 通过 pkg-config 链接它，
   # 而 nixpkgs 的 `cava` 只构建 autotools 的可执行文件。
   libcava = prev.callPackage ./libcava { };
