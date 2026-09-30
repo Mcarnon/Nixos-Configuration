@@ -248,6 +248,34 @@ in
   # 来切 GTK 深浅色（见 modules/home/desktop/clavis/bin/clavis-theme-sync）。
   programs.dconf.enable = true;
 
+  # 把 gsettings schema 目录挂进 XDG_DATA_DIRS。
+  #
+  # nixpkgs 现在把 schema 装到 $out/share/gsettings-schemas/<name>/glib-2.0/schemas，
+  # 而不是 glib 默认会搜的 $out/share/glib-2.0/schemas（gsettings-desktop-schemas
+  # 的 preInstall 注释就写着 "later moved by glib's setup hook"）。所以光把包列进
+  # environment.systemPackages 不够：/run/current-system/sw/share/glib-2.0 里没有
+  # 任何 schema，gsettings 一律报 "No schemas installed"。
+  #
+  # NixOS 自己的 GNOME/Budgie/Cinnamon/… 模块靠 environment.extraInit 补这一刀
+  # （见 gnome.nix:263、budgie.nix:142…），本机跑 niri/Clavis，不经过其中任何一个，
+  # 于是整条深浅色链路是断的：
+  #   - clavis-theme-sync 的 `gsettings set color-scheme` 静默失败（脚本里 || true），
+  #     dconf 一直停在 prefer-system；
+  #   - xdg-desktop-portal-gnome 读不到 org.gnome.desktop.interface，Appearance 端口
+  #     不发 AppearanceChanged，fcitx5（classicui 靠 portal 判断深浅色，
+  #     见 libclassicui 里的 org.freedesktop.appearance/color-scheme）不换主题；
+  #   - GTK4/libadwaita、Chromium 系直接读 dconf 的也读不到。
+  #
+  # 用 sessionVariables 而不是 extraInit：前者由 PAM 在登录时写进整个会话（含
+  # systemd --user 与它拉起的 portal/fcitx5），extraInit 只影响登录 shell。
+  # mkAfter 只是保证不覆盖别处（如 display-manager 模块）的 XDG_DATA_DIRS；
+  # 它会排在 profileRelativeSessionVariables 生成的 /run/current-system/sw/share
+  # 之前（system-environment.nix 里 sessionVariables 先于 suffixedVariables 合并），
+  # 顺序对 schema 查找无影响。
+  environment.sessionVariables.XDG_DATA_DIRS = lib.mkAfter [
+    "${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}"
+  ];
+
   # Fix graphical-session.target so systemd user services can use it
   systemd.user.targets.graphical-session = {
     unitConfig = {

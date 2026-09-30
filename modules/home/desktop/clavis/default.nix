@@ -52,10 +52,13 @@ let
   # （Clavis 只重画自己的模板，不管这些；见 bin/clavis-theme-sync 头部说明）。
   themeSync = pkgs.writeShellScriptBin "clavis-theme-sync" ''
     # procps 提供脚本里给 foot 发切换信号用的 pkill。
+    # dconf 是 gsettings 读不到 schema 时的回退写入通道（脚本里 export PATH 会
+    # 覆盖掉系统 PATH，所以必须显式带上，不能指望 /run/current-system/sw/bin/dconf）。
     export PATH=${
       lib.makeBinPath [
         pkgs.bash
         pkgs.coreutils
+        pkgs.dconf
         pkgs.gnused
         pkgs.glib
         pkgs.jq
