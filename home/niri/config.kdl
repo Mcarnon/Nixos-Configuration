@@ -97,9 +97,15 @@ include optional=true "clavis/effects.kdl" // 只写 xray，X-Ray 开启时只�
 include optional=true "clavis/cursor.kdl" // 光标覆盖，由 Clavis 生成
 include optional=true "clavis/layer-rules.kdl" // overview 壁纸 backdrop + 透明背景，由 Clavis 生成
 include optional=true "clavis/outputs.kdl" // 显示器配置，由 Clavis 生成
+// ⚠️ 这个片段里的 output {} 可以带 layout {}（gaps / default-column-width /
+// preset-column-widths / always-center-single-column —— 见上游 niri_outputs.py 的
+// LAYOUT 元组），而 niri 的 **per-output layout 优先于本文件末尾的全局 layout**。
+// 一旦 Clavis 设置中心（通用 → Displays）把那组值写进去，症状就是「窗口变成全宽
+// 平铺 + 窗口间距变小」，而本文件里写着的 gaps 16 / proportion 0.6 好像没生效。
+// 排查：cat ~/.config/niri/clavis/outputs.kdl，删掉多余的 layout 块，再重进会话。
 include optional=true "clavis/minimize-animation.kdl" // 最小化动画，由 Clavis 生成
 include optional=true "clavis/binds.kdl" // Clavis 托管键位，见上方顺序说明
-include "windowrule.kdl" // 只保留 Clavis 三条面板规则，见该文件头部说明
+include "windowrule.kdl" // 全局圆角 + Clavis 面板浮窗 + 其它应用浮窗尺寸，见该文件头部说明
 include "supertab.kdl" // 带缩略图的 Alt/Ctrl+Tab 窗口切换（SHORiN 原版）
 include "binds.kdl"
 
