@@ -8,11 +8,11 @@ How to keep this NixOS system up to date and how the repo is organised.
 |------|----------------|
 | `flake.nix` + `flake-parts/` | Standardized entry (flake-parts perSystem memoization, `nix flake check`); `hosts.nix`/`packages.nix`/`checks.nix` |
 | `lib/` | Helpers (`mkHost`, hardware helpers) — cross-host reuse |
-| `pkgs/` + `pkgs/default.nix` | Overlay (`overlays.default` = `{miyu}`) — single audit surface for custom binaries |
+| `pkgs/` + `pkgs/default.nix` | Overlay (`overlays.default` = `{miyu, airi, splayer, libcava, m3shapes, clavisShell, keyCli, dsh}`；`dsh` 是转接上游 overlay 得到的 scope) — single audit surface for custom binaries |
 | `roles/nixos/` + `roles/home/` | Host/user composition (base/desktop) |
 | `hosts/laptop/` | **Machine-specific** (hardware-configuration/disko-fs/niri-hardware + `default.nix` which picks `roles/nixos/desktop` + `hardware.intel.enable`) |
 | `modules/nixos/` | Reusable system modules: `core/` (boot/nix/shell/persist/kernel/cli/diagnostics), `desktop/` (niri/ly/audio), `hardware/` (intel/nvidia/power/disko), `network/` (manager/openssh/firewall), `security/` (secrets/hardening/sops), `i18n/` -> `locales/` |
-| `modules/home/` | Reusable HM modules: `shell/` (fish/tools, SHORiN 风格函数), `desktop/` (niri/waybar/fuzzel/lock/mako/appearance), `apps/` (cli/gui/media/network/ai), `services/` (miyu) |
+| `modules/home/` | Reusable HM modules: `shell/` (fish/tools, SHORiN 风格函数), `desktop/` (niri/waybar/fuzzel/lock/mako/appearance), `apps/` (cli/gui/media/network/ai/dsh), `services/` (miyu) |
 | `modules/_templates/` | 新模块脚手架 |
 | `locales/` | Locale / input-method / fonts (canonical，`modules/nixos/i18n` 垫片) |
 | `home/` | Per-user HM entry — `home/files/*` (miyu/f/fwatch/foot/fuzzel/...) + `home/niri/*` (kdl + hyprlock + scripts) |
@@ -131,6 +131,17 @@ laptop and re-apply it after a push — or commit the real UUIDs into the repo.
 - Fish hook `home/files/miyu.fish` → `xdg.configFile fish/conf.d/zz-miyu.fish` in `modules/home/services/miyu.nix` (loads after starship). Never run `miyu fish-init` under HM. Diagnostics: `miyu --shell-intercept --shell fish -- <cmd>` (hook silences stderr).
 - First-run init: `modules/home/services/miyu.nix` `home.activation.miyuInit` runs `miyu init` if `~/.miyu` missing (also `miyu daemon start`). Verify `miyu paths` / `miyu -h`.
 - Model / opencode / prompt: `miyu config` (TUI, DB at `~/.miyu`) → 供应商和模型 (default opencode public API; add own OpenAI-compatible or enable Claude Code provider) → 自定义提示词 (new persona) + 用户身份. Also `miyu models`, `miyu daemon logs request`, `miyu export --dry-run`.
+
+## DeepSeek Harness (`dsh`)
+
+- 包来自 flake 输入 `deepseek-harness`（github:moraxyc/deepseek-harness.nix，MIT，只打包不 fork）。更新：`nix flake update deepseek-harness`。别自己 `callPackage` 它的 pkgs。
+- `pkgs/default.nix` 里 `dsh = (inputs."deepseek-harness".overlays.default final prev).dsh;` —— 两个坑：上游 overlay 返回 `{ dsh = <scope>; }`，必须取 `.dsh`（否则 `pkgs.dsh.bundles` attribute missing、上游 `lib.mkPackageOption pkgs.dsh` 报 “not of type 'package'”）；必须传本仓库的 `final`/`prev`，否则 scope 退回上游 nixpkgs。同时**不要**再导入上游 `nixosModules.default`，它会重复叠 overlay。
+- `modules/home/apps/dsh.nix` 导入上游 `homeModules.default`（`programs.dsh` + profile 物化到 `~/.dsh/profiles/<materializedName>`）。只走 HM 一层，系统级不装。
+- Profile 是 `mutable`：Nix 只在目录不存在时 seed，之后 `dsh plugin` / Settings UI 的改动不会被覆盖。重新 seed：`rm -rf ~/.dsh` 后 `nixos-rebuild switch`（HM 激活会跑 `dsh-sync-profiles`）。
+- Bundle 在 `profiles.tui.bundles` 里声明（插件式，按列表顺序覆盖）：`tui` 已在用；`subscriptions`（ChatGPT/Claude/Copilot 订阅 OAuth）、`memento`（跨会话记忆）、`modsearch`（内置搜索）、`subagent-codex`/`subagent-claude-code`（后者 unfree，需 `nixpkgs.config.allowUnfreePredicate`）都没启用。
+- API key 不要进 Nix：官方 DeepSeek 平台申请后在 dsh 设置里填（或 `export DEEPSEEK_API_KEY`）。想用订阅免 key 就换 `subscriptions` bundle。
+- 上游 Cachix（`deepseek-harness-nix.cachix.org`）已写进 `flake.nix` 的 `nixConfig`，但 **bundle 组合后的 dsh 大概率不在缓存里**：第一次 rebuild 要本地 build 一千多个 node 派生，提前 `nix build .#dsh` 预热。
+- 想试上游其它组合而不动本仓库：`nix run github:moraxyc/deepseek-harness.nix#presets.tui --accept-flake-config`。
 
 ## Performance & security baselines
 
