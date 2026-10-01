@@ -1,67 +1,66 @@
 // Window & layer rules
 //
-// Strategy: dynamic blur (see blur.kdl) + this layout's transparent
-// background (config.kdl `background-color "transparent"`). 透明度只有
-// blur.kdl 里的全局基线（聚焦 0.9 / 失焦 0.85）两档；本文件只保留
-// 「必须不透明」的应用和浮窗几何，不再逐个应用微调透明度。
+// 上游（StatIndet/quickshell v2026.9.25）自己写进 ~/.config/niri/clavis/ 的
+// window-rule / layer-rule 只有两处，而且都已经在 config.kdl 里 include 了，
+// 本文件不重复：
+//   clavis/effects.kdl       只写 xray（X-Ray 开启时只有一行注释）
+//   clavis/layer-rules.kdl   overview 壁纸 place-within-backdrop
+//                            + layout background-color "transparent"
+// 上游仓库里没有逐应用规则 —— 作者本机那些没公开。能从他 README 截图反推的只有：
+//   - Clavis 主控窗是浮动的，尺寸约为输出的 60% × 85%（2560×1440 截图实测
+//     1548×1180，居中于顶栏 52px 专属区之下的工作区）；
+//   - 子对话框/文件选择器按窗口自己声明的 implicitWidth/Height 浮动；
+//   - 所有圆角都等于 Common/Appearance.qml 的 rounding token。
 //
-// 尺寸/圆角的来源是 Clavis 自己的 token 与源码里各窗口的 implicitWidth/
-// implicitHeight：圆角 23 = Appearance.qml 的 rounding.large，1100×750 =
-// ControlCenterWindow，920×600 = FilePickerWindow，620×640 =
-// NetworkConfigWindow（设置类对话框）。
+// ⚠️ 尺寸为什么不能照抄 px：作者的屏是 2560×1440 @scale 1（本机面板是
+// 1920×1080 @scale 1，见 hosts/laptop/niri-hardware.kdl）。同一组绝对像素在他的
+// 屏上占 43%×52%，在本机占 57%×69% —— 所以「浮窗尺寸」分两类处理：
+//   - Clavis 自己的窗口用比例（0.6 × 0.85），换屏幕后观感一致；
+//   - 其它应用沿用 Clavis 源码里的窗口尺寸（920×600 / 620×640 / 1100×750），
+//     这是最接近「他那里长什么样」的参考值，觉得偏大就按 0.75 等比缩小。
 
-// ---- All windows: rounded corners, no CSD ----
-// 23 必须等于 Clavis Appearance.qml 的 rounding.large。Clavis 的窗口用
-// anchors.fill: parent 的矩形自绘圆角+1px 描边（ControlCenterWindow.qml
-// 的 outerBackground），niri 的 geometry-corner-radius 必须在该圆角之外或
-// 恰好相等：小于它会裁掉描边最外侧（描边在圆角处断开），大于它则圆角处
-// 露出未裁剪的方角背景。
+// ---- 全局：圆角 + 裁剪 ----
+// 23 = Appearance.qml 的 rounding.large。niri 的 geometry-corner-radius 同时决定
+// 背景模糊的圆角（niri 文档：用 window-rule 开的 blur 跟随 geometry-corner-radius），
+// 所以这条不加，圆角和模糊都会变成方角。
 window-rule {
     geometry-corner-radius 23
     clip-to-geometry true
 }
 
-// ---- Clavis panels: floating, rounded, client-sized ----
-// Clavis 的面板全部是 toplevel（root 类型 FloatingWindow，带 title:），niri
-// 不会自动浮动它们，这里显式 open-floating。
-// 匹配式直接抄 Clavis 自己写的（niri_config.py 的 effects 片段）：
-//   ^(clavis-control-center(-[a-z-]+)?|clavis-file-picker)$
-// 之前只匹配主窗口，11 个子对话框全部按 0.5 列宽平铺。
-// 尺寸交给客户端：各窗口自己声明 implicitWidth/Height（主控 1100×750、
-// 文件选择器 920×600、子对话框 380…980 宽），niri 再写死尺寸只会把它们拉变形。
+// ---- Clavis 主控窗：浮动 + 作者截图的 60% × 85% ----
+// title 精确等于 clavis-control-center，且没有 parentWindow（见
+// Modules/ControlCenter/ControlCenterWindow.qml），niri 不会自动浮动它。
+// 嫌在本机 1920×1080 上偏高（60%×85% = 1152×874）就删掉下面两条 default-*，
+// 让它用自己的 implicitWidth/Height（1100×750 = 本机 57%×69%）。
 window-rule {
-    match title="^clavis-control-center(-[a-z-]+)?$"
+    match title="^clavis-control-center$"
     geometry-corner-radius 23
     clip-to-geometry true
     open-floating true
-    opacity 1.0
+    default-column-width { proportion 0.6; }
+    default-window-height { proportion 0.85; }
 }
 
-// 文件选择器外框自绘的是 rounding.veryLarge（30），见 FilePickerWindow.qml。
+// ---- Clavis 子对话框 / 文件选择器：客户端尺寸，圆角按源码 token ----
+// extraLarge = 28（NetworkConfigWindow 等），文件选择器 veryLarge = 30。
+// 它们都带 parentWindow: root.parentModal，尺寸用自己声明的 implicitWidth/Height。
+window-rule {
+    match title="^clavis-control-center-[a-z-]+$"
+    geometry-corner-radius 28
+    clip-to-geometry true
+    open-floating true
+}
+
 window-rule {
     match title="^clavis-file-picker$"
     geometry-corner-radius 30
     clip-to-geometry true
     open-floating true
-    opacity 1.0
 }
 
-// ---- Per-app opacity ----
-// 玻璃感只有两个来源，都写在 blur.kdl：聚焦 0.9 / 失焦 0.85。
-// 这里不再逐个应用做微调（原来 foot 0.92、zen 0.95、obsidian 0.93、zed 0.95、
-// code 0.94 各不相同），只有「必须不透明」的应用才在此覆盖 —— 半透明会把
-// 图片/视频/浏览器画面搞花。终端也一样：foot.ini 里的 alpha 已改成 1.0，
-// 透明度统一交给 niri，避免两层 alpha 相乘（0.8 × 0.92 ≈ 0.74，文字发灰）。
-window-rule {
-    match app-id="^brave-browser$"
-    opacity 1.0
-    // 圆角/裁剪继承上面的全局规则，不再单独覆盖。
-}
-
-// ---- Quick terminal (Mod+Period) ----
-// binds.kdl 用 --class quickterminal 拉起，注释写着「窗口规则仍按 app-id 匹配」，
-// 但这里一直没有对应规则：它会按默认 0.5 列宽平铺，根本不是下拉浮窗。
-// 下拉浮窗：顶部居中，预留一点顶边间距（对齐 spacing.large=16）。
+// ---- 快速终端（Mod+Period）：顶部下拉浮窗 ----
+// binds.kdl 用 foot-themed --class quickterminal 拉起。
 window-rule {
     match app-id="^quickterminal$"
     open-floating true
@@ -70,10 +69,9 @@ window-rule {
     default-floating-position x=0 y=16 relative-to="top"
 }
 
-// ---- Floating dialogs ----
-// 尺寸按「同类 Clavis 窗口」取，不再一律 1100×750：
-//   设置/音量类对话框 → NetworkConfigWindow 620×640
+// ---- 浮窗几何：尺寸参考 Clavis 源码里的窗口定义 ----
 //   文件管理器       → FilePickerWindow 920×600
+//   设置/音量类对话框 → NetworkConfigWindow 620×640
 //   大窗口(Spotify)  → ControlCenterWindow 1100×750
 window-rule {
     match app-id="^spotify$"
@@ -88,23 +86,28 @@ window-rule {
     default-column-width { fixed 620; }
     default-window-height { fixed 640; }
 }
+
 window-rule {
     match app-id="^nm-connection-editor$"
     open-floating true
     default-column-width { fixed 620; }
     default-window-height { fixed 640; }
 }
+
 window-rule {
     match app-id=r#"^(Thunar|thunar|org\.gnome\.Nautilus|pcmanfm|pcmanfm-qt)$"#
     open-floating true
     default-column-width { fixed 920; }
     default-window-height { fixed 600; }
 }
+
+// 图片/视频查看器：必须不透明（半透明会把画面搞花），并且浮动到最上层。
 window-rule {
     match app-id="^(imv|mpv|celluloid)$"
     open-floating true
     opacity 1.0
 }
+
 window-rule {
     match title="^Picture-in-Picture$"
     open-floating true
@@ -113,7 +116,7 @@ window-rule {
     default-floating-position x=16 y=16 relative-to="bottom-right"
 }
 
-// 通用文件/首选项对话框：按 Clavis 文件选择器的尺寸统一，避免浮窗过小
+// 通用文件/首选项对话框：按 Clavis 文件选择器 / 设置对话框的尺寸，避免浮窗过小。
 window-rule {
     match title="^(Open|Save|Save As|Save File|Open File|Select File|Select Folder|Choose File|Choose Folder).*"
     open-floating true
@@ -132,13 +135,11 @@ window-rule {
 }
 
 // ---- Chinese-app rules (SHORiN battle-tested) ----
-// Chat / QQ / WeChat popups (title-based) open as floating dialogs.
+// 聊天/QQ/微信的弹窗（按标题匹配）浮动成独立对话框。
 window-rule {
     match title="^(群聊的聊天记录|聊天记录|群相册|日历|重命名|另存为)$"
     open-floating true
 }
-// Image / video viewers must stay opaque (transparent would garble the
-// picture) and float so they appear on top of the workspace.
 window-rule {
     match title="^(图片查看器|画中画|图片和视频|视频播放器)$"
     open-floating true
@@ -146,21 +147,12 @@ window-rule {
 }
 
 // ---- Layer rules ----
-// Allow Clavis notification actions and window activation
+// 允许 Clavis 的通知动作/窗口激活（上游不写，但没有它点通知常常唤不起窗口）。
 debug {
     honor-xdg-activation-with-invalid-serial
 }
 
-// Clavis overview 壁纸必须画在 niri 的 backdrop 层，否则 overview 缩略图会被
-// 壁纸盖住（Clavis 自己生成的 clavis/effects.kdl 只管 xray/blur，不管这个）。
-// 只匹配 overview 专用命名空间，不要匹配 clavis-wallpaper（桌面壁纸不在
-// backdrop，否则会压住普通窗口）。
-layer-rule {
-    match namespace="^clavis-overview-wallpaper$"
-    place-within-backdrop true
-}
-
-// Block notifications from screen sharing (privacy)
+// 录屏/共享屏幕时不把通知录进去。
 layer-rule {
     match namespace="^notification$"
     block-out-from "screencast"

@@ -112,7 +112,8 @@ binds {
     // ---- Power user picks (shorin-derived, non-conflicting) ----
     // Drop-down floating terminal. Note: kitty is not installed in this config
     // (gui.nix only ships foot), so the fallback is what actually runs.
-    // --class 透传给 foot-themed -> foot，窗口规则仍按 app-id=quickterminal 匹配。
+    // --class 透传给 foot-themed -> foot，窗口规则按 app-id=quickterminal 匹配
+    //（见 home/niri/windowrule.kdl：顶部居中下拉，0.7 × 0.45）。
     Mod+Period hotkey-overlay-title="Quick terminal" { spawn-sh "foot-themed --class quickterminal"; }
     Mod+Slash hotkey-overlay-title="Shortcut map" { spawn-sh "key ipc call shortcut-map toggle"; }
     // Force-kill a stuck window (sends SIGTERM via niri IPC then escalates).
