@@ -3,8 +3,7 @@
 # Consumers use `pkgs.clavisShell` / `pkgs.keyCli` instead of ad-hoc
 # `callPackage` at call sites.
 # Takes `inputs` so the source trees come from pinned flake inputs.
-inputs: final: prev:
-{
+inputs: final: prev: {
   miyu = prev.callPackage ./miyu { };
 
   # AIRI 用本仓库 nixpkgs 构建（airi 自带 flake 内部对 electron_41 无 insecure 豁免；
@@ -72,5 +71,56 @@ inputs: final: prev:
   #      nixpkgs，flake.nix 里的 follows 就白写了。
   # 消费方：modules/home/apps/dsh.nix 的 programs.dsh。
   # 注意：不要再导入上游 nixosModules.default —— 它会再叠一层同样的 overlay。
-  dsh = (inputs."deepseek-harness".overlays.default final prev).dsh;
+  dsh =
+    let
+      upstream = inputs."deepseek-harness".overlays.default final prev;
+      scope = upstream.dsh;
+
+      # ---- dsh-TUI 0.12.0 覆盖（上游还没 bump 的临时补丁）----
+      #
+      # 上游 rev 9f53b70 的版本错位：dsh 内核已被 commit 150be1c 升到
+      # 0.2.0-rc.2，而 pkgs/bundles/tui 还钉在 dsh-TUI v0.11.2（10dd3bb），
+      # 它的 peerDependencies 只列到 0.2.0-rc.1 —— 组合后 dshBundleCheckHook
+      # 在 installCheckPhase 直接判定不兼容并 exit 1（`nix run #presets.tui`
+      # 同样坏）。上游 HEAD（2026-10-01）最后一个 bundles.tui 提交仍是 10dd3bb，
+      # 没有现成修复可抄。改用 pkgs/dsh-tui/（0.12.0，peer 已含 0.2.0-rc.2），
+      # 差异与删除条件都写在那里的文件头。
+      #
+      # scope 里的 buildDshBundle / copyTree / fetchPnpmDeps / dsh-kernel 是 dsh
+      # 打包协议的入口，必须用本仓库 nixpkgs 的 final 构造的那个 —— 传 scope.*。
+      tui = import ./dsh-tui {
+        inherit (scope)
+          buildDshBundle
+          copyTree
+          dsh-kernel
+          fetchPnpmDeps
+          ;
+        pnpmConfigHook = final.pnpmConfigHook;
+        pnpm_11 = final.pnpm_11;
+        lib = final.lib;
+        fetchFromGitHub = final.fetchFromGitHub;
+      };
+    in
+    # 两处都要改，只改一处会得到「版本冲突」而不是「装上了」：
+    #   - `bundles.tui`：让消费方（modules/home/apps/dsh.nix 的 profiles）
+    #     拿到 0.12.0。
+    #   - `dsh.override { bundles = ... }`：`scope.dsh` 是在 scope 建立时
+    #     通过 callPackage 绑定 **原始** bundles 的（overlays/default.nix 的
+    #     directoryPackages），overrideScope 事后改 `bundles` 属性不会回溯
+    #     改写 dsh 包内部的 `tuiBundle`（pkgs/dsh/package.nix:83）。
+    #     profiles.nix 的 profileBundles 会把 needsTui 的 tuiBundle 与 profile
+    #     自己声明的 bundles 一起 lib.unique 收集，于是
+    #     dsh-profile-*-template 在 dshBundleResolver 阶段报
+    #     "conflicting bundle metadata for @deepseek-harness-tui/dsh-tui:
+    #      0.11.2 ... vs 0.12.0 ..."。
+    scope.overrideScope (
+      self: super: {
+        bundles = super.bundles.overrideScope (
+          _bundlesSelf: bundlesPrev: {
+            inherit tui;
+          }
+        );
+        dsh = super.dsh.override { bundles = self.bundles; };
+      }
+    );
 }

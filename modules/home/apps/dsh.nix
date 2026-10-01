@@ -15,14 +15,51 @@
 {
   config,
   inputs,
+  lib,
   pkgs,
   ...
 }:
+let
+  # dshBundleCheckHook 用 pty（`script -qefc`）跑 TTY profile，普通 CLI profile
+  # 直接跑。分类名单由 pkgs/dsh/package.nix 从 `profiles` 推导，但上游
+  # lib/mk-dsh-runtime.nix 给 runtime 包传的 `profiles = { }`
+  # （profile 由 profileSeeder 单独物化），于是
+  # dshBundleCheckTtyProfiles 为空 —— hook 只能靠扫 $DSH_HOME/profiles/*
+  # 自动发现 profile，发现出来的名字在三个名单里都没有，于是被当成普通 CLI
+  # 直接 `dsh --profile nix-tui --help`。Ink 拿不到 tty，抛
+  # "Raw mode is not supported on the current process.stdin" 并让
+  # installCheckPhase 失败。
+  # 这里按上游 profileRequiresTty / profileNeedsTui 的同一套判据自己算一遍
+  # （profile-options.nix 没有 exposes requiresTui 选项，所以 bundles 的
+  # passthru 也要一起看）。
+  profileNeedsTty =
+    profile:
+    (profile.requiresTty or false)
+    || (profile.requiresTui or false)
+    || lib.any (
+      bundle: (bundle.passthru.requiresTty or false) || (bundle.passthru.requiresTui or false)
+    ) (profile.bundles or [ ]);
+
+  ttyProfiles = lib.concatStringsSep " " (
+    lib.filter (s: s != "") (
+      lib.map (profile: if profileNeedsTty profile then profile.materializedName else "") (
+        lib.attrValues config.programs.dsh.profiles
+      )
+    )
+  );
+in
 {
   imports = [ inputs.deepseek-harness.homeModules.default ];
 
   programs.dsh = {
     enable = true;
+
+    # overrideAttrs 在 mkDshRuntime 的 `.override { ... }` 之后生效（override
+    # 只换函数实参，__overrideAttrs 最后才跑），所以能改到最终 derivation 的
+    # 环境变量。
+    package = pkgs.dsh.dsh.overrideAttrs (_: {
+      dshBundleCheckTtyProfiles = ttyProfiles;
+    });
 
     profiles.tui = {
       # 最小组合：交互式终端界面（pkgs.dsh.bundles 是插件式扩展，后面的覆盖前面的）。
