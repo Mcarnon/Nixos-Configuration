@@ -60,4 +60,17 @@ inputs: final: prev:
     xdg-terminal-exec = final.xdg-terminal-exec;
     awww = final.awww; # 可选壁纸后端
   };
+
+  # DeepSeek Harness 上游的 overlay（inputs."deepseek-harness".overlays.default）。
+  # 两点必须做对，否则下游全是玄学报错：
+  #   1. 上游 overlay 返回的是 `{ dsh = <scope>; }`，所以要取 `.dsh`，否则
+  #      `pkgs.dsh` 会变成 `{ dsh = scope; }`：homeModules 的
+  #      `lib.mkPackageOption pkgs.dsh "dsh"` 会报 “not of type 'package'”，
+  #      而 `pkgs.dsh.bundles.*` 直接 attribute missing。
+  #   2. 必须把本仓库的 final/prev 传进去（scope 内部靠 `final` 取依赖），
+  #      不能自己 `import inputs.nixpkgs` 再套，否则 scope 会退回上游自带的
+  #      nixpkgs，flake.nix 里的 follows 就白写了。
+  # 消费方：modules/home/apps/dsh.nix 的 programs.dsh。
+  # 注意：不要再导入上游 nixosModules.default —— 它会再叠一层同样的 overlay。
+  dsh = (inputs."deepseek-harness".overlays.default final prev).dsh;
 }
