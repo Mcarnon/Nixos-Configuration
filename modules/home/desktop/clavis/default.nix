@@ -113,6 +113,14 @@ let
       fi
     '';
 
+  # 兜底：清掉上一代遗留的真实 __pycache__ 目录。注意 DAG 挂载点必须是
+  # checkLinkTargets（files.nix:142 里 entryBefore "writeBoundary" 的那个节点），
+  # 写不存在的节点名（如 "link-file"）会被静默丢弃，脚本根本不会进 activate。
+  home.activation.pruneScriptPycache = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
+    find "''${HOME:-/home/mccarnon}/.config/niri/scripts" -type d -name '__pycache__' \
+      -prune -exec rm -rf {} + 2>/dev/null || true
+  '';
+
   # Clavis 面板/脚本运行时依赖的外部命令。
   # 注意：Clavis 真正的运行时环境由 pkgs.keyCli 的 wrapper 决定（QML_IMPORT_PATH /
   # QT_PLUGIN_PATH / XDG_CONFIG_DIRS / PATH 都从那里注入，`key shell` exec qs 会
@@ -232,8 +240,21 @@ in
     source = ./nix/wallpaper-picker.py;
     executable = true;
   };
+  # 源目录必须过滤掉 __pycache__：path 字面量（./nix/wallpaper_picker）复制进 store
+  # 时**无视 .gitignore**，仓库里跑一次 Python 留下的 *.pyc 就被原样打进
+  # home-files，HM 随后要为 `~/.config/niri/scripts/wallpaper_picker/__pycache__/*.pyc`
+  # 建软链；而 Python 运行时又在同一个活目录里写真实的 .pyc →
+  # checkLinkTargets 判定 "would be clobbered" 并 **exit 1**，
+  # 整个 home 文件集（包括 niri 配置）都留在上一代，
+  # 表现为「rebuild 成功但界面毫无变化」。
+  # 所以这里用 builtins.path + filter 显式剔除，别删了 filter 又踩回去。
   home.file.".config/niri/scripts/wallpaper_picker" = {
-    source = ./nix/wallpaper_picker;
+    source = builtins.path {
+      name = "wallpaper_picker";
+      path = ./nix/wallpaper_picker;
+      filter = _path: type: baseName:
+        baseName != "__pycache__" && !(type == "regular" && lib.hasSuffix ".pyc" baseName);
+    };
     recursive = true;
   };
   home.file.".config/niri/scripts/wallpapers-rotate.py" = {

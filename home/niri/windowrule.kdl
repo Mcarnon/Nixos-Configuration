@@ -1,9 +1,14 @@
 // Window & layer rules
 //
-// Strategy: dynamic blur (see blur.kdl) + per-app `opacity` on this
-// layout's transparent background (config.kdl `background-color
-// "transparent"`). Only the per-app rules that differ from the global
-// xray-blur baseline in blur.kdl live here.
+// Strategy: dynamic blur (see blur.kdl) + this layout's transparent
+// background (config.kdl `background-color "transparent"`). 透明度只有
+// blur.kdl 里的全局基线（聚焦 0.9 / 失焦 0.85）两档；本文件只保留
+// 「必须不透明」的应用和浮窗几何，不再逐个应用微调透明度。
+//
+// 尺寸/圆角的来源是 Clavis 自己的 token 与源码里各窗口的 implicitWidth/
+// implicitHeight：圆角 23 = Appearance.qml 的 rounding.large，1100×750 =
+// ControlCenterWindow，920×600 = FilePickerWindow，620×640 =
+// NetworkConfigWindow（设置类对话框）。
 
 // ---- All windows: rounded corners, no CSD ----
 // 23 必须等于 Clavis Appearance.qml 的 rounding.large。Clavis 的窗口用
@@ -16,85 +21,110 @@ window-rule {
     clip-to-geometry true
 }
 
-// ---- Clavis panels: floating, rounded, fixed size ----
-// Clavis 的控制中心/文件选择器是自绘浮层（title 见 clavis/effects.kdl 的
-// window-rule），但 niri 不会自动浮动普通 toplevel，这里显式给尺寸和圆角，
-// 保持"圆角浮窗设置面板"的观感。
-// 圆角 23 = 上面全局值，重复写是为了本规则块自解释；改全局值时这里要同步。
+// ---- Clavis panels: floating, rounded, client-sized ----
+// Clavis 的面板全部是 toplevel（root 类型 FloatingWindow，带 title:），niri
+// 不会自动浮动它们，这里显式 open-floating。
+// 匹配式直接抄 Clavis 自己写的（niri_config.py 的 effects 片段）：
+//   ^(clavis-control-center(-[a-z-]+)?|clavis-file-picker)$
+// 之前只匹配主窗口，11 个子对话框全部按 0.5 列宽平铺。
+// 尺寸交给客户端：各窗口自己声明 implicitWidth/Height（主控 1100×750、
+// 文件选择器 920×600、子对话框 380…980 宽），niri 再写死尺寸只会把它们拉变形。
 window-rule {
-    match title="^(clavis-control-center|clavis-file-picker)$"
+    match title="^clavis-control-center(-[a-z-]+)?$"
     geometry-corner-radius 23
     clip-to-geometry true
     open-floating true
-    default-column-width { fixed 1100; }
-    default-window-height { fixed 750; }
+    opacity 1.0
 }
 
-// ---- Per-app opacity (see-through but legible) ----
+// 文件选择器外框自绘的是 rounding.veryLarge（30），见 FilePickerWindow.qml。
 window-rule {
-    match app-id="^foot$"
-    opacity 0.92
+    match title="^clavis-file-picker$"
+    geometry-corner-radius 30
+    clip-to-geometry true
+    open-floating true
+    opacity 1.0
 }
-window-rule {
-    match app-id="^zen-beta$"
-    opacity 0.95
-}
-window-rule {
-    match app-id="^obsidian$"
-    opacity 0.93
-}
-window-rule {
-    match app-id=r#"^dev\.zed\.Zed$"#
-    opacity 0.95
-}
-window-rule {
-    match app-id="^code$"
-    opacity 0.94
-}
+
+// ---- Per-app opacity ----
+// 玻璃感只有两个来源，都写在 blur.kdl：聚焦 0.9 / 失焦 0.85。
+// 这里不再逐个应用做微调（原来 foot 0.92、zen 0.95、obsidian 0.93、zed 0.95、
+// code 0.94 各不相同），只有「必须不透明」的应用才在此覆盖 —— 半透明会把
+// 图片/视频/浏览器画面搞花。终端也一样：foot.ini 里的 alpha 已改成 1.0，
+// 透明度统一交给 niri，避免两层 alpha 相乘（0.8 × 0.92 ≈ 0.74，文字发灰）。
 window-rule {
     match app-id="^brave-browser$"
     opacity 1.0
     // 圆角/裁剪继承上面的全局规则，不再单独覆盖。
 }
+
+// ---- Quick terminal (Mod+Period) ----
+// binds.kdl 用 --class quickterminal 拉起，注释写着「窗口规则仍按 app-id 匹配」，
+// 但这里一直没有对应规则：它会按默认 0.5 列宽平铺，根本不是下拉浮窗。
+// 下拉浮窗：顶部居中，预留一点顶边间距（对齐 spacing.large=16）。
+window-rule {
+    match app-id="^quickterminal$"
+    open-floating true
+    default-column-width { proportion 0.7; }
+    default-window-height { proportion 0.45; }
+    default-floating-position x=0 y=16 relative-to="top"
+}
+
+// ---- Floating dialogs ----
+// 尺寸按「同类 Clavis 窗口」取，不再一律 1100×750：
+//   设置/音量类对话框 → NetworkConfigWindow 620×640
+//   文件管理器       → FilePickerWindow 920×600
+//   大窗口(Spotify)  → ControlCenterWindow 1100×750
 window-rule {
     match app-id="^spotify$"
     open-floating true
-    default-column-width { fixed 1000; }
-    default-window-height { fixed 800; }
-    opacity 0.92
+    default-column-width { fixed 1100; }
+    default-window-height { fixed 750; }
 }
 
-// ---- Floating windows (overrides) ----
 window-rule {
     match app-id="^pavucontrol$"
     open-floating true
-    default-column-width { fixed 1000; }
-    default-window-height { fixed 800; }
+    default-column-width { fixed 620; }
+    default-window-height { fixed 640; }
 }
 window-rule {
     match app-id="^nm-connection-editor$"
     open-floating true
+    default-column-width { fixed 620; }
+    default-window-height { fixed 640; }
 }
 window-rule {
-    match app-id=r#"^(Thunar|thunar|org\.gnome\.Nautilus)$"#
+    match app-id=r#"^(Thunar|thunar|org\.gnome\.Nautilus|pcmanfm|pcmanfm-qt)$"#
     open-floating true
-    default-column-width { fixed 1000; }
-    default-window-height { fixed 800; }
+    default-column-width { fixed 920; }
+    default-window-height { fixed 600; }
 }
 window-rule {
-    match app-id="^(imv|mpv)$"
+    match app-id="^(imv|mpv|celluloid)$"
     open-floating true
+    opacity 1.0
 }
 window-rule {
     match title="^Picture-in-Picture$"
     open-floating true
     default-column-width { fixed 480; }
     default-window-height { fixed 270; }
-    default-floating-position x=32 y=32 relative-to="bottom-right"
+    default-floating-position x=16 y=16 relative-to="bottom-right"
+}
+
+// 通用文件/首选项对话框：按 Clavis 文件选择器的尺寸统一，避免浮窗过小
+window-rule {
+    match title="^(Open|Save|Save As|Save File|Open File|Select File|Select Folder|Choose File|Choose Folder).*"
+    open-floating true
+    default-column-width { fixed 920; }
+    default-window-height { fixed 600; }
 }
 window-rule {
-    match title="^(Open|Save) File.*$"
+    match title="^(Preferences|Settings|Options|About|Properties|Configure|Configuration).*"
     open-floating true
+    default-column-width { fixed 620; }
+    default-window-height { fixed 640; }
 }
 window-rule {
     match app-id=r#"^com\.obsproject\.Studio$"#
@@ -112,10 +142,6 @@ window-rule {
 window-rule {
     match title="^(图片查看器|画中画|图片和视频|视频播放器)$"
     open-floating true
-    opacity 1.0
-}
-window-rule {
-    match app-id="^(mpv|celluloid)$"
     opacity 1.0
 }
 

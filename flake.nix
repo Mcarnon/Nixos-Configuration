@@ -62,6 +62,12 @@
       flake = false;
     };
 
+    # thyx — SDDM 的 QML 登录主题，2026-10 起取代 ly 当登录界面。
+    # 自带 nixosModules.default（负责 sddm.enable/theme/extraPackages + 字体），
+    # 上游还有 flake check：NixOS VM 冒烟测试会真在 SDDM 下加载主题。
+    # 钉在 v1.1.0 tag：仓库只发 tag 不发 release，且该 tag 就等于 main HEAD。
+    thyx.url = "github:rccyx/thyx/v1.1.0";
+
     # AIRI — self-hosted Grok/Neuro-sama companion (Electron "tamagotchi" desktop)
     airi = {
       url = "github:moeru-ai/airi";

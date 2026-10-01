@@ -1,7 +1,7 @@
 {
   imports = [
     ./niri.nix
-    ./ly.nix
+    ./sddm.nix
     ./audio.nix
     ./udisks.nix
   ];
