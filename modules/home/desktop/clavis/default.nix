@@ -217,6 +217,22 @@ in
   # 只 seed config.json 一个文件：上游把旧的 ui-preferences.json 合并进了
   # config.json（docs/architecture/config-isolation.md 的迁移说明），
   # 现在再写一个 ui-preferences.json 只会变成没人读的僵尸配置。
+  #
+  # 种子里的值对齐上游 Services/PersonalizationConfig.qml 的默认值（钉住的 tag
+  # v2026.9.25）：bar（位置 + 两侧组件）、keystone（bangs / top / hideDate false）、
+  # sidebar（keepLoaded）、theme（dark / scheme-tonal-spot / cursorSize 24 /
+  # cursorTheme "" 跟系统）、wallpaper（transition 1000ms + customBezier、
+  # overview、autoCycle interval 300）都与默认一致。刻意保留的三处非默认值：
+  #   - effects.shellBackgroundOpacity 0.8 + shellBlurEnabled true：上游默认是
+  #     1（面板完全不透明）+ 关闭。作者截图里面板明显透出壁纸，说明他开了模糊、
+  #     调低了不透明度，所以这里按截图估 0.8（模糊是 Clavis 自己通过
+  #     ext-background-effect 请求的，见 home/niri/blur.kdl 的说明）；
+  #   - theme.iconTheme "Papirus-Dark"：上游默认 ""（跟系统）。保留是因为 Adwaita
+  #     缺 freedesktop action 图标，Qt 加载不到就只剩按钮底色（见 home/niri/config.kdl
+  #     里 QS_ICON_THEME 的注释）；
+  #   - wallpaper.folder / path：本机壁纸目录与当前壁纸，属于用户数据。
+  # 注意：seed 是「文件不存在（或还是软链）才写一次」，所以改这里不会动已经在用的
+  # 机器 —— 要让新值生效得先删掉 ~/.config/clavis/config.json。
   home.activation.clavisSeedConfig = seedFile ".config/clavis/config.json" ./config.json;
   # qt6ct 设置种子（其他 Qt 桌面应用读这个；用 activation 种成可写副本，
   # 因为 qt6ct 在 GUI 里保存设置时要写同一个文件）。
