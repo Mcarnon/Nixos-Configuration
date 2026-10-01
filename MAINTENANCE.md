@@ -8,11 +8,11 @@ How to keep this NixOS system up to date and how the repo is organised.
 |------|----------------|
 | `flake.nix` + `flake-parts/` | Standardized entry (flake-parts perSystem memoization, `nix flake check`); `hosts.nix`/`packages.nix`/`checks.nix` |
 | `lib/` | Helpers (`mkHost`, hardware helpers) — cross-host reuse |
-| `pkgs/` + `pkgs/default.nix` | Overlay (`overlays.default` = `{miyu, airi, splayer, libcava, m3shapes, clavisShell, keyCli, dsh}`；`dsh` 是转接上游 overlay 得到的 scope) — single audit surface for custom binaries |
+| `pkgs/` + `pkgs/default.nix` | Overlay (`overlays.default` = `{miyu}`) — single audit surface for custom binaries |
 | `roles/nixos/` + `roles/home/` | Host/user composition (base/desktop) |
 | `hosts/laptop/` | **Machine-specific** (hardware-configuration/disko-fs/niri-hardware + `default.nix` which picks `roles/nixos/desktop` + `hardware.intel.enable`) |
 | `modules/nixos/` | Reusable system modules: `core/` (boot/nix/shell/persist/kernel/cli/diagnostics), `desktop/` (niri/ly/audio), `hardware/` (intel/nvidia/power/disko), `network/` (manager/openssh/firewall), `security/` (secrets/hardening/sops), `i18n/` -> `locales/` |
-| `modules/home/` | Reusable HM modules: `shell/` (fish/tools, SHORiN 风格函数), `desktop/` (niri/waybar/fuzzel/lock/mako/appearance), `apps/` (cli/gui/media/network/ai/dsh), `services/` (miyu) |
+| `modules/home/` | Reusable HM modules: `shell/` (fish/tools, SHORiN 风格函数), `desktop/` (niri/waybar/fuzzel/lock/mako/appearance), `apps/` (cli/gui/media/network/ai), `services/` (miyu) |
 | `modules/_templates/` | 新模块脚手架 |
 | `locales/` | Locale / input-method / fonts (canonical，`modules/nixos/i18n` 垫片) |
 | `home/` | Per-user HM entry — `home/files/*` (miyu/f/fwatch/foot/fuzzel/...) + `home/niri/*` (kdl + hyprlock + scripts) |
@@ -131,20 +131,6 @@ laptop and re-apply it after a push — or commit the real UUIDs into the repo.
 - Fish hook `home/files/miyu.fish` → `xdg.configFile fish/conf.d/zz-miyu.fish` in `modules/home/services/miyu.nix` (loads after starship). Never run `miyu fish-init` under HM. Diagnostics: `miyu --shell-intercept --shell fish -- <cmd>` (hook silences stderr).
 - First-run init: `modules/home/services/miyu.nix` `home.activation.miyuInit` runs `miyu init` if `~/.miyu` missing (also `miyu daemon start`). Verify `miyu paths` / `miyu -h`.
 - Model / opencode / prompt: `miyu config` (TUI, DB at `~/.miyu`) → 供应商和模型 (default opencode public API; add own OpenAI-compatible or enable Claude Code provider) → 自定义提示词 (new persona) + 用户身份. Also `miyu models`, `miyu daemon logs request`, `miyu export --dry-run`.
-
-## DeepSeek Harness (`dsh`)
-
-- 包来自 flake 输入 `deepseek-harness`（github:moraxyc/deepseek-harness.nix，MIT，只打包不 fork）。更新：`nix flake update deepseek-harness`。别自己 `callPackage` 它的 pkgs。
-- `pkgs/default.nix` 里 `dsh = (inputs."deepseek-harness".overlays.default final prev).dsh;` —— 两个坑：上游 overlay 返回 `{ dsh = <scope>; }`，必须取 `.dsh`（否则 `pkgs.dsh.bundles` attribute missing、上游 `lib.mkPackageOption pkgs.dsh` 报 “not of type 'package'”）；必须传本仓库的 `final`/`prev`，否则 scope 退回上游 nixpkgs。同时**不要**再导入上游 `nixosModules.default`，它会重复叠 overlay。
-- **`bundles.tui` 被本地覆盖成 dsh-TUI 0.12.0**（`pkgs/dsh-tui/`），这是临时补丁：`nix flake update deepseek-harness` 到内核 0.2.0-rc.2 后，上游 `pkgs/bundles/tui` 还钉在 0.11.2，它的 `peerDependencies` 只到 0.2.0-rc.1，`dshBundleCheckHook` 在 installCheckPhase 判定不兼容直接 exit 1（`nix run #presets.tui` 同样坏）。0.12.0 的 peer 已含 rc.2。判据：上游 bundles.tui 版本 >= 0.12.0（或内核 peer 检查不再失败）就删掉 `pkgs/dsh-tui/` 与 `pkgs/default.nix` 里的 `tui` 覆盖。改 hash 的办法：`hash = lib.fakeHash` 让报错打印 `got:`，填回去；`src` 先于 `pnpmDeps`（后者依赖前者）。
-- 上面那个 `bundles.tui` 覆盖要**两处**都改（`pkgs/default.nix`：`bundles = super.bundles.overrideScope …` **加** `dsh = super.dsh.override { bundles = self.bundles; }`）。只改 `bundles.tui` 消费方看到 0.12.0，但 `scope.dsh` 在 scope 建立时就通过 callPackage 绑定了**原始** bundles（上游 `overlays/default.nix` 的 `directoryPackages`），`overrideScope` 事后改 `bundles` 不会回溯改它内部的 `tuiBundle`（`pkgs/dsh/package.nix:83`）。`profiles.nix` 把 needsTui 的 `tuiBundle` 和 profile 自己声明的 bundles 一起 `lib.unique` 收集，resolver 于是报 `conflicting bundle metadata for @deepseek-harness-tui/dsh-tui: 0.11.2 … vs 0.12.0 …`，`dsh-profile-*-template` 失败。
-- `modules/home/apps/dsh.nix` 导入上游 `homeModules.default`（`programs.dsh` + profile 物化到 `~/.dsh/profiles/<materializedName>`）。只走 HM 一层，系统级不装。
-- 该文件里还有 `package = pkgs.dsh.dsh.overrideAttrs …` 注入 `dshBundleCheckTtyProfiles`：上游 `lib/mk-dsh-runtime.nix` 给 runtime 包传 `profiles = { }`（profile 由 `profileSeeder` 单独物化），于是 `dshBundleCheckTtyProfiles` 为空，`dshBundleCheckHook` 只能扫 `$DSH_HOME/profiles/*` 自动发现 profile，而发现出来的名字三个名单里都没有，被当普通 CLI 直接 `dsh --profile nix-tui --help` —— 没有 pty，Ink 抛 `Raw mode is not supported on the current process.stdin`，installCheckPhase 失败。名单用上游 `profileRequiresTty` 的同一套判据自己算（`profile.requiresTty` / `profile.requiresTui` / 任一 bundle 的 `passthru.requiresTui|requiresTty`），写进 `overrideAttrs` 才能活过 `mkDshRuntime` 的 `.override { … }`（override 只换函数实参，`__overrideAttrs` 最后才跑）。注意 `pkgs.dsh` 是 scope，包本身是 `pkgs.dsh.dsh`。
-- Profile 是 `mutable`：Nix 只在目录不存在时 seed，之后 `dsh plugin` / Settings UI 的改动不会被覆盖。重新 seed：`rm -rf ~/.dsh` 后 `nixos-rebuild switch`（HM 激活会跑 `dsh-sync-profiles`）。
-- Bundle 在 `profiles.tui.bundles` 里声明（插件式，按列表顺序覆盖）：`tui` 已在用；`subscriptions`（ChatGPT/Claude/Copilot 订阅 OAuth）、`memento`（跨会话记忆）、`modsearch`（内置搜索）、`subagent-codex`/`subagent-claude-code`（后者 unfree，需 `nixpkgs.config.allowUnfreePredicate`）都没启用。
-- API key 不要进 Nix：官方 DeepSeek 平台申请后在 dsh 设置里填（或 `export DEEPSEEK_API_KEY`）。想用订阅免 key 就换 `subscriptions` bundle。
-- 上游 Cachix（`deepseek-harness-nix.cachix.org`）已写进 `flake.nix` 的 `nixConfig`，但 **bundle 组合后的 dsh 大概率不在缓存里**：第一次 rebuild 要本地 build 一千多个 node 派生，提前 `nix build .#dsh` 预热。
-- 想试上游其它组合而不动本仓库：`nix run github:moraxyc/deepseek-harness.nix#presets.tui --accept-flake-config`。
 
 ## Performance & security baselines
 

@@ -3,19 +3,11 @@
 
   # Binary caches: CN mirrors (priority=5 means prefer mirrors
   # over the default cache.nixos.org priority 40).
-  # deepseek-harness 的公开 Cachix 放在最后（默认 priority 40，与 cache.nixos.org
-  # 同级）：dsh 的包和 bundle 几乎全部预构建在它上面，源码构建要跑整棵
-  # pnpm workspace 的 deploy。channel 镜像沿用 nixpkgs 发布密钥，Cachix 必须自带
-  # trusted key（上游 flake.nix 的 nixConfig 给的就是这一对）。
   nixConfig = {
     extra-substituters = [
       "https://mirrors.ustc.edu.cn/nix-channels/store?priority=5"
       "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store?priority=5"
       "https://mirror.sjtu.edu.cn/nix-channels/store?priority=5"
-      "https://deepseek-harness-nix.cachix.org"
-    ];
-    extra-trusted-public-keys = [
-      "deepseek-harness-nix.cachix.org-1:5NrkwLN9veNMhiINtU5ZeV4isXFhFsOwn6Ms7J1M+TA="
     ];
   };
 
@@ -79,20 +71,6 @@
     # AIRI — self-hosted Grok/Neuro-sama companion (Electron "tamagotchi" desktop)
     airi = {
       url = "github:moeru-ai/airi";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    # DeepSeek Harness (dsh) — 终端 AI CLI，上游自己维护 Nix 打包：
-    # overlay（pkgs.dsh.*）、nixosModules/homeModules（programs.dsh + profile 物化）。
-    # 上游是纯打包层（MIT），dsh 本体来自 DeepSeek 官方仓库。
-    # 本仓库消费方式：pkgs/default.nix 把它的 overlay 接到 pkgs.dsh（和其余
-    # 自定义包同一个审计面），modules/home/apps/dsh.nix 导入它的 homeModules
-    # 并声明 tui profile。
-    # 不用 follows = home-manager：上游 flake 根本没声明 home-manager 输入
-    # （homeModules 是普通路径模块，不经 inputs），加了只会触发 Nix 警告
-    # "override for a non-existent input"。
-    deepseek-harness = {
-      url = "github:moraxyc/deepseek-harness.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };

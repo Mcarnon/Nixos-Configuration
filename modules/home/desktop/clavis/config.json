@@ -6,8 +6,8 @@
     "desktopBackend": "quickshell",
     "transition": {
       "type": "fade",
-      "durationMs": 1000,
-      "easingMode": "customBezier"
+      "durationMs": 1500,
+      "easingMode": "cubic"
     },
     "overview": {
       "enabled": true,
@@ -17,25 +17,25 @@
     "autoCycle": {
       "enabled": false,
       "mode": "interval",
-      "interval": 300
+      "interval": 1800
     }
   },
   "theme": {
     "mode": "dark",
     "matugenScheme": "scheme-tonal-spot",
-    "cursorTheme": "",
+    "cursorTheme": "breeze_cursors",
     "cursorSize": 24,
-    "cursorHideWhenTyping": false,
-    "cursorHideAfterInactiveMs": 0,
+    "cursorHideWhenTyping": true,
+    "cursorHideAfterInactiveMs": 3000,
     "iconTheme": "Papirus-Dark",
     "fonts": {
-      "ui": "LXGW WenKai GB Screen"
+      "ui": "LXGW WenKai"
     }
   },
   "effects": {
-    "shellBackgroundOpacity": 0.8,
+    "shellBackgroundOpacity": 1,
     "shellBlurEnabled": true,
-    "shellBlurXray": true
+    "shellBlurXray": false
   },
   "keystone": {
     "style": "bangs",

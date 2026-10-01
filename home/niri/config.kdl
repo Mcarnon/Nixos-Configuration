@@ -75,7 +75,7 @@ spawn-sh-at-startup "systemctl --user import-environment WAYLAND_DISPLAY XDG_CUR
 
 include "niri-hardware.kdl"
 include "startup.kdl"
-include "blur.kdl" // 全局 blur 参数（只有 blur{} 参数块，没有透明度规则）
+include "blur.kdl" // global opacity/blur baseline — before windowrule.kdl so per-app rules win
 include "clavis-static.kdl" // SHORiN 静态 niri 配色（Clavis 已不再生成 colors.kdl，这是唯一来源）
 // Clavis 托管片段（scripts/system/niri_config.py 的 FRAGMENTS 元组）：
 //   effects, cursor, layer-rules, binds, outputs, minimize-animation
@@ -86,20 +86,20 @@ include "clavis-static.kdl" // SHORiN 静态 niri 配色（Clavis 已不再生�
 // 文件，下次 home-manager switch 又变回软链，include 丢失，来回抖动）。
 //
 // 顺序说明：
-//   - effects 只影响 niri 的 xray（Clavis 面板的模糊由它自己通过
-//     ext-background-effect 请求，不走 window-rule），放在 blur.kdl 之后。
+//   - effects 放在 blur.kdl 之后：blur.kdl 是静态基线，Clavis 的 xray/wlogout
+//     动态模糊要能覆盖它。
 //   - binds 放在本仓库 binds.kdl 之前：niri 遇到重复键位时按 include 顺序解析，
 //     我们让 Clavis 的托管片段先落地。两边在 Mod+Space / Mod+Slash /
 //     Mod+Shift+Space / Mod+N / Mod+A / Mod+Shift+T 上绑的是同一个动作，所以
 //     谁先谁后结果都一样 —— 关键是不要让"先绑 quick terminal、后绑
 //     shortcut-map"这种不同动作的重复键留在配置里。
-include optional=true "clavis/effects.kdl" // 只写 xray，X-Ray 开启时只有一行注释
+include optional=true "clavis/effects.kdl" // xray / wlogout blur，由 Clavis 生成
 include optional=true "clavis/cursor.kdl" // 光标覆盖，由 Clavis 生成
-include optional=true "clavis/layer-rules.kdl" // overview 壁纸 backdrop + 透明背景，由 Clavis 生成
+include optional=true "clavis/layer-rules.kdl" // 通知/录屏 layer 规则，由 Clavis 生成
 include optional=true "clavis/outputs.kdl" // 显示器配置，由 Clavis 生成
 include optional=true "clavis/minimize-animation.kdl" // 最小化动画，由 Clavis 生成
 include optional=true "clavis/binds.kdl" // Clavis 托管键位，见上方顺序说明
-include "windowrule.kdl" // 只保留 Clavis 三条面板规则，见该文件头部说明
+include "windowrule.kdl"
 include "supertab.kdl" // 带缩略图的 Alt/Ctrl+Tab 窗口切换（SHORiN 原版）
 include "binds.kdl"
 

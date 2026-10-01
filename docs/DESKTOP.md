@@ -14,8 +14,8 @@
 | `modules/nixos/desktop/niri.nix` | niri 会话 wrapper（关键：激活 graphical-session.target）+ `key`/字体 + 键盘 LED udev 规则 + 可选 RAPL setcap + polkit + fcitx5 服务 + xdg portal 路由 |
 | `home/niri/config.kdl` | niri 主配置（环境变量/光标/输入/布局/动画 + Clavis 托管片段 include） |
 | `home/niri/binds.kdl` | 全部快捷键（`key ipc call` + 音量/媒体/窗口/工作区） |
-| `home/niri/blur.kdl` | 全局 blur 参数（只剩 `blur{}` 参数块）。自加的全局 `opacity` / `background-effect` 规则已删 |
-| `home/niri/windowrule.kdl` | 只剩 Clavis 三条面板规则（主控 60%×85% 浮动、子对话框/文件选择器圆角）。逐应用透明度/悬浮/中文应用/PiP/快速终端规则**已按「照抄上游」删除** |
+| `home/niri/blur.kdl` | 全局毛玻璃基线（blur + 窗口透明度） |
+| `home/niri/windowrule.kdl` | 逐应用透明度/悬浮/中文应用规则 + layer 规则 |
 | `home/niri/supertab.kdl` | 带缩略图的 Alt/Ctrl+Tab 窗口切换 |
 | `home/niri/startup.kdl` | 启动项（Wayland 环境导入 / xwayland-satellite / nm-applet） |
 | `home/niri/clavis-static.kdl` | SHORiN niri 配色。**唯一**的 niri 强调色来源（Clavis 不再生成 colors 片段） |
@@ -47,16 +47,6 @@ Clavis 的 `scripts/system/niri_config.py` 会写这六个文件到
 `~/.config/niri/clavis/`：
 
 `effects`、`cursor`、`layer-rules`、`binds`、`outputs`、`minimize-animation`
-
-这六个片段里只有两个和「窗口/图层规则」有关，也就是上游窗口配置的全部内容：
-`effects`（X-Ray 开启时只有一行注释；关掉 X-Ray 才写 `^clavis-shell-` 命名空间和
-`clavis-control-center(-*)` / `clavis-file-picker` 两个 title 的
-`background-effect { xray false }`）和 `layer-rules`（overview 壁纸
-`place-within-backdrop` + `layout { background-color "transparent" }`）。
-其余窗口规则——逐应用透明度/悬浮、写死尺寸、中文应用、PiP、快速终端、全局
-`geometry-corner-radius`、通知排除录屏、`debug { honor-xdg-activation-with-invalid-serial }`
-——都是本仓库自加的，已按「照抄上游」删除。
-`home/niri/windowrule.kdl` 现在只留作者截图里能直接看到的 Clavis 面板浮动与圆角三条。
 
 `home/niri/config.kdl` 必须**提前**用 `include optional=true` 写好这六行，否则
 Clavis 会把它们标成 `not-connected`；而它自己的 "Set up" 会去 append
@@ -142,15 +132,7 @@ Clavis 的 matugen 模板**不含** GTK、fuzzel、foot、niri —— 这几个�
   给 `key-cpu-power` 加 `cap_dac_read_search`；失败不影响 CPU 占用率，只是
   功率那一项显示 unavailable。
 - 锁屏是 Clavis 自带；休眠组合 `Mod+Alt+P` 会锁屏后挂起。
-- 通知由 Clavis 接管。但「把 notification 命名空间排除出录屏」那条 `layer-rule`
-  是本仓库自加的，已按「照抄上游」删除 —— 副作用是录屏/共享屏幕时通知会入镜。
-  想要回来，在 `home/niri/windowrule.kdl` 末尾加：
-  `layer-rule { match namespace="^notification$"; block-out-from "screencast"; }`。
-- 逐应用窗口规则（spotify / pavucontrol / thunar 的浮窗尺寸、`Mod+Period` 快速
-  终端下拉、画中画、中文应用弹窗、brave 不透明、全局 `geometry-corner-radius 23`、
-  `debug { honor-xdg-activation-with-invalid-serial }`）都是自加的，已按「照抄上游」
-  删除。副作用：普通应用窗口回到 niri 默认的方角 + 不透明，快速终端变成按 0.5 列宽
-  平铺。要整体回退：`git show f0358ac:home/niri/windowrule.kdl > home/niri/windowrule.kdl`。
+- 通知由 Clavis 接管（`layer-rule` 里把 notification 命名空间排除出录屏）。
 - 旧 `modules/home/desktop/dynamic-wallpaper.nix`（mpvpaper 时代的壁纸轮换，依赖
   Noctalia 的 `noctalia msg`）已删除；壁纸轮换现在由 Clavis 的
   `wallpapers-rotate.py`（挂 Matugen post-hook）承担。

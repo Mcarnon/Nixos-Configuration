@@ -1,20 +1,31 @@
-// 全局 blur 参数（niri 26.04+ 的 background blur）。
+// Window blur (niri 26.04+).
 //
-// 这里只留参数块：passes / offset / noise / saturation 决定「模糊长什么样」，
-// 不是 window-rule。上游 Clavis 不写这个块，用的是 niri 自己的默认值；保留它
-// 是因为作者截图里那层奶白色玻璃感的参数与 NyxNiri 的 effects_normal.kdl 一致。
-// 想完全回到上游默认，把整个 blur{} 块删掉即可（niri 的 blur 参数块是可选的）。
+// Dynamic mode (xray false): every window blurs whatever is behind it each
+// frame — wallpaper AND other windows show through the glass. Heavier than
+// the old xray-static mode, and the blur briefly disappears during
+// open/close animations (niri limitation). Look ported from NyxNiri
+// (ech678/NyxNiri, configs/niri/effects_normal.kdl).
 //
-// 原来自加的两条 window-rule 已按「照抄上游」删除：
-//   window-rule { opacity 0.9; background-effect { blur true; xray false } }  ← 全局透明度基线
-//   window-rule { match is-focused=false; opacity 0.85 }                     ← 失焦变暗
-// Clavis 自己的面板是通过 ext-background-effect 协议向 niri 请求模糊的
-//（设置中心 → 通用 → Transparency and blur），不依赖 niri 的 window-rule；
-// 普通应用窗口的模糊也应该由应用自己请求。niri 的 blur{} 块只配置参数，
-// 不负责开启：谁请求，谁才有模糊。
+// This file is included BEFORE windowrule.kdl on purpose: it sets the
+// global opacity baseline (all 0.9, unfocused 0.85), and the per-app
+// `opacity` rules in windowrule.kdl override it for specific apps.
 blur {
     passes 3
     offset 2.3
     noise 0.001
     saturation 2
+}
+
+window-rule {
+    opacity 0.9
+    background-effect {
+        blur true
+        xray false
+    }
+}
+
+// Unfocused windows dim slightly for depth under the glass.
+window-rule {
+    match is-focused=false
+    opacity 0.85
 }

@@ -112,12 +112,7 @@ binds {
     // ---- Power user picks (shorin-derived, non-conflicting) ----
     // Drop-down floating terminal. Note: kitty is not installed in this config
     // (gui.nix only ships foot), so the fallback is what actually runs.
-    // --class 透传给 foot-themed -> foot。快速终端原来的 app-id="^quickterminal$"
-    // 浮窗规则已按「照抄上游」删除，所以现在它按默认 0.5 列宽平铺（不再是下拉浮窗）；
-    // 想要回来就在 home/niri/windowrule.kdl 里补：
-    //   window-rule { match app-id="^quickterminal$"; open-floating true;
-    //     default-column-width { proportion 0.7; } default-window-height { proportion 0.45; }
-    //     default-floating-position x=0 y=16 relative-to="top"; }
+    // --class 透传给 foot-themed -> foot，窗口规则仍按 app-id=quickterminal 匹配。
     Mod+Period hotkey-overlay-title="Quick terminal" { spawn-sh "foot-themed --class quickterminal"; }
     Mod+Slash hotkey-overlay-title="Shortcut map" { spawn-sh "key ipc call shortcut-map toggle"; }
     // Force-kill a stuck window (sends SIGTERM via niri IPC then escalates).

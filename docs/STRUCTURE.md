@@ -13,7 +13,7 @@ modules/
   home/
     shell/{fish.nix,tools.nix}
     desktop/{niri.nix,appearance.nix,clavis/}      # Clavis Shell（Quickshell 桌面壳）
-    apps/{cli,gui,media,network,ai,dsh,neovim}.nix
+    apps/{cli,gui,media,network,ai,neovim}.nix
     services/{miyu.nix}
   _templates/                                     # 新模块脚手架
 locales/{default.nix,zh-cn.nix}                   # locale/输入法/字体框架（canonical）

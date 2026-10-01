@@ -12,7 +12,6 @@
 - **Intel Iris Xe** graphics acceleration (VA-API) via `modules/hardware/intel.nix`
 - **Chinese environment** (locale + fonts + Fcitx5 input method)
 - **Miyu** terminal AI assistant via overlay `pkgs.miyu` + `home/modules/miyu.nix`
-- **DeepSeek Harness** (`dsh`) terminal AI CLI via upstream flake `deepseek-harness` + `modules/home/apps/dsh.nix`（bundle 组合 + mutable profile）
 - **Hardened baseline**: firewall default-closed, SSH keys-only (TODO flip after agenix), zram + BBR + GC/auto-optimise
 - **CI**: `nix flake check` (VM test `checks/miyu.nix`) in `.github/workflows/ci.yml`
 
@@ -46,7 +45,7 @@ git add -A && sudo nixos-rebuild switch --flake .#laptop
 │   ├── home/
 │   │   ├── shell/{fish.nix,tools.nix} # fish 含 SHORiN 风格函数（y/cat/ls/lt/la/sl/f）
 │   │   ├── desktop/{niri.nix,appearance.nix,clavis/}
-│   │   ├── apps/{cli,gui,media,network,ai,dsh,neovim}.nix
+│   │   ├── apps/{cli,gui,media,network,ai,neovim}.nix
 │   │   └── services/{miyu,cliphist}.nix
 │   └── _templates/{enable-option.nix,nested-import.nix,example-simple.nix}
 ├── roles/                       # 主机/用户组合（base/desktop）
@@ -180,7 +179,6 @@ Reinstalling later is the same flow — disko's `destroy` step handles the wipe.
 | `pkgs/m3shapes/` | `import M3Shapes` 的 QML 模块 |
 | `modules/nixos/desktop/ly.nix` | 登录界面（ly，TUI 显示管理器） |
 | `modules/home/services/miyu.nix` | Miyu TUI (`miyu config`); no prefill needed |
-| `modules/home/apps/dsh.nix` | DeepSeek Harness `dsh`（bundle 列表 / profile 模式；API key 在 dsh 自己的设置里填，或 `export DEEPSEEK_API_KEY`） |
 | `locales/zh-cn.nix` | input method (e.g. Rime) |
 
 ## Notes & optional enhancements
@@ -188,7 +186,6 @@ Reinstalling later is the same flow — disko's `destroy` step handles the wipe.
 - **impermanence**: btrfs 子卷直接持久化，需更激进可用 `nix-community/impermanence`。
 - **polkit auth agent**: `polkit_gnome` 在 `modules/nixos/desktop/niri.nix` 以 `graphical-session` 服务运行。
 - **Miyu**: `pkgs.miyu` overlay + `modules/home/services/miyu.nix` 的 `fish/conf.d/zz-miyu.fish` + `home.activation.miyuInit`；`miyu config` 配置。
-- **DeepSeek Harness (`dsh`)**: 包来自 `deepseek-harness` 输入的 overlay（`pkgs/default.nix` 转接 → `pkgs.dsh`），`modules/home/apps/dsh.nix` 导入上游 `homeModules` 声明 profile；profile 是 `mutable`，Nix 只在 `~/.dsh/profiles/nix-tui` 不存在时 seed。想重新 seed：`rm -rf ~/.dsh` 再 rebuild。
 - **Performance**: `flake-parts` perSystem 缓存，`nix.gc` weekly，`zramSwap` zstd，`BBR/fq`，`services.resolved` 缓存。
 - **Security**: `agenix` `/run/agenix.d` tmpfs，`networking.firewall` 默认关，`PermitRootLogin no`。
 - **XWayland**: off by default; configure `xwayland-satellite` per the niri docs if you need X11 apps.
