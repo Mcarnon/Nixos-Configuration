@@ -144,6 +144,22 @@ pkgs.runCommand "niri-config-validate"
       exit 1
     fi
 
+    # 全局窗口模糊：`opacity` 和 `background-effect { blur true }` 必须成对存在。
+    # 只写 blur 不写 opacity（或 opacity 1.0）时窗口是不透明的，背景效果被内容整个
+    # 盖住 —— niri 文档 Window Effects → Overview 明说这一点，症状就是「规则在、
+    # 但看不出效果」，属于最难查的一类静默失效。这里只要求「有 opacity 且小于 1」，
+    # 具体数值随便调。
+    grep -qF 'blur true' "$work/blur.kdl" \
+      || {
+        echo "blur.kdl lost the global blur rule (background-effect { blur true })" >&2
+        exit 1
+      }
+    grep -qE '^[[:space:]]*opacity 0\.' "$work/blur.kdl" \
+      || {
+        echo "blur.kdl needs an opacity < 1 (an opaque window hides its background effect)" >&2
+        exit 1
+      }
+
     # Every IPC call in binds.kdl must name a target/method that the shell
     # actually registers. The authoritative list lives in the shell source
     # (AppShell.qml, Modules/Keystone/Keystone.qml, Modules/Sidebars/*); the

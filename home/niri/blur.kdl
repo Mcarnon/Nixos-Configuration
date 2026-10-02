@@ -1,36 +1,60 @@
-// 全局 blur 参数（niri 26.04+ 的 background blur）。
+// 全局窗口模糊（niri 26.04+ 的 background blur）。
 //
-// 这里只留参数块：passes / offset / noise / saturation 决定「模糊长什么样」，
-// 不是 window-rule。上游 Clavis 不写这个块（用 niri 自己的默认值）；保留它是因为
-// 本仓库原来的玻璃感就是这组值（NyxNiri 的 effects_normal.kdl）。想完全回到
-// 上游默认，把整个 blur{} 块删掉即可（blur 参数块是可选的）。
+// 这里有两部分，**缺一不可**：
+//   1. 下面的 `blur {}` 参数块只决定「模糊长什么样」（passes / offset / noise /
+//      saturation），它不开启任何东西；
+//   2. `window-rule { opacity …; background-effect { blur true } }` 才是开启。
+//      ⚠️ niri 文档（Window Effects → Overview）明说：窗口必须是**半透明**的，
+//      否则背景效果被不透明的内容整个盖住，等于没开 —— 所以 opacity 和 blur
+//      是一对，删一个另一个就没意义。
+// 圆角：blur 跟随 `geometry-corner-radius`（niri 文档 Window Effects → Blur），
+// 全局那条在 windowrule.kdl 里（23 + clip-to-geometry），所以这里不用管。
 //
-// 关于「谁请求模糊」：Clavis 自己的面板是走 ext-background-effect 协议向 niri
-// 请求的（设置中心 → 通用 → Transparency and blur），不依赖 window-rule。
-// 普通应用窗口要玻璃感得有人替它们请求 —— 原来就是下面这段，现在注释着，
-// 取消注释即可恢复「应用窗口半透明 + 模糊」：
+// 关于 xray（niri 文档 Window Effects → Xray / Non-xray effects）：
+//   - 不写这一项 = niri 在「有其它背景效果（比如 blur）时自动开 xray true」：
+//     模糊的是**壁纸**，只算一次、所有窗口共用 —— 便宜，而且窗口开关动画、
+//     拖动平铺窗口时模糊都不会掉。平铺窗口彼此不重叠，观感和下面那种几乎一样。
+//   - 写 `xray false` = 真·玻璃（模糊窗口下面真实的内容）。代价更大（下面内容一变
+//     就要重算），且上游标为 **experimental**：窗口开/关动画期间、拖动平铺窗口时
+//     模糊会消失。想要那种观感，把下面 background-effect 里那行注释放开即可。
+// 本仓库默认用前者（稳、省）。Clavis 自己面板/浮窗的 xray 由它设置中心单独管
+//（config.json 的 effects.shellBlurXray，走 ext-background-effect 协议，
+//  不经过这里的 window-rule）。
 //
-// window-rule {
-//     opacity 0.9
-//     background-effect {
-//         blur true
-//         xray false
-//     }
-// }
-//
-// window-rule {
-//     match is-focused=false
-//     opacity 0.85
-// }
-//
-// 注意两点：
-//   - niri 的 blur{} 只配置参数、不负责开启；没有上面的规则、应用自己也不请求时，
-//     窗口就是不透明无模糊的（niri 默认）；
-//   - xray false 是 niri 的实验分支（"Non-xray effects (experimental)"）：
-//     窗口开关动画和拖动平铺窗口时模糊会消失，代价也更高。
+// 例外与叠加都写在 windowrule.kdl（它在本文件**之后** include，后写的规则覆盖
+// 先写的）：
+//   - imv / mpv / celluloid / Picture-in-Picture → opacity 1.0 + blur false；
+//   - Clavis 自己的浮窗（control-center / file-picker）→ opacity 1.0
+//     （它自己已经画了 0.8 透明 + 模糊，再叠全局 0.9 会变成 0.72）；
+//   - 想让某个窗口临时不透明：Mod+Shift+O（niri 的 toggle-window-rule-opacity）。
+// ⚠️ 浏览器里的全屏视频同样会被这条全局规则变成 0.9 透明（niri 没有
+//   is-fullscreen 这类匹配器，没法按「是否全屏」排除）；要么用 Mod+Shift+O 临时
+//   切掉，要么把该应用的 app-id 追加进 windowrule.kdl 里那条 1.0 的规则。
+
 blur {
     passes 3
     offset 2.3
     noise 0.001
     saturation 2
+}
+
+// 全局：所有窗口半透明 + 背景模糊（这一条没有 match = 匹配一切窗口）。
+window-rule {
+    opacity 0.9
+
+    background-effect {
+        blur true
+
+        // 取消注释 = 真·玻璃（模糊下层内容，experimental，见文件头说明）：
+        // xray false
+    }
+}
+
+// 未聚焦的窗口再透一点，做出层级感。
+// 注意 niri 的语义：层表面（Clavis 面板/启动器）拿到键盘焦点时，普通窗口全都不
+// 匹配 is-focused=true，也就是在这一瞬间**所有**窗口都会变成 0.85 —— 这是 niri
+// 文档写明的行为，不是这里写错了。
+window-rule {
+    match is-focused=false
+    opacity 0.85
 }

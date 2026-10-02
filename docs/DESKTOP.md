@@ -14,8 +14,8 @@
 | `modules/nixos/desktop/niri.nix` | niri 会话 wrapper（关键：激活 graphical-session.target）+ `key`/字体 + 键盘 LED udev 规则 + 可选 RAPL setcap + polkit + fcitx5 服务 + xdg portal 路由 |
 | `home/niri/config.kdl` | niri 主配置（环境变量/光标/输入/布局/动画 + Clavis 托管片段 include）。⚠️ 运行时那份 `~/.config/niri/config.kdl` 是可写副本，不是 store 软链 |
 | `home/niri/binds.kdl` | 全部快捷键（`key ipc call` + 音量/媒体/窗口/工作区） |
-| `home/niri/blur.kdl` | `blur{}` 参数块 + 注释掉的「应用窗口半透明 + 模糊」全局基线（取消注释即恢复） |
-| `home/niri/windowrule.kdl` | 全局圆角 23 + Clavis 面板浮窗（主控 60%×85%，圆角 23/28/30）+ 快速终端下拉 + 其它应用浮窗尺寸（920×600 / 620×640 / 1100×750，取自 Clavis 源码窗口定义）+ 中文应用弹窗 + 通知排除录屏 + **backdrop 兜底规则**（概览/切工作区时壁纸后面那层背景） |
+| `home/niri/blur.kdl` | `blur{}` 参数块 + **全局窗口半透明 + 背景模糊**（`opacity 0.9`，未聚焦 0.85，`background-effect { blur true }`）。默认走 niri 自动开的 xray（省、动画不掉模糊）；想要「真·玻璃」把里面 `xray false` 那行注释放开 |
+| `home/niri/windowrule.kdl` | 全局圆角 23 + Clavis 面板浮窗（主控 60%×85%，圆角 23/28/30，opacity 1.0 以免叠上全局 0.9）+ 快速终端下拉 + 其它应用浮窗尺寸（920×600 / 620×640 / 1100×750，取自 Clavis 源码窗口定义）+ 图片/视频/PiP 强制不透明无模糊 + 中文应用弹窗 + 通知排除录屏 + **backdrop 兜底规则**（概览/切工作区时壁纸后面那层背景） |
 | `home/niri/supertab.kdl` | 带缩略图的 Alt/Ctrl+Tab 窗口切换 |
 | `home/niri/startup.kdl` | 启动项（Wayland 环境导入 / xwayland-satellite / nm-applet） |
 | `home/niri/clavis-static.kdl` | SHORiN niri 配色。**唯一**的 niri 强调色来源（Clavis 不再生成 colors 片段） |
@@ -245,9 +245,15 @@ Clavis 的 matugen 模板**不含** GTK、fuzzel、foot、niri —— 这几个�
     常用，而且浏览器/blender 本来就会在开窗后自己请求满屏（niri 对「initial configure
     之后」的请求照办、规则拦不住），与其先开 1770 再跳一下，不如由 niri 一次给满屏。
     **B 组（obsidian / obs-studio / code / jetbrains…）**：`proportion 1.0` = 工作区
-    整宽但两侧照留 gaps = 1770px（图1 的观感）。Obsidian 除了 app-id 还补了一条
-    **标题兜底**匹配（`[Oo]bsidian v?[0-9]`，niri 的多个 match 是 OR），因为它的
-    app-id 上报形态各机器不一。
+    整宽但两侧照留 gaps = 1770px（图1 的观感）。Obsidian 单独两条规则、匹配放到最宽：
+    app-id 只要求**含有** `obsidian`（大小写用 `[Xx]` 类覆盖，不加 `^…$`、也不用 `(?i)`）。
+    本机实测它的 `App ID` 是 **`md.Obsidian`**（标题 `… - Obsidian 1.13.7`）——
+    「md. 小写 + Obsidian 大写」这种混合写法，锚定枚举全都会漏；而漏掉时的表现是
+    窗口按全局兜底的 1155×878 开出来（`niri msg pick-window` 可直接读出这两个数）。
+    另外还有一条**标题兜底**（同样只要求含 `obsidian`，但 `exclude` 掉终端 app-id，
+    免得 nvim 打开 vault 文件时把 foot 也放大）。
+    教训：niri 的 app-id 正则是**区分大小写**且在字符串里**搜**，枚举写法一定会漏，
+    「点了 Mod+F 能变大、开窗却还是小的」就等于「规则没匹配上」而不是「尺寸写错」。
     浮动只有「设置」（Clavis 主控窗 0.6×0.85、nm-connection-editor /
     nwg-look 这类设置小工具 620×640）和「文件管理器」（0.6×0.85），外加它们自己的
     对话框、文件选择器、图片/视频查看器、PiP、聊天记录弹窗这类临时窗口。
@@ -257,8 +263,25 @@ Clavis 的 matugen 模板**不含** GTK、fuzzel、foot、niri —— 这几个�
     layout（这是 Clavis 设置中心「通用 → Displays」自己写的，不是本仓库的）。
     症状：间距变小、窗口变全宽。窗口宽度有 windowrule.kdl 兜着，gaps 没有 Plan B，
     所以改完窗口样式先 `cat ~/.config/niri/clavis/outputs.kdl` 确认没有 layout 块。
-- 应用窗口的全局半透明 + 模糊（`opacity 0.9` / `background-effect { blur true; xray false }`）
-  是自加的，现在以注释形式留在 `home/niri/blur.kdl` 里，取消注释即可恢复。
+- **应用窗口的全局半透明 + 模糊**（`home/niri/blur.kdl`，2026-10 起默认开启）：
+  - 两条规则缺一不可：`opacity 0.9` + `background-effect { blur true }`。niri 文档
+    （Window Effects → Overview）明说窗口必须半透明，否则背景效果被不透明内容盖住
+    —— 只想要模糊不想要透明是做不到的。
+  - **xray**：默认不写 = niri 在有 blur 时自动开 `xray true`（模糊壁纸，只算一次、
+    所有窗口共用；平铺窗口互不重叠，观感几乎一样，而且开窗动画/拖动时模糊不掉）。
+    想要「真·玻璃」（模糊窗口下面的真实内容）就把 `blur.kdl` 里 `xray false` 的注释
+    放开 —— 代价是上游标为 experimental：**开/关窗动画期间与拖动平铺窗口时模糊会
+    消失**，且内容一变就要重算（Intel 核显上更明显）。
+  - 例外（`windowrule.kdl`，写在后、覆盖全局）：`imv`/`mpv`/`celluloid` 与
+    Picture-in-Picture 强制 `opacity 1.0` + `blur false`（半透明会毁掉画面）；
+    Clavis 自己的主控窗/子对话框/文件选择器强制 `opacity 1.0`（它自己已经画了
+    0.8 透明 + 模糊，叠上全局 0.9 会变成 0.72）。
+  - ⚠️ niri 没有 `is-fullscreen` 这类匹配器，所以**浏览器里的全屏视频也会变成 0.9
+    透明**。临时处理：`Mod+Shift+O`（niri 的 `toggle-window-rule-opacity`）切掉当前
+    窗口的不透明规则；长期处理：把该应用的 app-id 追加进 windowrule.kdl 那条 1.0 的
+    规则（`niri msg pick-window` 点一下窗口能查到 app-id）。
+  - 需要 niri ≥ 26.04（`background-effect` 与 `blur{}` 都是 26.04 引入的）；本仓库
+    的 niri 就是 26.04+，`niri validate` 会挡住语法回退。
 - 旧 `modules/home/desktop/dynamic-wallpaper.nix`（mpvpaper 时代的壁纸轮换，依赖
   Noctalia 的 `noctalia msg`）已删除；壁纸轮换现在由 Clavis 的
   `wallpapers-rotate.py`（挂 Matugen post-hook）承担。

@@ -8,7 +8,7 @@
 - hardware HAL (`hardware.intel.enable`)
 - **agenix** secrets management (age-encrypted, decrypt only on the target host)
 - **roles/** host composition (base/desktop) — cross-host reuse without double-eval
-- **niri** scrollable-tiling Wayland compositor + **Clavis Shell**（Quickshell 桌面壳，源码打包）：ly 登录 + 状态栏 + 启动器 + 控制中心 + 锁屏 + M3 动态主题 + niri 动态模糊 + 概览/切工作区 backdrop 壁纸 + 统一光标（Bibata-Modern-Ice，niri/GTK/X11 同名）
+- **niri** scrollable-tiling Wayland compositor + **Clavis Shell**（Quickshell 桌面壳，源码打包）：ly 登录 + 状态栏 + 启动器 + 控制中心 + 锁屏 + M3 动态主题 + 全局窗口半透明/模糊 + 概览/切工作区 backdrop 壁纸 + 统一光标（Bibata-Modern-Ice，niri/GTK/X11 同名）
 - **Intel Iris Xe** graphics acceleration (VA-API) via `modules/hardware/intel.nix`
 - **Chinese environment** (locale + fonts + Fcitx5 input method)
 - **Miyu** terminal AI assistant via overlay `pkgs.miyu` + `home/modules/miyu.nix`

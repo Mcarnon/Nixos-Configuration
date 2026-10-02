@@ -94,7 +94,36 @@ window-rule {
     default-column-width { proportion 1.0; }
 }
 
-// ---- 大窗口 B：留 gaps 的大窗口（图1；左右仍各留一个 gaps，不是贴边）----
+// ---- 大窗口 B：Obsidian（匹配放到最宽，别再靠枚举）----
+// 线索：Obsidian 窗口按 Mod+F（maximize-column）能变宽 —— 那正是这条规则要给的宽度
+// （proportion 1.0 = 1770px），说明**规则没匹配到窗口**，不是尺寸写错。
+//
+// 本机实测（`niri msg pick-window` 点出来的原话）：
+//     App ID: "md.Obsidian"
+//     Title:  "烧烤 - Mcarnon的三部曲 - Obsidian 1.13.7"
+// 「md. 小写 + Obsidian 大写」这个混合写法，把之前锚定枚举的 obsidian /
+// Obsidian / md.obsidian.Obsidian / obsidian[0-9.-]* 全躲过去了 —— 这就是它一直
+// 是小窗的根因（当时窗口尺寸 1155×878，正好是全局兜底 2/3）。
+//
+// 所以这里改成「搜」而不是「枚举」：
+//   1. 不枚举、也不加 ^…$ —— niri 的正则是在 app-id 里**搜**，只要有 obsidian 这一段
+//      就命中（obsidian / Obsidian / md.obsidian / md.Obsidian / md.obsidian.Obsidian /
+//      obsidian-1.9.14 / net.obsidian.Obsidian …）；
+//   2. 大小写用 [Xx] 字符类覆盖，不用 (?i) 内联开关（少一个「版本差异导致解析失败」的风险）。
+window-rule {
+    match app-id=r#"[Oo][Bb][Ss][Ii][Dd][Ii][Aa][Nn]"#
+    default-column-width { proportion 1.0; }
+}
+
+// 标题兜底：万一它的 app-id 完全不叫 obsidian（Electron / XWayland 下有可能报成进程名）。
+// 显式 exclude 掉终端 —— 否则 nvim 打开 vault 里的文件时，标题里带路径的终端也会被放大。
+window-rule {
+    match title=r#"[Oo][Bb][Ss][Ii][Dd][Ii][Aa][Nn]"#
+    exclude app-id=r#"^([Ff]oot|footclient|[Aa]lacritty|[Kk]itty|org\.wezfurlong\.wezterm|com\.mitchellh\.ghostty)$"#
+    default-column-width { proportion 1.0; }
+}
+
+// ---- 大窗口 B 其余：obs-studio / code / jetbrains ----
 // 实测窗口矩形 x 75..1838（宽 1762px = 屏宽 91.8%），左右 75 / 82px 的留白就是 gaps。
 // 也就是说 niri 的 proportion 1.0 指「工作区宽 1920」，两侧的 gaps 照样扣掉 →
 // 1920 − 2×75 = 1770px，窗口永远碰不到屏幕边缘，和截图一致。
@@ -104,23 +133,20 @@ window-rule {
 // 想让大窗口比工作区更窄（比如留给下一列一个缝隙），把下面的 proportion 改成
 // p = (目标宽度 + gaps) / (工作区宽 − gaps)，例如让窗口 ≈1620px 就写 0.92。
 // 以后想加应用，把它追加进这个正则即可；app-id 用 `niri msg windows`（看 App ID 行）
-// 或 `niri msg pick-window` 点一下窗口查。
-// ⚠️ 大小写要自己覆盖：niri 的 app-id 正则**区分大小写**，所以每项写成 [Xx] 形式，
-// 别再退回纯小写。
+// 或 `niri msg pick-window` 点一下窗口查（点一下就会打印 App ID + Title，最省事）。
+// ⚠️ 大小写要自己覆盖：niri 的 app-id 正则**区分大小写**，所以每项写成 [Xx] 形式。
 window-rule {
     match app-id=r#"^([Oo]bsidian[0-9.-]*|md\.[Oo]bsidian\.[Oo]bsidian|com\.obsproject\.Studio|[Cc]ode|[Cc]ode-oss|[Cc]odium|jetbrains-[a-z-]+)$"#
-    // Obsidian 的 app-id 各机器上报形态不一（obsidian / Obsidian / md.obsidian.Obsidian /
-    // 带版本号），而且 niri 的多个 match 之间是「任一命中即可」（OR），所以补一条
-    // 标题兜底：它的标题结尾永远带 "Obsidian <版本号>"（别的窗口标题不会长这样，
-    // 终端里打开的 obsidian vault 路径不会带 "Obsidian 1.9" 这种版本号）。
-    // 还不行的话，`niri msg windows` 里看它那行 App ID，直接加进上面的正则。
-    match title=r#"[Oo]bsidian v?[0-9]"#
     default-column-width { proportion 1.0; }
 }
 
 // ---- 设置：Clavis 主控窗（浮动，0.6 × 0.85 = 图3 的 1143×890 @1920×1080）----
 // title 精确等于 clavis-control-center，且没有 parentWindow（见
 // Modules/ControlCenter/ControlCenterWindow.qml），niri 不会自动浮动它。
+// opacity 1.0：这条窗口自己就画了 0.8 的背景 + 通过 ext-background-effect 请求模糊
+// （config.json 的 effects.shellBackgroundOpacity/shellBlurEnabled），blur.kdl 那条
+// 全局 0.9 会再乘上去变成 0.72 —— 面板会比设计稿更透。这里把它还原成 1.0，
+// 让「透明 + 模糊」只由 Clavis 自己那一层决定。
 window-rule {
     match title="^clavis-control-center$"
     open-floating true
@@ -128,6 +154,7 @@ window-rule {
     default-window-height { proportion 0.85; }
     geometry-corner-radius 23
     clip-to-geometry true
+    opacity 1.0
 }
 
 // ---- 文件管理器：浮动，尺寸与上面的设置窗一致 ----
@@ -158,11 +185,13 @@ window-rule {
 // 高度仍由窗口自己声明。想让它们完全按客户端 implicitWidth/Height 开，
 // 在这两条规则里补一行 `default-column-width {}` 即可（niri 文档：这种写法
 // 就是给特定窗口用的，niri 会发 (0, H) 的初始 configure，由客户端定宽）。
+// opacity 1.0 的理由同上面的主控窗（Clavis 自己画 0.8 + 模糊，别再叠全局 0.9）。
 window-rule {
     match title="^clavis-control-center-[a-z-]+$"
     geometry-corner-radius 28
     clip-to-geometry true
     open-floating true
+    opacity 1.0
 }
 
 window-rule {
@@ -170,6 +199,7 @@ window-rule {
     geometry-corner-radius 30
     clip-to-geometry true
     open-floating true
+    opacity 1.0
 }
 
 // ---- 快速终端（Mod+Period）：顶部下拉浮窗 ----
@@ -182,19 +212,31 @@ window-rule {
     default-floating-position x=0 y=16 relative-to="top"
 }
 
-// ---- 图片/视频查看器：浮动 + 必须不透明（半透明会把画面搞花）----
+// ---- 图片/视频查看器：浮动 + 必须不透明、必须无模糊 ----
+// blur.kdl 的全局规则会给所有窗口 0.9 透明 + 背景模糊；对放画面/放视频的窗口来说
+// 那是灾难（画面透出壁纸、糊成一团）。opacity 是「换成别的值」，blur false 是
+// niri 文档里唯一的「强制关掉」写法（window-rule → background-effect：`blur`
+// set to true to enable blur behind this window, or false to force-disable it）。
 window-rule {
     match app-id=r#"^(imv|mpv|celluloid)$"#
     open-floating true
     opacity 1.0
+    background-effect {
+        blur false
+    }
 }
 
+// 画中画同理（内容也是视频）。想让它也跟着全局玻璃效果，把这两行删掉即可。
 window-rule {
     match title="^Picture-in-Picture$"
     open-floating true
     default-column-width { fixed 480; }
     default-window-height { fixed 270; }
     default-floating-position x=16 y=16 relative-to="bottom-right"
+    opacity 1.0
+    background-effect {
+        blur false
+    }
 }
 
 // ---- 通用文件/首选项对话框：给个固定尺寸，避免浮窗过小或撑满 ----
