@@ -64,6 +64,16 @@ sudo nix store optimise           # dedupe (auto-optimise-store is already on)
 - **Firmware**: `sudo fwupdmgr refresh && sudo fwupdmgr update` (BIOS / SSD / etc.).
 - **CPU microcode**: `hardware.intel.enable = true` (`modules/nixos/hardware/intel.nix`) — HAL, set per host, microcode ships with kernel.
 - **GPU / VA-API**: `intel-media-driver` (iHD, Iris Xe) via same HAL; verify with `vainfo`.
+- **Gaomon (高漫) M6 tablet**: `hardware.gaomon.enable = true`
+  (`modules/nixos/hardware/tablet.nix`) enables OpenTabletDriver instead of the
+  vendor driver (which has no Linux build and mis-reads the X11 cursor position
+  under Wayland — the pen jumps back to a fixed spot on niri). Tune mappings in
+  `otd-gui`; its settings live in `~/.config/OpenTabletDriver/` as runtime files,
+  so do not symlink them from the store. The toggle also blacklists
+  `hid-uclogic`/`wacom` **globally**: if OTD ever stops recognizing the tablet,
+  set `hardware.opentabletdriver.blacklistedKernelModules = []` and turn the
+  toggle off to fall back to the in-kernel driver. The M6's touch ring/wheel is
+  not parsed by OTD — only the pen and its 13 aux buttons.
 - **Diagnostics** (installed by `modules/nixos/core/diagnostics.nix`):
   `lspci`, `lsusb`, `dmidecode`, `smartctl -a /dev/nvme0n1`, `nvme list`,
   `sensors`, `powertop`, `inxi -F`.

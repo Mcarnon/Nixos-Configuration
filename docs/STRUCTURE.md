@@ -6,7 +6,7 @@ modules/
   nixos/
     core/{boot.nix,nix.nix,shell.nix,persist.nix,kernel.nix,cli.nix,diagnostics.nix}
     desktop/{niri.nix,ly.nix,audio.nix}          # 登录 ly, pipewire->audio
-    hardware/{intel.nix,nvidia.nix,power.nix,disko.nix}
+    hardware/{intel.nix,nvidia.nix,power.nix,disko.nix,tablet.nix}
     network/{manager.nix,openssh.nix,firewall.nix}
     security/{hardening.nix,secrets.nix,sops.nix}
     i18n/ -> ../../locales                        # 垫片，canonical 在 locales/

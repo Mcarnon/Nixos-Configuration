@@ -10,6 +10,7 @@
 - **roles/** host composition (base/desktop) — cross-host reuse without double-eval
 - **niri** scrollable-tiling Wayland compositor + **Clavis Shell**（Quickshell 桌面壳，源码打包）：ly 登录 + 状态栏 + 启动器 + 控制中心 + 锁屏 + M3 动态主题 + 全局窗口半透明/模糊 + 概览/切工作区 backdrop 壁纸 + 统一光标（Bibata-Modern-Ice，niri/GTK/X11 同名）
 - **Intel Iris Xe** graphics acceleration (VA-API) via `modules/hardware/intel.nix`
+- **Gaomon (高漫) M6 tablet** via OpenTabletDriver — `hardware.gaomon.enable` (`modules/nixos/hardware/tablet.nix`)
 - **Chinese environment** (locale + fonts + Fcitx5 input method)
 - **Miyu** terminal AI assistant via overlay `pkgs.miyu` + `home/modules/miyu.nix`
 - **DeepSeek Harness** (`dsh`) terminal AI CLI via upstream flake `deepseek-harness` + `modules/home/apps/dsh.nix`（bundle 组合 + mutable profile）
@@ -39,7 +40,7 @@ git add -A && sudo nixos-rebuild switch --flake .#laptop
 │   ├── nixos/
 │   │   ├── core/{boot.nix,nix.nix,shell.nix,persist.nix,kernel.nix,cli.nix,diagnostics.nix}
 │   │   ├── desktop/{niri.nix,ly.nix,audio.nix}   # niri拆ly(登录), pipewire->audio
-│   │   ├── hardware/{intel.nix,nvidia.nix,power.nix,disko.nix}
+│   │   ├── hardware/{intel.nix,nvidia.nix,power.nix,disko.nix,tablet.nix}
 │   │   ├── network/{manager.nix,openssh.nix,firewall.nix}
 │   │   ├── security/{hardening.nix,secrets.nix,sops.nix}
 │   │   └── i18n/ -> ../../locales                    # locale框架垫片

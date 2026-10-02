@@ -21,6 +21,7 @@ in
 
   # Hardware HAL — single toggle per vendor (scale: add `hardware.nvidia.enable` for next host)
   hardware.intel.enable = true;
+  hardware.gaomon.enable = true; # 高漫 M6 数位板（OpenTabletDriver）
 
   # ---- Identity ----
   networking.hostName = "loliconOS"; # TODO: change as needed

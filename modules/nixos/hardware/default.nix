@@ -4,5 +4,6 @@
     ./nvidia.nix
     ./power.nix
     ./disko.nix
+    ./tablet.nix
   ];
 }
