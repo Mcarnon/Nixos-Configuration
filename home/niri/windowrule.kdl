@@ -53,16 +53,30 @@
 // 或者在 Clavis 设置里把间距也调成 75 来对齐。
 // 排查：cat ~/.config/niri/clavis/outputs.kdl，把里面的 layout {} 删掉再重进会话。
 
-// ---- 全局：圆角 + 兜底宽度（小窗口）----
+// ---- 全局：圆角 + 兜底宽度（小窗口）+ 挡住「自动最大化到边」----
 // 23 = Appearance.qml 的 rounding.large。niri 的 geometry-corner-radius 同时决定
 // 背景模糊的圆角（niri 文档：用 window-rule 开的 blur 跟随 geometry-corner-radius），
 // 所以这条不加，圆角和模糊都会变成方角。
 // 宽度是「小窗口」兜底：niri 按出现顺序处理 window-rule，后面的规则覆盖前面的，
 // 所以下面的大窗口、浮窗规则都能盖掉它。
+//
+// ⚠️ open-maximized-to-edges false 是治「浏览器/zed 一开就占满屏」的关键一条：
+// niri 有三种「变大」的状态，只有这一种不看 gaps：
+//   - maximize-column（Mod+F）= **等价于 proportion 1.0**，仍然留 gaps 和 border
+//     （niri 文档 Fullscreen-and-Maximize 原话）—— 所以正常的 proportion 1.0 大窗口
+//     应该是 1920 − 2×75 = 1770px，四周留白 75，不会贴边；
+//   - maximize-window-to-edges（Mod+M / 双击标题栏 / 点窗口自带方形按钮）：
+//     「no struts, gaps, or borders」→ 真正的贴边满屏；
+//   - fullscreen（Mod+Shift+F / F11）：连顶栏一起盖住。
+// 而文档同时写明：客户端会**记住**这个状态并在下次打开时再次请求（多数在 initial
+// configure 之后），只有本规则能在「打开时」把它挡下去 —— 不挡的话，浏览器/zed
+// 会次次自己最大化到边，跟你写的 proportion 完全无关。
+// 本规则只作用于「打开瞬间」：想手动 Mod+M 或 F11 仍然照常。
 window-rule {
     geometry-corner-radius 23
     clip-to-geometry true
     default-column-width { proportion 0.6667; }
+    open-maximized-to-edges false
 }
 
 // ---- 大窗口：工作区整宽（图1；左右仍各留一个 gaps，不是贴边）----
