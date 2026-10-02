@@ -15,7 +15,7 @@
 | `home/niri/config.kdl` | niri 主配置（环境变量/光标/输入/布局/动画 + Clavis 托管片段 include）。⚠️ 运行时那份 `~/.config/niri/config.kdl` 是可写副本，不是 store 软链 |
 | `home/niri/binds.kdl` | 全部快捷键（`key ipc call` + 音量/媒体/窗口/工作区） |
 | `home/niri/blur.kdl` | `blur{}` 参数块 + **全局窗口半透明 + 背景模糊**（`opacity 0.9`，未聚焦 0.85，`background-effect { blur true }`）。默认走 niri 自动开的 xray（省、动画不掉模糊）；想要「真·玻璃」把里面 `xray false` 那行注释放开 |
-| `home/niri/windowrule.kdl` | 全局圆角 23 + Clavis 面板浮窗（主控 60%×85%，圆角 23/28/30，opacity 1.0 以免叠上全局 0.9）+ 快速终端下拉 + 其它应用浮窗尺寸（920×600 / 620×640 / 1100×750，取自 Clavis 源码窗口定义）+ 图片/视频/PiP 强制不透明无模糊 + 中文应用弹窗 + 通知排除录屏 + **backdrop 兜底规则**（概览/切工作区时壁纸后面那层背景） |
+| `home/niri/windowrule.kdl` | 全局圆角 23 + Clavis 面板浮窗（主控 60%×85%，圆角 23/28/30，opacity 1.0 以免叠上全局 0.9）+ 快速终端下拉 + 其它应用浮窗尺寸（920×600 / 620×640 / 1100×750，取自 Clavis 源码窗口定义）+ 图片/视频/PiP/Blender 强制不透明无模糊（Blender 是上色/渲染需要真实颜色）+ 中文应用弹窗 + 通知排除录屏 + **backdrop 兜底规则**（概览/切工作区时壁纸后面那层背景） |
 | `home/niri/supertab.kdl` | 带缩略图的 Alt/Ctrl+Tab 窗口切换 |
 | `home/niri/startup.kdl` | 启动项（Wayland 环境导入 / xwayland-satellite / nm-applet） |
 | `home/niri/clavis-static.kdl` | SHORiN niri 配色。**唯一**的 niri 强调色来源（Clavis 不再生成 colors 片段） |
@@ -274,6 +274,10 @@ Clavis 的 matugen 模板**不含** GTK、fuzzel、foot、niri —— 这几个�
     消失**，且内容一变就要重算（Intel 核显上更明显）。
   - 例外（`windowrule.kdl`，写在后、覆盖全局）：`imv`/`mpv`/`celluloid` 与
     Picture-in-Picture 强制 `opacity 1.0` + `blur false`（半透明会毁掉画面）；
+    **Blender** 同样强制 `opacity 1.0` + `blur false` —— 0.9 透明会把视口/渲染结果
+    和壁纸做 alpha 混合，看到的不是真实颜色，上色和渲染时不能用；模糊本身也会在
+    渲染期间持续吃核显。想再排除别的颜色敏感应用（Krita / GIMP / Inkscape /
+    darktable / Resolve…）就往那条 `[Bb]lender` 正则里追加 app-id。
     Clavis 自己的主控窗/子对话框/文件选择器强制 `opacity 1.0`（它自己已经画了
     0.8 透明 + 模糊，叠上全局 0.9 会变成 0.72）。
   - ⚠️ niri 没有 `is-fullscreen` 这类匹配器，所以**浏览器里的全屏视频也会变成 0.9

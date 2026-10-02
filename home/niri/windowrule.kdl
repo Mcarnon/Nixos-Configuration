@@ -239,6 +239,24 @@ window-rule {
     }
 }
 
+// ---- Blender：必须不透明、必须无模糊（上色/渲染时颜色不能被玻璃效果污染）----
+// 两个后果都来自 blur.kdl 那条全局规则：0.9 的窗口透明度会把视口/渲染结果和壁纸
+// 做 alpha 混合（看到的颜色不是真实颜色），背景模糊还会在渲染时持续吃掉核显。
+// 所以这里强制 opacity 1.0 + blur false（后者是 niri 文档里唯一的「强制关掉」写法）。
+// 写法用「搜」而不是「枚举」：本仓库装的是 nixpkgs 的原生 Blender，app-id 通常是
+// 小写 blender，但历史上报过 Blender / blender-4.x / Flatpak 的 org.blender.Blender，
+// 正则里只写 [Bb]lender 就能全覆盖（和上面 Obsidian 那条同一个教训，见文件头）。
+// 想再排除别的「颜色敏感」应用（Krita / GIMP / Inkscape / darktable / Resolve…），
+// 把它们按 | 追加进这条正则即可；反过来想让某个应用也参与全局玻璃效果，
+// 就把它从这条正则里拿掉。
+window-rule {
+    match app-id=r#"[Bb]lender"#
+    opacity 1.0
+    background-effect {
+        blur false
+    }
+}
+
 // ---- 通用文件/首选项对话框：给个固定尺寸，避免浮窗过小或撑满 ----
 window-rule {
     match title="^(Open|Save|Save As|Save File|Open File|Select File|Select Folder|Choose File|Choose Folder).*"

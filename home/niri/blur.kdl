@@ -24,6 +24,7 @@
 // 例外与叠加都写在 windowrule.kdl（它在本文件**之后** include，后写的规则覆盖
 // 先写的）：
 //   - imv / mpv / celluloid / Picture-in-Picture → opacity 1.0 + blur false；
+//   - Blender → opacity 1.0 + blur false（上色/渲染要真实颜色，玻璃效果会污染）；
 //   - Clavis 自己的浮窗（control-center / file-picker）→ opacity 1.0
 //     （它自己已经画了 0.8 透明 + 模糊，再叠全局 0.9 会变成 0.72）；
 //   - 想让某个窗口临时不透明：Mod+Shift+O（niri 的 toggle-window-rule-opacity）。

@@ -101,7 +101,7 @@ spawn-sh-at-startup "systemctl --user import-environment WAYLAND_DISPLAY XDG_CUR
 
 include "niri-hardware.kdl"
 include "startup.kdl"
-include "blur.kdl" // 全局 blur 参数（只有 blur{} 参数块，没有透明度规则）
+include "blur.kdl" // blur{} 参数块 + 全局窗口半透明/背景模糊（例外清单在 windowrule.kdl）
 include "clavis-static.kdl" // SHORiN 静态 niri 配色（Clavis 已不再生成 colors.kdl，这是唯一来源）
 // Clavis 托管片段（scripts/system/niri_config.py 的 FRAGMENTS 元组）：
 //   effects, cursor, layer-rules, binds, outputs, minimize-animation
