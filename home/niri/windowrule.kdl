@@ -68,21 +68,11 @@
 //   - maximize-window-to-edges（Mod+M / 双击标题栏 / 点窗口自带方形按钮）：
 //     「no struts, gaps, or borders」→ 真正的贴边满屏；
 //   - fullscreen（Mod+Shift+F / F11）：连顶栏一起盖住。
-// 而文档同时写明：客户端会**记住**这个状态并在下次打开时再次请求（多数在 initial
-// configure 之后），只有本规则能在「打开时」把它挡下去 —— 不挡的话，浏览器/zed
-// 会次次自己最大化到边，跟你写的 proportion 完全无关。
-// 本规则只作用于「打开瞬间」：想手动 Mod+M 或 F11 仍然照常。
-//
-// ⚠️ 但这条拦不住「窗口已经显示出来、客户端**再补一次**请求」的情况（niri 文档原话：
-// 这时 open-maximized-to-edges / open-fullscreen 都不起作用，niri 会直接照办）。
-// 实测就撞上了：浏览器、blender 会先按 1770 开出来，紧接着自己跳成满屏。
-// 这不是配置能修的 —— 状态存在**客户端**那边（窗口被标记过 maximized，它就每次都
-// 请求一次）。修法是让它把「非最大化」记回去：
-//   1. 聚焦该窗口按 Mod+M（切换 maximize-to-edges），确认它变回 1770、四周留白；
-//   2. **保持这个状态把这个窗口关掉**（浏览器要关窗口、不是关标签页；Blender 关之前
-//      先 File → Defaults → Save Preferences，让它把窗口几何写回配置）；
-//   3. 再打开就不再自己跳满屏了。
-// （zed / obs-studio 本来不请求这个状态，所以只靠规则就正常。）
+// ⚠️ 这条 open-maximized-to-edges false 拦的是「别的应用开窗时自己请求贴边满屏」，
+// 让 niri 默认只按下面写的宽度开窗。需要满屏的那几个（浏览器 / zed / blender）
+// 在「大窗口 A」里被显式改回 true —— 规则按出现顺序处理，后写的覆盖先写的。
+// （注意：本规则 + 大窗口 A 都只管「打开瞬间」。客户端**开出来之后再补**的请求
+//   niri 会照办，规则拦不住，所以 A 用的是 niri 主动给的满屏，而不是等客户端请求。）
 window-rule {
     geometry-corner-radius 23
     clip-to-geometry true
@@ -90,7 +80,21 @@ window-rule {
     open-maximized-to-edges false
 }
 
-// ---- 大窗口：工作区整宽（图1；左右仍各留一个 gaps，不是贴边）----
+// ---- 大窗口 A：常用软件直接满屏（用户决定：浏览器 / zed / blender）----
+// 这几个天天用，索性固定满屏，不再依赖「客户端自己请求」——那条路会先按 1770 开出来
+// 再跳一下（niri 文档：客户端在 initial configure 之后补的请求，规则拦不住），
+// 而 open-maximized-to-edges true 是**开窗时**由 niri 直接给的，一次到位、没有跳动。
+// 满屏 = maximize-to-edges：贴到工作区边缘，不看 gaps 也不画 border（顶栏仍在）。
+// 想让它退回「大但留 75px 间距（1770px）」，把这条里的 open-maximized-to-edges 删掉，
+// 或者把这个应用挪到下面「大窗口 B」那条正则里。
+window-rule {
+    match app-id=r#"^([Zz]en|[Zz]en-beta|[Ff]irefox|[Ff]irefox-developer-edition|[Ff]irefox-nightly|org\.mozilla\.[Ff]irefox|[Cc]hromium|[Cc]hromium-browser|org\.chromium\.[Cc]hromium|[Gg]oogle-chrome|[Gg]oogle-chrome-stable|[Bb]rave-browser|[Mm]icrosoft-edge|[Vv]ivaldi-stable|qutebrowser|[Zz]ed|dev\.[Zz]ed\.[Zz]ed|[Bb]lender)$"#
+    open-maximized-to-edges true
+    // Mod+M 取消满屏后回到「工作区整宽」而不是 2/3 小窗。
+    default-column-width { proportion 1.0; }
+}
+
+// ---- 大窗口 B：留 gaps 的大窗口（图1；左右仍各留一个 gaps，不是贴边）----
 // 实测窗口矩形 x 75..1838（宽 1762px = 屏宽 91.8%），左右 75 / 82px 的留白就是 gaps。
 // 也就是说 niri 的 proportion 1.0 指「工作区宽 1920」，两侧的 gaps 照样扣掉 →
 // 1920 − 2×75 = 1770px，窗口永远碰不到屏幕边缘，和截图一致。
@@ -101,10 +105,16 @@ window-rule {
 // p = (目标宽度 + gaps) / (工作区宽 − gaps)，例如让窗口 ≈1620px 就写 0.92。
 // 以后想加应用，把它追加进这个正则即可；app-id 用 `niri msg windows`（看 App ID 行）
 // 或 `niri msg pick-window` 点一下窗口查。
-// ⚠️ 大小写要自己覆盖：niri 的 app-id 正则区分大小写，实测 Obsidian 这类客户端上报的
-// 首字母就是大写（"Obsidian"），所以下面每一项都写成 [Xx] 形式，别再退回纯小写。
+// ⚠️ 大小写要自己覆盖：niri 的 app-id 正则**区分大小写**，所以每项写成 [Xx] 形式，
+// 别再退回纯小写。
 window-rule {
-    match app-id=r#"^([Zz]en|[Zz]en-beta|[Ff]irefox|[Ff]irefox-developer-edition|[Ff]irefox-nightly|org\.mozilla\.[Ff]irefox|[Cc]hromium|[Cc]hromium-browser|org\.chromium\.[Cc]hromium|[Gg]oogle-chrome|[Gg]oogle-chrome-stable|[Bb]rave-browser|[Mm]icrosoft-edge|[Vv]ivaldi-stable|qutebrowser|[Zz]ed|dev\.[Zz]ed\.[Zz]ed|[Oo]bsidian[0-9.-]*|md\.[Oo]bsidian\.[Oo]bsidian|com\.obsproject\.Studio|[Bb]lender|[Cc]ode|[Cc]ode-oss|[Cc]odium|jetbrains-[a-z-]+)$"#
+    match app-id=r#"^([Oo]bsidian[0-9.-]*|md\.[Oo]bsidian\.[Oo]bsidian|com\.obsproject\.Studio|[Cc]ode|[Cc]ode-oss|[Cc]odium|jetbrains-[a-z-]+)$"#
+    // Obsidian 的 app-id 各机器上报形态不一（obsidian / Obsidian / md.obsidian.Obsidian /
+    // 带版本号），而且 niri 的多个 match 之间是「任一命中即可」（OR），所以补一条
+    // 标题兜底：它的标题结尾永远带 "Obsidian <版本号>"（别的窗口标题不会长这样，
+    // 终端里打开的 obsidian vault 路径不会带 "Obsidian 1.9" 这种版本号）。
+    // 还不行的话，`niri msg windows` 里看它那行 App ID，直接加进上面的正则。
+    match title=r#"[Oo]bsidian v?[0-9]"#
     default-column-width { proportion 1.0; }
 }
 

@@ -237,13 +237,22 @@ Clavis 的 matugen 模板**不含** GTK、fuzzel、foot、niri —— 这几个�
     **2/3 而不是 0.6**：在 1920 宽 + gaps 75 下 2/3 得 1155px = 屏宽的 0.6（= 截图观感），
     写 0.6 只有 1032px。改 `gaps` 后小窗口实际宽度会跟着变，这正是这个比例要放在
     windowrule.kdl 里一起解释的原因。
-  - 分工：全局兜底 = 小窗口 2/3（含 foot、yazi、Discord…）；`windowrule.kdl` 里
-    「大窗口」正则 = 浏览器 / zed / obsidian / obs-studio / blender 等占工作区整宽
-    （1.0，两侧照留 gaps，不是贴边）；浮动只有「设置」（Clavis 主控窗 0.6×0.85、nm-connection-editor /
+  - 分工：全局兜底 = 小窗口 2/3（含 foot、yazi、Discord…），另外全局挂
+    `open-maximized-to-edges false`，防止别的应用开窗时自己贴边满屏；
+    `windowrule.kdl` 里大窗口分两组 ——
+    **A 组（浏览器 / zed / blender）**：`open-maximized-to-edges true`，开窗即满屏
+    （贴工作区边缘、不看 gaps、不画 border，顶栏仍在）。这是使用习惯上的选择：这三个
+    常用，而且浏览器/blender 本来就会在开窗后自己请求满屏（niri 对「initial configure
+    之后」的请求照办、规则拦不住），与其先开 1770 再跳一下，不如由 niri 一次给满屏。
+    **B 组（obsidian / obs-studio / code / jetbrains…）**：`proportion 1.0` = 工作区
+    整宽但两侧照留 gaps = 1770px（图1 的观感）。Obsidian 除了 app-id 还补了一条
+    **标题兜底**匹配（`[Oo]bsidian v?[0-9]`，niri 的多个 match 是 OR），因为它的
+    app-id 上报形态各机器不一。
+    浮动只有「设置」（Clavis 主控窗 0.6×0.85、nm-connection-editor /
     nwg-look 这类设置小工具 620×640）和「文件管理器」（0.6×0.85），外加它们自己的
     对话框、文件选择器、图片/视频查看器、PiP、聊天记录弹窗这类临时窗口。
-    Spotify / pavucontrol 这类主窗口按口径走平铺。加新的大窗口应用 = 往那条正则里
-    追加 app-id（`niri msg pick-window` 点窗口可查）。
+    Spotify / pavucontrol 这类主窗口按口径走平铺。加新的大窗口应用 = 往对应那条正则里
+    追加 app-id（`niri msg windows` 看 `App ID:` 行，注意正则区分大小写）。
   - `clavis/outputs.kdl` 里的 per-output `layout {}` 会**盖掉** `config.kdl` 的全局
     layout（这是 Clavis 设置中心「通用 → Displays」自己写的，不是本仓库的）。
     症状：间距变小、窗口变全宽。窗口宽度有 windowrule.kdl 兜着，gaps 没有 Plan B，
