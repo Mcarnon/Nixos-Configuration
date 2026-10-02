@@ -101,26 +101,45 @@ include optional=true "clavis/outputs.kdl" // 显示器配置，由 Clavis 生�
 // preset-column-widths / always-center-single-column —— 见上游 niri_outputs.py 的
 // LAYOUT 元组），而 niri 的 **per-output layout 优先于本文件末尾的全局 layout**。
 // 一旦 Clavis 设置中心（通用 → Displays）把那组值写进去，症状就是「窗口变成全宽
-// 平铺 + 窗口间距变小」，而本文件里写着的 gaps 16 / proportion 0.6 好像没生效。
-// 排查：cat ~/.config/niri/clavis/outputs.kdl，删掉多余的 layout 块，再重进会话。
+// 平铺 + 窗口间距变小」，而本文件里写着的 gaps 75 好像没生效 —— 而这份全局 layout
+// 正是「大窗口 1.0 / 小窗口 2/3 / 间距 75」的唯一 gaps 来源，被盖掉就全乱了。
+// 窗口宽度还有 windowrule.kdl 兜着（规则按窗口生效，per-output layout 盖不到），
+// 但 gaps 没有 Plan B。
+// 排查：cat ~/.config/niri/clavis/outputs.kdl，删掉多余的 layout 块（或在 Clavis
+// 设置里把间距也设成 75），再重进会话。
 include optional=true "clavis/minimize-animation.kdl" // 最小化动画，由 Clavis 生成
 include optional=true "clavis/binds.kdl" // Clavis 托管键位，见上方顺序说明
-include "windowrule.kdl" // 全局圆角 + Clavis 面板浮窗 + 其它应用浮窗尺寸，见该文件头部说明
+include "windowrule.kdl" // 大/小窗口宽度 + 设置/文件管理器浮窗 + 全局圆角，见该文件头部说明
 include "supertab.kdl" // 带缩略图的 Alt/Ctrl+Tab 窗口切换（SHORiN 原版）
 include "binds.kdl"
 
 layout {
-    // 窗口间距 16 = Clavis Appearance.qml 的 spacing.large / Metrics.spacingL。
-    gaps 16
+    // 窗口间距 75 = 作者演示图逐像素实测值（见 windowrule.kdl 头部）。
+    // 帧内量到：两列之间 75px，窗口到屏幕边缘 74~76px；作者本机是 2560×1440
+    // @scale 1 全屏录制缩到 1920×1080（0.75 倍），换算成作者逻辑像素是 100，
+    // 本机 1920×1080 @scale 1 要还原同样的观感就是 75（占屏宽 3.9%）。
+    //
+    // 这条同时是窗口到屏幕四周的留白（niri 的 gaps 内外都算），
+    // 所以窗口上下沿也会各留 75：帧内 y 113~1004 = 顶栏 52 + 75 到 1080 − 75 ✓。
+    gaps 75
     background-color "transparent" // see-through to wallpaper (required for blur to show)
 
     // 单窗口不再占满整屏宽度，而是居中留白（官方截图里 Zen/终端都是这样）。
     always-center-single-column true
 
-    // 单/新窗口默认 60% 宽度居中；预设给到 1/3、1/2、2/3、满宽。
-    // 这四个参数正是 Clavis 设置页「显示 → 高级」按输出托管的那组
-    // （scripts/system/niri_outputs.py 的 LAYOUT），官方截图用的是作者本机的值。
-    default-column-width { proportion 0.6; }
+    // 小窗口（foot、yazi、Discord、文件管理器平铺时…）默认宽度。
+    //
+    // ⚠️ 为什么是 2/3 而不是 0.6：niri 的 proportion 是「扣掉 gaps 之后」的比例，
+    //    实际宽度 = p × (工作区宽 − gaps) − gaps（niri wiki → Layout：proportion 0.25
+    //    的四个窗口不管 gaps 多少都刚好铺满，只有这个公式成立）。
+    //    作者截图里的小窗口实测 ≈1143px = 屏宽的 0.6；本机在 gaps 75 下要让
+    //    0.6 × 1920 = 1152px 成立，p 必须 ≈ 0.665 → 写 2/3（实际 1155px，差 3px）。
+    //    照抄 0.6 只能得到 0.6×1845 − 75 = 1032px，比截图窄 110px，
+    //    而且一改 gaps 就会跟着变 —— 这是之前「怎么改都还原不了」的根因。
+    //
+    // 大窗口（浏览器/zed/obsidian/obs-studio/blender）由 windowrule.kdl 覆盖成 1.0。
+    // 预设给到 1/3、1/2、2/3、满宽，Mod+R 循环。
+    default-column-width { proportion 0.6667; }
 
     preset-column-widths {
         proportion 0.3333

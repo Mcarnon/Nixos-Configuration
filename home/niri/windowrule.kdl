@@ -1,50 +1,114 @@
 // Window & layer rules
 //
+// ============================ 口径：作者演示图的逐像素实测 ============================
+// 作者的屏是 2560×1440 @scale 1（图6 的 fastfetch 写着 "Display: 2560x1440 @180Hz"），
+// 演示视频是整屏 1920×1080 录制 = 0.75 倍缩放。于是：
+//   帧内像素 ÷ 0.75 = 作者的逻辑像素
+//   帧内像素          = 本机 1920×1080 @scale 1 上的同比例像素（可以直接用）
+// 在帧内量到（脚本扫竖直/水平边缘，误差 ±8px）：
+//
+//   窗口间距        75px   两列之间 75、窗口到屏幕边缘 74~76
+//                          → 作者 100 逻辑像素；本机取 75（config.kdl 的 layout gaps）
+//   竖直留白        75px   窗口帧内 y 113~1004；作者 1440 − 52(顶栏) − 2×100 = 1188
+//                          → 帧内 891 ✓（本机顶栏同为 52px，所以上下留白同样是 75）
+//   大窗口（图1）   1762px ≈ 1920 − 2×75 = 工作区扣掉两侧间距 → proportion 1.0
+//   小窗口（图3/5） 1143px 图3 的设置浮窗、图5 的两列终端一样宽 → 屏宽的 0.6
+//
+// ⚠️ niri 的 proportion 不是「屏宽百分比」，而是**扣掉 gaps 之后**的比例：
+//       实际宽度 = p × (工作区宽 − gaps) − gaps
+//    （niri wiki → Layout：proportion 0.25 的四个窗口「不管 gaps 多少都刚好铺满」，
+//      只有这个公式成立；gaps 0 时它才退化成 p × 工作区宽。）
+//    本机 1920 宽 / gaps 75 下，要让小窗口等于「屏宽的 0.6 = 1152px」，
+//    解得 p ≈ 0.665 → 写 2/3（得 1155px，与截图差 3px）。
+//    直接照抄 0.6 只有 0.6×1845 − 75 = 1032px，比作者截图窄 110px（屏宽的 6%）——
+//    这正是「窗口样式改了好几遍都还原不了」的原因：比例对了但没扣 gaps。
+//
+//    浮窗走的是另一条路：图3 的设置浮窗实测 1143px = 屏宽的 0.6，而它左右并不需要
+//    让出 gaps，所以浮窗直接写 proportion 0.6（= 本机 1152px）就对了。
+//    于是「设置/文件管理器浮窗 0.6」「平铺小窗口 2/3」两个不同的数字，
+//    落到屏幕上是同一个宽度（1143 / 1155px）—— 不是笔误。
+//
+// ================================ 本文件的分工 ================================
+//   全局兜底  小窗口：没被下面点名的窗口一律按 2/3 开（foot、yazi、Discord…）
+//   大窗口    浏览器 / 编辑器 / 笔记 / 录屏 / 3D → 占满工作区宽度（盖掉上面的兜底）
+//   浮动      只有「设置」和「文件管理器」，加上它们的对话框、文件选择器、
+//             图片/视频查看器、PiP、聊天记录弹窗这类临时窗口；其余全部平铺
+//
 // 上游（StatIndet/quickshell v2026.9.25）自己写进 ~/.config/niri/clavis/ 的
 // window-rule / layer-rule 只有两处，而且都已经在 config.kdl 里 include 了，
 // 本文件不重复：
 //   clavis/effects.kdl       只写 xray（X-Ray 开启时只有一行注释）
 //   clavis/layer-rules.kdl   overview 壁纸 place-within-backdrop
 //                            + layout background-color "transparent"
-// 上游仓库里没有逐应用规则 —— 作者本机那些没公开。能从他 README 截图反推的只有：
-//   - Clavis 主控窗是浮动的，尺寸约为输出的 60% × 85%（2560×1440 截图实测
-//     1548×1180，居中于顶栏 52px 专属区之下的工作区）；
-//   - 子对话框/文件选择器按窗口自己声明的 implicitWidth/Height 浮动；
-//   - 所有圆角都等于 Common/Appearance.qml 的 rounding token。
 //
-// ⚠️ 尺寸为什么不能照抄 px：作者的屏是 2560×1440 @scale 1（本机面板是
-// 1920×1080 @scale 1，见 hosts/laptop/niri-hardware.kdl）。同一组绝对像素在他的
-// 屏上占 43%×52%，在本机占 57%×69% —— 所以「浮窗尺寸」分两类处理：
-//   - Clavis 自己的窗口用比例（0.6 × 0.85），换屏幕后观感一致；
-//   - 其它应用沿用 Clavis 源码里的窗口尺寸（920×600 / 620×640 / 1100×750），
-//     这是最接近「他那里长什么样」的参考值，觉得偏大就按 0.75 等比缩小。
+// ⚠️ 如果 Clavis 的设置中心（通用 → Displays）往 ~/.config/niri/clavis/outputs.kdl
+// 写过 per-output 的 layout {}，那份 layout 会**压过** config.kdl 里的全局 layout
+// （niri 文档：per-output / 命名工作区的 layout 覆盖全局），症状就是「窗口间距变小、
+// 窗口变成全宽」。窗口规则按窗口生效、且后写的规则覆盖先写的，不受它影响 ——
+// 所以本文件里的大/小窗口宽度是稳的；但 gaps 只能靠清掉那个 layout 块，
+// 或者在 Clavis 设置里把间距也调成 75 来对齐。
+// 排查：cat ~/.config/niri/clavis/outputs.kdl，把里面的 layout {} 删掉再重进会话。
 
-// ---- 全局：圆角 + 裁剪 ----
+// ---- 全局：圆角 + 兜底宽度（小窗口）----
 // 23 = Appearance.qml 的 rounding.large。niri 的 geometry-corner-radius 同时决定
 // 背景模糊的圆角（niri 文档：用 window-rule 开的 blur 跟随 geometry-corner-radius），
 // 所以这条不加，圆角和模糊都会变成方角。
+// 宽度是「小窗口」兜底：niri 按出现顺序处理 window-rule，后面的规则覆盖前面的，
+// 所以下面的大窗口、浮窗规则都能盖掉它。
 window-rule {
+    geometry-corner-radius 23
+    clip-to-geometry true
+    default-column-width { proportion 0.6667; }
+}
+
+// ---- 大窗口：占满工作区宽度（图1）----
+// proportion 1.0 得到 1920 − 2×75 = 1770px（实测 1762px）。
+// 以后想加应用，把它追加进这个正则即可；app-id 用 `niri msg pick-window` 点一下窗口查。
+window-rule {
+    match app-id=r#"^(zen|zen-beta|Zen|firefox|firefox-developer-edition|firefox-nightly|org\.mozilla\.firefox|chromium|chromium-browser|org\.chromium\.Chromium|google-chrome|google-chrome-stable|brave-browser|microsoft-edge|vivaldi-stable|qutebrowser|zed|Zed|dev\.zed\.Zed|obsidian|md\.obsidian\.Obsidian|com\.obsproject\.Studio|blender|code|code-oss|codium|jetbrains-[a-z-]+)$"#
+    default-column-width { proportion 1.0; }
+}
+
+// ---- 设置：Clavis 主控窗（浮动，0.6 × 0.85 = 图3 的 1143×890 @1920×1080）----
+// title 精确等于 clavis-control-center，且没有 parentWindow（见
+// Modules/ControlCenter/ControlCenterWindow.qml），niri 不会自动浮动它。
+window-rule {
+    match title="^clavis-control-center$"
+    open-floating true
+    default-column-width { proportion 0.6; }
+    default-window-height { proportion 0.85; }
     geometry-corner-radius 23
     clip-to-geometry true
 }
 
-// ---- Clavis 主控窗：浮动 + 作者截图的 60% × 85% ----
-// title 精确等于 clavis-control-center，且没有 parentWindow（见
-// Modules/ControlCenter/ControlCenterWindow.qml），niri 不会自动浮动它。
-// 嫌在本机 1920×1080 上偏高（60%×85% = 1152×874）就删掉下面两条 default-*，
-// 让它用自己的 implicitWidth/Height（1100×750 = 本机 57%×69%）。
+// ---- 文件管理器：浮动，尺寸与上面的设置窗一致 ----
+// Mod+E 拉起的是 thunar（见 binds.kdl: `spawn-sh "thunar || nautilus"`），
+// nautilus / pcmanfm / nemo / dolphin 一并收进来。
+// 想让文件管理器也参与平铺，删掉 open-floating 这一行即可 —— 它会退回全局的 2/3 小窗。
 window-rule {
-    match title="^clavis-control-center$"
-    geometry-corner-radius 23
-    clip-to-geometry true
+    match app-id=r#"^(Thunar|thunar|org\.gnome\.Nautilus|nautilus|pcmanfm|pcmanfm-qt|nemo|dolphin)$"#
     open-floating true
     default-column-width { proportion 0.6; }
     default-window-height { proportion 0.85; }
 }
 
+// ---- Clavis 之外的「设置」类小工具：同样浮动，尺寸沿用源码 token ----
+// nm-connection-editor 是 NetworkManager 的设置窗，nwg-look 是本仓库装的 GTK 设置 GUI。
+// 音量混音器（pavucontrol）不在此列 —— 按「只有设置和文件管理器浮动」的口径它走平铺，
+// 想要它也浮动就把它加进这条正则。
+window-rule {
+    match app-id=r#"^(nm-connection-editor|gnome-control-center|nwg-look|systemsettings)$"#
+    open-floating true
+    default-column-width { fixed 620; }
+    default-window-height { fixed 640; }
+}
+
 // ---- Clavis 子对话框 / 文件选择器：客户端尺寸，圆角按源码 token ----
 // extraLarge = 28（NetworkConfigWindow 等），文件选择器 veryLarge = 30。
-// 它们都带 parentWindow: root.parentModal，尺寸用自己声明的 implicitWidth/Height。
+// 它们都带 parentWindow: root.parentModal，宽度继承上面的全局兜底（2/3 = 1280px），
+// 高度仍由窗口自己声明。想让它们完全按客户端 implicitWidth/Height 开，
+// 在这两条规则里补一行 `default-column-width {}` 即可（niri 文档：这种写法
+// 就是给特定窗口用的，niri 会发 (0, H) 的初始 configure，由客户端定宽）。
 window-rule {
     match title="^clavis-control-center-[a-z-]+$"
     geometry-corner-radius 28
@@ -69,41 +133,9 @@ window-rule {
     default-floating-position x=0 y=16 relative-to="top"
 }
 
-// ---- 浮窗几何：尺寸参考 Clavis 源码里的窗口定义 ----
-//   文件管理器       → FilePickerWindow 920×600
-//   设置/音量类对话框 → NetworkConfigWindow 620×640
-//   大窗口(Spotify)  → ControlCenterWindow 1100×750
+// ---- 图片/视频查看器：浮动 + 必须不透明（半透明会把画面搞花）----
 window-rule {
-    match app-id="^spotify$"
-    open-floating true
-    default-column-width { fixed 1100; }
-    default-window-height { fixed 750; }
-}
-
-window-rule {
-    match app-id="^pavucontrol$"
-    open-floating true
-    default-column-width { fixed 620; }
-    default-window-height { fixed 640; }
-}
-
-window-rule {
-    match app-id="^nm-connection-editor$"
-    open-floating true
-    default-column-width { fixed 620; }
-    default-window-height { fixed 640; }
-}
-
-window-rule {
-    match app-id=r#"^(Thunar|thunar|org\.gnome\.Nautilus|pcmanfm|pcmanfm-qt)$"#
-    open-floating true
-    default-column-width { fixed 920; }
-    default-window-height { fixed 600; }
-}
-
-// 图片/视频查看器：必须不透明（半透明会把画面搞花），并且浮动到最上层。
-window-rule {
-    match app-id="^(imv|mpv|celluloid)$"
+    match app-id=r#"^(imv|mpv|celluloid)$"#
     open-floating true
     opacity 1.0
 }
@@ -116,7 +148,7 @@ window-rule {
     default-floating-position x=16 y=16 relative-to="bottom-right"
 }
 
-// 通用文件/首选项对话框：按 Clavis 文件选择器 / 设置对话框的尺寸，避免浮窗过小。
+// ---- 通用文件/首选项对话框：给个固定尺寸，避免浮窗过小或撑满 ----
 window-rule {
     match title="^(Open|Save|Save As|Save File|Open File|Select File|Select Folder|Choose File|Choose Folder).*"
     open-floating true
@@ -128,10 +160,6 @@ window-rule {
     open-floating true
     default-column-width { fixed 620; }
     default-window-height { fixed 640; }
-}
-window-rule {
-    match app-id=r#"^com\.obsproject\.Studio$"#
-    min-width 876
 }
 
 // ---- Chinese-app rules (SHORiN battle-tested) ----

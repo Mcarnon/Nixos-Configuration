@@ -53,10 +53,10 @@ Clavis 的 `scripts/system/niri_config.py` 会写这六个文件到
 `clavis-control-center(-*)` / `clavis-file-picker` 两个 title 的
 `background-effect { xray false }`）和 `layer-rules`（overview 壁纸
 `place-within-backdrop` + `layout { background-color "transparent" }`）。
-其余窗口规则——逐应用透明度/悬浮、写死尺寸、中文应用、PiP、快速终端、全局
+其余窗口规则——大/小窗口宽度、浮窗尺寸、中文应用弹窗、PiP、快速终端、全局
 `geometry-corner-radius`、通知排除录屏、`debug { honor-xdg-activation-with-invalid-serial }`
-——都是本仓库自加的，已按「照抄上游」删除。
-`home/niri/windowrule.kdl` 现在只留作者截图里能直接看到的 Clavis 面板浮动与圆角三条。
+——上游一个都不写（作者本机那份没公开），是本仓库按作者演示图实测自己定的，
+口径见下方「已知取舍 → 窗口规则」。
 
 `home/niri/config.kdl` 必须**提前**用 `include optional=true` 写好这六行，否则
 Clavis 会把它们标成 `not-connected`；而它自己的 "Set up" 会去 append
@@ -144,18 +144,31 @@ Clavis 的 matugen 模板**不含** GTK、fuzzel、foot、niri —— 这几个�
 - 锁屏是 Clavis 自带；休眠组合 `Mod+Alt+P` 会锁屏后挂起。
 - 通知由 Clavis 接管；`layer-rule` 里把 notification 命名空间排除出录屏（这条是
   本仓库自加的，上游不写；保留是因为共享屏幕时通知入镜很尴尬）。
-- 窗口规则的口径（`home/niri/windowrule.kdl`）：
+- 窗口规则的口径（`home/niri/windowrule.kdl` + `config.kdl` 的 `layout {}`）：
   - **上游只写两处** `window-rule`/`layer-rule`：`clavis/effects.kdl` 的 xray 和
     `clavis/layer-rules.kdl` 的 overview backdrop + 透明背景。两处都已在
     `config.kdl` 里 include，本文件不重复。
-  - 圆角与尺寸全部取上游源码/截图：`geometry-corner-radius` 用
-    `Common/Appearance.qml` 的 rounding token（主控 23 / 子对话框 28 /
-    文件选择器 30）；Clavis 主控窗用截图实测的 **60% × 85%** 比例（不是它声明的
-    1100×750）；其它浮窗沿用源码窗口尺寸（文件管理器 920×600 = FilePickerWindow，
-    设置/音量 620×640 = NetworkConfigWindow，大窗 1100×750 = ControlCenterWindow）。
-  - **尺寸不能照抄 px**：作者是 2560×1440 @scale 1，本机面板是 1920×1080 @scale 1
-    （`hosts/laptop/niri-hardware.kdl`），同一组绝对像素在本机占的比例大 1/0.75 倍。
-    所以 Clavis 自己的窗口用比例，其它应用用源码 px；嫌大就整体按 0.75 缩。
+  - 尺寸全部来自作者演示视频的逐像素实测（1920×1080 帧 = 作者 2560×1440 @scale 1
+    整屏的 0.75 倍；帧内像素 = 本机 1920×1080 @scale 1 的同比例像素）：
+    **间距 75**（帧内两列之间 75、到屏幕边缘 74~76）、**大窗口 proportion 1.0**
+    （帧内 1762 ≈ 1920 − 2×75）、**小窗口 ≈1155px**（帧内 1143）。
+  - ⚠️ niri 的 `proportion` 是**扣掉 gaps 之后**的比例：
+    `实际宽度 = p × (工作区宽 − gaps) − gaps`（niri wiki → Layout 里「proportion 0.25
+    的四个窗口不管 gaps 多少都刚好铺满」只有这个公式成立）。所以小窗口写的是
+    **2/3 而不是 0.6**：在 1920 宽 + gaps 75 下 2/3 得 1155px = 屏宽的 0.6（= 截图观感），
+    写 0.6 只有 1032px。改 `gaps` 后小窗口实际宽度会跟着变，这正是这个比例要放在
+    windowrule.kdl 里一起解释的原因。
+  - 分工：全局兜底 = 小窗口 2/3（含 foot、yazi、Discord…）；`windowrule.kdl` 里
+    「大窗口」正则 = 浏览器 / zed / obsidian / obs-studio / blender 等占满工作区
+    （1.0）；浮动只有「设置」（Clavis 主控窗 0.6×0.85、nm-connection-editor /
+    nwg-look 这类设置小工具 620×640）和「文件管理器」（0.6×0.85），外加它们自己的
+    对话框、文件选择器、图片/视频查看器、PiP、聊天记录弹窗这类临时窗口。
+    Spotify / pavucontrol 这类主窗口按口径走平铺。加新的大窗口应用 = 往那条正则里
+    追加 app-id（`niri msg pick-window` 点窗口可查）。
+  - `clavis/outputs.kdl` 里的 per-output `layout {}` 会**盖掉** `config.kdl` 的全局
+    layout（这是 Clavis 设置中心「通用 → Displays」自己写的，不是本仓库的）。
+    症状：间距变小、窗口变全宽。窗口宽度有 windowrule.kdl 兜着，gaps 没有 Plan B，
+    所以改完窗口样式先 `cat ~/.config/niri/clavis/outputs.kdl` 确认没有 layout 块。
 - 应用窗口的全局半透明 + 模糊（`opacity 0.9` / `background-effect { blur true; xray false }`）
   是自加的，现在以注释形式留在 `home/niri/blur.kdl` 里，取消注释即可恢复。
 - 旧 `modules/home/desktop/dynamic-wallpaper.nix`（mpvpaper 时代的壁纸轮换，依赖
