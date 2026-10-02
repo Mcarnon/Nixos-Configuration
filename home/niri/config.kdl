@@ -25,19 +25,45 @@ input {
     focus-follows-mouse max-scroll-amount="10%"
 }
 
+// 光标：主题 + 尺寸。
+//
+// 这里只是**兜底/声明式默认值**，两个原因：
+//   1. niri 的 `cursor {}` 会顺带把它设成 XCURSOR_THEME / XCURSOR_SIZE 环境变量
+//      （niri 文档 Configuration:-Miscellaneous → cursor：Change the theme and
+//      size of the cursor as well as set the XCURSOR_THEME and XCURSOR_SIZE
+//      environment variables），XWayland/X11 应用就是靠这个变量找主题的，所以
+//      下面 environment{} 里**不再**重复写 XCURSOR_*（写了就会盖住 niri 从
+//      cursor{} 派生的值，Clavis 改光标时 X11 应用会留在旧主题上）。
+//   2. Clavis 的设置中心（主题 → 光标主题/尺寸）owns 这个值：它把
+//      theme.cursorTheme/cursorSize 写进 ~/.config/niri/clavis/cursor.kdl，
+//      而那一行 include 在本文件里位于这个 cursor{} **之后**，所以 Clavis 的值
+//      覆盖这里的默认值。cursorTheme 为空（= 它界面上的 "System default"）时
+//      它会写 `gsettings get ... cursor-theme` 读到的系统默认主题 —— 也就是
+//      appearance.nix 里写成 dconf cursor-theme 的那个名字（与 home.pointerCursor
+//      同一个主题），于是 niri / GTK / Qt / X11 才是「一个光标」。
+// 因此：换光标主题请改 modules/home/desktop/appearance.nix + 这里两处，
+// 或直接在 Clavis 设置里选（那样由 clavis/cursor.kdl 生效）。
+//
+// ⚠️ 关于 hide-when-typing / hide-after-inactive-ms：niri 对 include 里的 cursor{}
+// 是**逐字段合并**（niri-config/src/misc.rs 的 CursorPart + MergeWith：片段没写的
+// 字段保留前面块的值，见 niri 文档 Configuration:-Include → Merging），所以下面
+// 这两行等于把「打字时隐藏 / 3 秒后隐藏」钉死 —— Clavis 设置中心里那两个开关能改
+// 成别的值，但没法把它们关掉（`hide-after-inactive-ms` 在 niri 侧也没有「取消」
+// 的写法）。想让 Clavis 全权管就删掉这两行。
 cursor {
-    xcursor-theme "breeze_cursors"
+    xcursor-theme "Bibata-Modern-Ice"
     xcursor-size 24
     hide-when-typing
     hide-after-inactive-ms 3000
 }
 
 // Applies to niri-spawned processes only (system-wide vars live in the host).
+// 刻意不写 XCURSOR_THEME / XCURSOR_SIZE：niri 从上面的 cursor{} 派生这两个变量
+// 发给它 spawn 的进程（见 cursor{} 的注释），写死在这里会和 Clavis 运行期改的
+// 光标主题打架。
 environment {
     XDG_CURRENT_DESKTOP "niri"
     XDG_SESSION_DESKTOP "niri"
-    XCURSOR_THEME "breeze_cursors"
-    XCURSOR_SIZE "24"
     QT_QPA_PLATFORM "wayland"
     // Locale (locale) + input method + QT theme for niri-spawned processes.
     // System-wide equivalents live in hosts/laptop/default.nix + locales/.
@@ -79,11 +105,17 @@ include "blur.kdl" // 全局 blur 参数（只有 blur{} 参数块，没有透�
 include "clavis-static.kdl" // SHORiN 静态 niri 配色（Clavis 已不再生成 colors.kdl，这是唯一来源）
 // Clavis 托管片段（scripts/system/niri_config.py 的 FRAGMENTS 元组）：
 //   effects, cursor, layer-rules, binds, outputs, minimize-animation
-// 全部必须【提前】写好这几行 include：Clavis 的 manage-niri-fragment.sh 只在
-// 自己 grep 到 include 时才肯写片段，缺一个就把该片段标成 "not-connected"；而
-// 它自己的 "Set up" 会往 config.kdl 追加 include —— config.kdl 是指向
-// /nix/store 的只读软链，追加会失败（追加成功反而更糟：声明式文件悄悄变成普通
-// 文件，下次 home-manager switch 又变回软链，include 丢失，来回抖动）。
+// 全部必须【提前】写好这几行 include：Clavis 只在 grep 到 include 时才认这个片段
+// （否则标成 "not-connected"），而它的 "Set up" 会往 config.kdl 追加 include。
+//
+// ⚠️ 本文件是 ~/.config/niri/config.kdl 的**源**，但运行时那份不是软链：
+// modules/home/desktop/niri.nix 每次 switch 把它刷成一份**可写副本**（内容仍然
+// 100% 声明式，别的 .kdl 仍是 store 软链）。原因见那个文件：Clavis 的
+// niri_config.py 在写任何片段之前都会先 safe_target(主配置)，而它拒绝软链
+// （Symbolic links are read-only: .../niri/config.kdl）——做成软链时它的
+// Set up / 光标 / 模糊开关**全部**写不进去（读却正常，所以设置页看起来是好的）。
+// 副本换来的是「设置中心真的能改东西」；代价是本文件被 Clavis 追加过的 include
+// 不会留存（每次 switch 覆盖回去），所以这六个 include 必须写在这里。
 //
 // 顺序说明：
 //   - effects 只影响 niri 的 xray（Clavis 面板的模糊由它自己通过
@@ -93,9 +125,10 @@ include "clavis-static.kdl" // SHORiN 静态 niri 配色（Clavis 已不再生�
 //     Mod+Shift+Space / Mod+N / Mod+A / Mod+Shift+T 上绑的是同一个动作，所以
 //     谁先谁后结果都一样 —— 关键是不要让"先绑 quick terminal、后绑
 //     shortcut-map"这种不同动作的重复键留在配置里。
+//   - cursor 在本文件 cursor{} 之后，所以 Clavis 选的光标主题覆盖声明式默认值。
 include optional=true "clavis/effects.kdl" // 只写 xray，X-Ray 开启时只有一行注释
-include optional=true "clavis/cursor.kdl" // 光标覆盖，由 Clavis 生成
-include optional=true "clavis/layer-rules.kdl" // overview 壁纸 backdrop + 透明背景，由 Clavis 生成
+include optional=true "clavis/cursor.kdl" // 光标覆盖：Clavis 生成，本仓库另种一份种子（见 clavis 模块）
+include optional=true "clavis/layer-rules.kdl" // overview 壁纸 backdrop + 透明背景；规则的兜底副本在 windowrule.kdl
 include optional=true "clavis/outputs.kdl" // 显示器配置，由 Clavis 生成
 // ⚠️ 这个片段里的 output {} 可以带 layout {}（gaps / default-column-width /
 // preset-column-widths / always-center-single-column —— 见上游 niri_outputs.py 的

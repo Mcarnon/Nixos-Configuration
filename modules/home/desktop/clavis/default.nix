@@ -16,7 +16,12 @@
 #   - niri 集成：~/.config/niri/clavis/{effects,cursor,layer-rules,binds,outputs,
 #     minimize-animation}.kdl 由 Clavis 的 scripts/system/niri_config.py 生成，
 #     主配置里的 include 全部带 optional=true，Clavis 尚未写出的片段不会让
-#     niri 起不来（config.kdl 本身是指向 store 的只读软链，绝不能被追加）。
+#     niri 起不来。其中 layer-rules / cursor 两个片段由本模块种一份**可写副本**
+#     （见下方 seedFile 调用）：它们分别决定「概览 / 切换工作区时的 backdrop
+#     壁纸」与「光标主题/尺寸」能否在设置中心里改动 —— Clavis 只认已存在且已
+#     include 的片段，缺文件时设置页只剩一个点了必失败的 Set up。
+#     另外注意 config.kdl 由 modules/home/desktop/niri.nix 刷成可写副本（不是
+#     store 软链），否则 Clavis 的 niri_config.py 会先被 safe_target(主配置) 拒掉。
 #   - 壁纸链路：NyxNiri 选择器 / 定时轮换 / scan-tones 色调库，全部改走
 #     `key ipc call wallpaper set`（Clavis 写 config.json + 重生成 matugen 主题）。
 {
@@ -239,6 +244,20 @@ in
   # 注意：seed 是「文件不存在（或还是软链）才写一次」，所以改这里不会动已经在用的
   # 机器 —— 要让新值生效得先删掉 ~/.config/clavis/config.json。
   home.activation.clavisSeedConfig = seedFile ".config/clavis/config.json" ./config.json;
+  # niri 托管片段里两个「开箱必须存在」的种子（理由见文件头）：
+  #   layer-rules.kdl —— 概览 / 切工作区时的 backdrop 壁纸（place-within-backdrop）
+  #                      + 透明 workspace 背景。没有它 Clavis 的 status() 报
+  #                      overviewSatisfied=false，设置页显示 Set up；规则本身的
+  #                      兜底副本在 home/niri/windowrule.kdl，所以即使这里被删
+  #                      backdrop 也不会空。
+  #   cursor.kdl      —— 光标主题/尺寸。有了它 Clavis 才会在启动时和用户改设置时
+  #                      重写这段 niri 配置（光标是 niri 画的，改完 niri 重载配置
+  #                      即生效）；GTK/Qt/X11 那一半由 clavis-theme-sync 同步 dconf。
+  # 两份都用 seedFile（非 force）：Clavis 之后要自己覆盖它们，软链会写不进去。
+  home.activation.clavisSeedNiriLayerRules =
+    seedFile ".config/niri/clavis/layer-rules.kdl" ./niri/layer-rules.kdl;
+  home.activation.clavisSeedNiriCursor =
+    seedFile ".config/niri/clavis/cursor.kdl" ./niri/cursor.kdl;
   # qt6ct 设置种子（其他 Qt 桌面应用读这个；用 activation 种成可写副本，
   # 因为 qt6ct 在 GUI 里保存设置时要写同一个文件）。
   home.activation.clavisSeedQt6ct = seedFile ".config/qt6ct/qt6ct.conf" ../../../../home/files/qt6ct/qt6ct.conf;

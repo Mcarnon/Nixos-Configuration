@@ -13,9 +13,12 @@
 #     -> ~/.config/gtk-3.0/settings.ini + gtk-4.0/settings.ini（原子写）
 #     -> Kvantum kvconfig（仅当主题目录存在）
 #     -> foot：SIGUSR1(暗) / SIGUSR2(亮)，就地切 [colors-dark]/[colors-light]
+#     -> 光标：theme.cursorTheme / theme.cursorSize -> dconf cursor-theme / cursor-size
+#        （原因见下面 read_cursor_theme 的注释：Clavis 只写 niri 那一半，
+#          GTK/Qt/X11 那一半没人管，桌面看着就是「光标不统一」）
 #
 # --mode light|dark 可以显式指定模式，供日出日落定时器调用；不带参数时只读
-# config.json，行为与原来一致。
+# config.json，行为与原来一致（光标两段也照读 config.json，与 --mode 无关）。
 #
 # 刻意不做的事：不再生成 Adwaita-Matugen-* 图标、不再往 gtk.css 注入壁纸配色。
 # 壁纸取色现在只影响 Clavis 自己的模板输出（niri/... ），GTK 保持
@@ -50,6 +53,33 @@ read_mode() {
     esac
 }
 
+# 光标：Clavis 只把 theme.cursorTheme/cursorSize 写进 niri 的 clavis/cursor.kdl
+# （scripts/system/niri_config.py），**从不碰 GTK/dconf/Qt**。所以在设置中心换
+# 光标以前只换掉了 niri 自己画的那一半：GTK3/GTK4/libadwaita（读 dconf）和
+# XSETTINGS 系应用还是旧主题 —— 桌面看着就是「光标没统一」。这里把同一个来源
+# 补进 dconf，与上面深浅色走同一套 gsettings/dconf 双通道。
+#
+# 空字符串 = Clavis 界面上的 "System default"：此时**什么都不写**。因为 dconf 里
+# 现成的那个值正是 Clavis 读出来当作「系统默认」的名字
+# （scripts/theme/list_cursor_icon_themes.sh 的 gsettings get cursor-theme），
+# 而它由 modules/home/desktop/appearance.nix 的 dconf 块（与 home.pointerCursor
+# 声明同一个主题）写进去；反过来回写会造成「声明式默认 ↔ 用户选择」互相覆盖。
+read_cursor_theme() {
+    local theme=""
+    if [ -r "$CONFIG" ] && command -v jq >/dev/null 2>&1; then
+        theme=$(jq -r '.theme.cursorTheme // ""' "$CONFIG" 2>/dev/null)
+    fi
+    printf '%s' "$theme"
+}
+
+read_cursor_size() {
+    local size=""
+    if [ -r "$CONFIG" ] && command -v jq >/dev/null 2>&1; then
+        size=$(jq -r '.theme.cursorSize // ""' "$CONFIG" 2>/dev/null)
+    fi
+    printf '%s' "$size"
+}
+
 # foot 切换：SIGUSR1=暗 / SIGUSR2=亮（foot(1) 明文规定）。
 #
 # 为什么信号就够，不需要像 kitty 那样换文件：foot 把两套配色同时写在
@@ -64,7 +94,8 @@ read_mode() {
 FOOT_SIGNAL_DARK="${CLAVIS_FOOT_SIGNAL_DARK:-USR1}"
 FOOT_SIGNAL_LIGHT="${CLAVIS_FOOT_SIGNAL_LIGHT:-USR2}"
 
-# 签名只覆盖真正决定外部状态的输入：版本 + 深浅色。刻意不含任何文件 mtime ——
+# 签名只覆盖真正决定外部状态的输入：版本 + 深浅色 + 光标主题/尺寸。刻意不含任何
+# 文件 mtime ——
 # 之前把输出文件的 mtime 也算进去，结果每次拷贝都换新 mtime，签名永远不稳定，
 # 幂等保护完全失效，每次 path unit 触发都重做一遍 dconf/GTK/kitty
 # （clavis-theme-sync 撞过的 start-limit-hit 就是这么来的）。
@@ -72,7 +103,9 @@ FOOT_SIGNAL_LIGHT="${CLAVIS_FOOT_SIGNAL_LIGHT:-USR2}"
 # v4：gsettings 段加了 schema 探测 + dconf 回退（见 main 里的注释）。老版本在
 # 读不到 schema 的机器上会「成功」空跑一次并写下 v3 签名，升级后必须重跑一次
 # 才能把 color-scheme 真正写进去，所以顺手把版本号顶上去。
-SIGNATURE_VERSION=4
+# v5：签名里加了光标主题/尺寸（签名必须覆盖所有真正写出去的输入，否则在设置中心
+# 只改光标、不改深浅色时，签名不变 -> 脚本直接退出 -> dconf 永远拿不到新光标）。
+SIGNATURE_VERSION=5
 
 # 切 foot：SIGUSR1/SIGUSR2 是内建动作，重复发同一个信号无副作用，
 # 所以「没变也照发」比判断运行中实例的当前主题更可靠。
@@ -127,8 +160,10 @@ atomic_update_ini() {
 }
 
 main() {
-    local mode scheme gtk kvantum dark signature
+    local mode scheme gtk kvantum dark signature cursor_theme cursor_size
     mode=$(read_mode)
+    cursor_theme=$(read_cursor_theme)
+    cursor_size=$(read_cursor_size)
 
     # --mode 让调用方（日出日落定时器）显式指定模式，不依赖 Clavis 的 config.json。
     # 不带这个参数时行为与以前完全一致：仍然只读 config.json 的 theme.mode。
@@ -159,9 +194,9 @@ main() {
         esac
     done
 
-    # 签名 = 版本 + 深浅色。没变就直接退出：Clavis 每次写 config.json（换壁纸等）
-    # 都会触发 path unit，不能每次都去戳 dconf/GTK/foot。
-    signature="v$SIGNATURE_VERSION:$mode"
+    # 签名 = 版本 + 深浅色 + 光标主题/尺寸。没变就直接退出：Clavis 每次写
+    # config.json（换壁纸等）都会触发 path unit，不能每次都去戳 dconf/GTK/foot。
+    signature="v$SIGNATURE_VERSION:$mode:$cursor_theme:$cursor_size"
     if [ -r "$STATE" ] && [ "$(cat "$STATE" 2>/dev/null)" = "$signature" ]; then
         return 0
     fi
@@ -204,6 +239,32 @@ main() {
         echo "clavis-theme-sync: neither gsettings nor dconf available" >&2
     fi
 
+    # 光标（gsettings 优先，探测方式与上面 color-scheme 完全一致）。
+    # 只在 Clavis 真的选了一个主题/尺寸时才写；"System default"（空字符串）留给
+    # appearance.nix 的 home.pointerCursor，见 read_cursor_theme 的注释。
+    if [ -n "$cursor_theme" ] || [ -n "$cursor_size" ]; then
+        if command -v gsettings >/dev/null 2>&1 &&
+            gsettings get org.gnome.desktop.interface cursor-theme >/dev/null 2>&1; then
+            if [ -n "$cursor_theme" ]; then
+                gsettings set org.gnome.desktop.interface cursor-theme "$cursor_theme" 2>/dev/null ||
+                    echo "clavis-theme-sync: gsettings set cursor-theme failed" >&2
+            fi
+            if [ -n "$cursor_size" ]; then
+                gsettings set org.gnome.desktop.interface cursor-size "$cursor_size" 2>/dev/null ||
+                    echo "clavis-theme-sync: gsettings set cursor-size failed" >&2
+            fi
+        elif command -v dconf >/dev/null 2>&1; then
+            if [ -n "$cursor_theme" ]; then
+                dconf write /org/gnome/desktop/interface/cursor-theme "'$cursor_theme'" 2>/dev/null ||
+                    echo "clavis-theme-sync: dconf write cursor-theme failed" >&2
+            fi
+            if [ -n "$cursor_size" ]; then
+                dconf write /org/gnome/desktop/interface/cursor-size "$cursor_size" 2>/dev/null ||
+                    echo "clavis-theme-sync: dconf write cursor-size failed" >&2
+            fi
+        fi
+    fi
+
     # GTK3 / GTK4：gtk-application-prefer-dark-theme 在 GTK4 已废弃（libadwaita
     # 会打一条 warning），但 Chromium 系读它来判深色，所以两边都写。
     atomic_update_ini "$HOME/.config/gtk-3.0/settings.ini" gtk-application-prefer-dark-theme "$dark" || true
@@ -221,6 +282,9 @@ main() {
 
     if [ -t 1 ]; then
         echo "clavis-theme-sync: $mode (dconf $scheme, gtk $gtk)"
+        if [ -n "$cursor_theme" ] || [ -n "$cursor_size" ]; then
+            echo "clavis-theme-sync: cursor theme='$cursor_theme' size='$cursor_size'"
+        fi
     fi
 }
 

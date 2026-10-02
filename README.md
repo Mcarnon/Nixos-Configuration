@@ -8,7 +8,7 @@
 - hardware HAL (`hardware.intel.enable`)
 - **agenix** secrets management (age-encrypted, decrypt only on the target host)
 - **roles/** host composition (base/desktop) — cross-host reuse without double-eval
-- **niri** scrollable-tiling Wayland compositor + **Clavis Shell**（Quickshell 桌面壳，源码打包）：ly 登录 + 状态栏 + 启动器 + 控制中心 + 锁屏 + M3 动态主题 + niri 动态模糊
+- **niri** scrollable-tiling Wayland compositor + **Clavis Shell**（Quickshell 桌面壳，源码打包）：ly 登录 + 状态栏 + 启动器 + 控制中心 + 锁屏 + M3 动态主题 + niri 动态模糊 + 概览/切工作区 backdrop 壁纸 + 统一光标（Bibata-Modern-Ice，niri/GTK/X11 同名）
 - **Intel Iris Xe** graphics acceleration (VA-API) via `modules/hardware/intel.nix`
 - **Chinese environment** (locale + fonts + Fcitx5 input method)
 - **Miyu** terminal AI assistant via overlay `pkgs.miyu` + `home/modules/miyu.nix`
@@ -174,7 +174,9 @@ Reinstalling later is the same flow — disko's `destroy` step handles the wipe.
 | `modules/nixos/network/openssh.nix` | remote IP / user |
 | `modules/nixos/network/firewall.nix` | `allowedTCPPorts` (default only 22) |
 | `modules/nixos/security/hardening.nix` | `boot.kernel.sysctl` BBR/fq, `zramSwap` |
-| `modules/home/desktop/clavis/default.nix` | Clavis 桌面壳（`clavis-shell`/`clavis-clipboard` 用户服务 + 种子配置 + NyxNiri 壁纸选择器/轮换/tone 扫描 + 主题同步） |
+| `modules/home/desktop/clavis/default.nix` | Clavis 桌面壳（`clavis-shell`/`clavis-clipboard` 用户服务 + 种子配置 + `niri/clavis/{layer-rules,cursor}.kdl` 片段种子 + NyxNiri 壁纸选择器/轮换/tone 扫描 + 主题同步） |
+| `modules/home/desktop/appearance.nix` | 光标主题（`home.pointerCursor`，声明式默认 = Bibata-Modern-Ice）+ GTK 深浅色/图标 |
+| `modules/home/desktop/niri.nix` | niri 配置软链；`config.kdl` 例外：刷成可写副本（Clavis 的 niri 集成要求主配置可写） |
 | `pkgs/clavis-shell/` | Clavis 本体打包（native QML 模块 + QML 源树 + matugen 模板） |
 | `pkgs/key-cli/` | `key` 命令打包（shell IPC/生命周期 + 剪贴板 + 录屏 + sysmon + QML 运行时环境） |
 | `pkgs/m3shapes/` | `import M3Shapes` 的 QML 模块 |
@@ -193,6 +195,7 @@ Reinstalling later is the same flow — disko's `destroy` step handles the wipe.
 - **Security**: `agenix` `/run/agenix.d` tmpfs，`networking.firewall` 默认关，`PermitRootLogin no`。
 - **XWayland**: off by default; configure `xwayland-satellite` per the niri docs if you need X11 apps.
 - **Lock screen**: Clavis 锁屏 bound to `Super+Alt+L`；suspend combo `Mod+Alt+P` 先锁后挂。
-- **Wallpaper**: 图片丢进 `~/Pictures/Wallpapers/`，`Mod+F10` 随机切换（`key ipc call wallpaper random` + matugen 主题跟随）；也可用 `random-anime-wallpaper-clavis` 下载动漫壁纸。
-- **桌面壳诊断**: `key doctor`（逐项检查 qs/qalc/gio/录屏/剪贴板/音频后端）。niri 片段在 `~/.config/niri/clavis/`，是运行时生成的普通文件，不要做成 store 软链。
+- **Wallpaper**: 图片丢进 `~/Pictures/Wallpapers/`，`Mod+F10` 随机切换（`key ipc call wallpaper random` + matugen 主题跟随）；也可用 `random-anime-wallpaper-clavis` 下载动漫壁纸。概览/切换工作区时那层背景（niri 的 backdrop）靠 `home/niri/windowrule.kdl` 的 `place-within-backdrop` 规则 + `~/.config/niri/clavis/layer-rules.kdl` 种子，两者都由本仓库保证（详见 [docs/DESKTOP.md](docs/DESKTOP.md)）。
+- **光标**: 声明式默认是 Bibata-Modern-Ice，四处（`appearance.nix` 的 dconf、`config.kdl` 的 `cursor{}`、`xsettingsd.conf`、`clavis/niri/cursor.kdl` 种子）同名；`checks/niri-config.nix` 校验后三处。要换主题改这四处，或在 Clavis 设置中心 → 主题 → 光标主题里选（`clavis-theme-sync` 会把值同步给 dconf）。
+- **桌面壳诊断**: `key doctor`（逐项检查 qs/qalc/gio/录屏/剪贴板/音频后端）。niri 片段在 `~/.config/niri/clavis/`，是运行时生成的普通文件，不要做成 store 软链（其中 `layer-rules.kdl` / `cursor.kdl` 由 `modules/home/desktop/clavis` 种成可写副本）。
 - **键位教程**: `Mod+Shift+Slash`（niri 内置 hotkey-overlay）。

@@ -1,0 +1,27 @@
+// Managed by Clavis.
+// 种子文件：由 modules/home/desktop/clavis 的 home.activation 写进
+// ~/.config/niri/clavis/cursor.kdl（只在文件不存在或是软链时写一次）。
+//
+// 为什么需要这个种子：Clavis 只有 ready("cursor")（片段存在 + include 已在主配置
+// 里）才会去写光标片段，而它**只创建已存在的片段之外什么也不创建** —— 没有这个
+// 文件时，设置中心 → 主题 → 光标主题/尺寸 那一页的控件全是禁用的，点 Set up 又
+// 会被 niri_config.py 的 safe_target(主配置) 拒掉（以前主配置是 store 软链）。
+// 有种子之后：Clavis 启动时 ThemeService.applyCursorSettings() 会自动
+// update("cursor")，把这个文件按 config.json 的 theme.cursorTheme/cursorSize
+// 重新生成；界面上改主题/尺寸也会即时重写并让 niri 重载。
+//
+// 内容刻意写成 Clavis 自己会生成的形态（scripts/system/niri_config.py 的
+// initial('cursor')）：cursorTheme 为空（= 界面上的 "System default"）时它取
+// `gsettings get org.gnome.desktop.interface cursor-theme` 作为主题名，而 dconf 里
+// 那个值就是 modules/home/desktop/appearance.nix 的 home.pointerCursor/dconf 写进去
+// 的 Bibata-Modern-Ice。所以这里直接写同一个名字，两边永远一致。
+//
+// ⚠️ 主题名在这里是第三份声明式副本，必须与下面两处同名：
+//   - modules/home/desktop/appearance.nix 的 cursorTheme
+//   - home/niri/config.kdl 的 cursor{} / home/files/xsettingsd.conf 的
+//     Gtk/CursorThemeName（后两处由 checks/niri-config.nix 校验）
+// 换主题时四处一起改；或者干脆不动这里，让 Clavis 按 dconf 重新生成。
+cursor {
+    xcursor-theme "Bibata-Modern-Ice";
+    xcursor-size 24;
+}

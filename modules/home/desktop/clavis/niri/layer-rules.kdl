@@ -1,0 +1,28 @@
+// Managed by Clavis.
+// 种子文件：由 modules/home/desktop/clavis 的 home.activation 写进
+// ~/.config/niri/clavis/layer-rules.kdl（只在文件不存在或是软链时写一次）。
+//
+// 内容与上游 scripts/system/niri_config.py 的 initial('layer-rules') 逐字一致，
+// 所以 Clavis 的 state("layer-rules") 直接就是 "ready"：设置中心 → 壁纸 →
+// Overview integration 不再显示一个点了必报错的 Set up，而 Clavis 自己
+// （update/setup）也能随时覆盖这个文件。
+//
+// 它解决的是「概览 / 切换工作区时壁纸后面那一层背景（niri 的 backdrop）不见了」：
+// 只有被 place-within-backdrop 收进 backdrop 的 background 层表面，才会出现在
+// 概览里每个工作区背后、以及工作区之间。Clavis 的 OverviewWallpaper
+// (namespace ^clavis-overview-wallpaper$) 就是那个表面；没有这条规则时，概览里
+// 只剩 niri 的 overview.backdrop-color（默认深灰）——看起来就是「背景层没了」。
+// 同一份规则在 home/niri/windowrule.kdl 里还有一份兜底（重复是幂等的），
+// 这样即使这个文件被删掉，backdrop 也不会再空。
+//
+// 透明的 workspace 背景（下面的 layout background-color）是 backdrop 与
+// 窗口半透明/模糊共存的前提（niri 文档 Overview → Backdrop customization），
+// 所以这两条总是一起出现；home/niri/config.kdl 的全局 layout 里也写着同样的
+// transparent，两处一致。
+layer-rule {
+    match namespace="^clavis-overview-wallpaper$";
+    place-within-backdrop true;
+}
+layout {
+    background-color "transparent";
+}

@@ -35,11 +35,13 @@
 //             图片/视频查看器、PiP、聊天记录弹窗这类临时窗口；其余全部平铺
 //
 // 上游（StatIndet/quickshell v2026.9.25）自己写进 ~/.config/niri/clavis/ 的
-// window-rule / layer-rule 只有两处，而且都已经在 config.kdl 里 include 了，
-// 本文件不重复：
+// window-rule / layer-rule 只有两处，两处都在 config.kdl 里 include 了：
 //   clavis/effects.kdl       只写 xray（X-Ray 开启时只有一行注释）
 //   clavis/layer-rules.kdl   overview 壁纸 place-within-backdrop
 //                            + layout background-color "transparent"
+// 其中 backdrop 那条本文件**另外**写了一份（见下面 Layer rules 段落）：上游那个
+// 片段只在用户点设置中心的 Set up 时才存在，而「概览里工作区背后要有壁纸」是开箱
+// 就该有的行为，不能挂在一次 GUI 操作上。重复对 niri 是幂等的。
 //
 // ⚠️ 如果 Clavis 的设置中心（通用 → Displays）往 ~/.config/niri/clavis/outputs.kdl
 // 写过 per-output 的 layout {}，那份 layout 会**压过** config.kdl 里的全局 layout
@@ -175,6 +177,35 @@ window-rule {
 }
 
 // ---- Layer rules ----
+
+// 概览（Overview）与切换工作区时露出的那一层背景 = niri 的 backdrop。
+//
+// niri 的 backdrop 是「工作区背后 / 工作区之间」可见的那一层；壁纸想出现在那里，
+// 该表面必须是 background 层、忽略独占区，并且被 place-within-backdrop
+// （niri 文档 Configuration:-Layer-Rules → place-within-backdrop；只有这类表面
+// 才会随着 backdrop 一起缩放，并且不再吃输入）。Clavis 的 OverviewWallpaper 就是
+// 为这件事存在的表面：namespace `clavis-overview-wallpaper`
+// （Modules/Wallpaper/OverviewWallpaper.qml，visible 由设置里的
+// 壁纸 → "Enable background" 即 config.json 的 wallpaper.overview.enabled 控制）。
+//
+// 上游把这条规则写在自己托管的 ~/.config/niri/clavis/layer-rules.kdl 里，但那个
+// 文件只有点「设置中心 → 壁纸 → Overview integration → Set up」才会生成，而
+// niri_config.py 的 safe_target() 会先拒绝任何「主配置是软链」的机器
+// （Symbolic links are read-only: .../niri/config.kdl）——本仓库以前正是把
+// config.kdl 做成 /nix/store 软链，所以那条路点了必失败：backdrop 一直是空的，
+// 概览里只剩 niri 的 backdrop-color 纯色/黑。
+// （现在 config.kdl 由 modules/home/desktop/niri.nix 刷成可写副本，Set up 能用了；
+//   这条规则仍然在这里写死，开箱即有效，不依赖任何 GUI 操作。）
+//
+// 同时它让 Clavis 的 status() 报 overviewSatisfied=true（它扫的是整条 include 链，
+// 不要求规则出自它自己那个片段），设置页于是显示
+// "Overview is already configured outside Clavis" 而不是一个点不动的 Set up。
+// 与 clavis/layer-rules.kdl 里那份重复是无害的（niri 对同一表面重复设同一个值幂等）。
+layer-rule {
+    match namespace="^clavis-overview-wallpaper$"
+    place-within-backdrop true
+}
+
 // 允许 Clavis 的通知动作/窗口激活（上游不写，但没有它点通知常常唤不起窗口）。
 debug {
     honor-xdg-activation-with-invalid-serial

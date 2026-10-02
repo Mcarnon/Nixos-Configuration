@@ -12,18 +12,21 @@
 |---|---|
 | `modules/nixos/desktop/ly.nix` | 登录界面（ly，TUI 显示管理器） |
 | `modules/nixos/desktop/niri.nix` | niri 会话 wrapper（关键：激活 graphical-session.target）+ `key`/字体 + 键盘 LED udev 规则 + 可选 RAPL setcap + polkit + fcitx5 服务 + xdg portal 路由 |
-| `home/niri/config.kdl` | niri 主配置（环境变量/光标/输入/布局/动画 + Clavis 托管片段 include） |
+| `home/niri/config.kdl` | niri 主配置（环境变量/光标/输入/布局/动画 + Clavis 托管片段 include）。⚠️ 运行时那份 `~/.config/niri/config.kdl` 是可写副本，不是 store 软链 |
 | `home/niri/binds.kdl` | 全部快捷键（`key ipc call` + 音量/媒体/窗口/工作区） |
 | `home/niri/blur.kdl` | `blur{}` 参数块 + 注释掉的「应用窗口半透明 + 模糊」全局基线（取消注释即恢复） |
-| `home/niri/windowrule.kdl` | 全局圆角 23 + Clavis 面板浮窗（主控 60%×85%，圆角 23/28/30）+ 快速终端下拉 + 其它应用浮窗尺寸（920×600 / 620×640 / 1100×750，取自 Clavis 源码窗口定义）+ 中文应用弹窗 + 通知排除录屏 |
+| `home/niri/windowrule.kdl` | 全局圆角 23 + Clavis 面板浮窗（主控 60%×85%，圆角 23/28/30）+ 快速终端下拉 + 其它应用浮窗尺寸（920×600 / 620×640 / 1100×750，取自 Clavis 源码窗口定义）+ 中文应用弹窗 + 通知排除录屏 + **backdrop 兜底规则**（概览/切工作区时壁纸后面那层背景） |
 | `home/niri/supertab.kdl` | 带缩略图的 Alt/Ctrl+Tab 窗口切换 |
 | `home/niri/startup.kdl` | 启动项（Wayland 环境导入 / xwayland-satellite / nm-applet） |
 | `home/niri/clavis-static.kdl` | SHORiN niri 配色。**唯一**的 niri 强调色来源（Clavis 不再生成 colors 片段） |
 | `hosts/laptop/niri-hardware.kdl` | 本机显示器输出 |
-| `modules/home/desktop/niri.nix` | 把上面的 `.kdl` 软链到 `~/.config/niri` |
-| `modules/home/desktop/clavis/default.nix` | Clavis 集成：`clavis-shell`/`clavis-clipboard` 用户服务、种子配置、壁纸选择器/轮换/tone 扫描、主题同步 |
+| `modules/home/desktop/niri.nix` | 把上面的 `.kdl` 软链到 `~/.config/niri`；**唯一例外**：`config.kdl` 刷成可写副本（Clavis 的 niri_config.py 拒绝软链，见「已知取舍 → Clavis 的 niri 集成」） |
+| `modules/home/desktop/clavis/default.nix` | Clavis 集成：`clavis-shell`/`clavis-clipboard` 用户服务、种子配置（config.json + `niri/clavis/{layer-rules,cursor}.kdl`）、壁纸选择器/轮换/tone 扫描、主题同步 |
+| `modules/home/desktop/clavis/niri/layer-rules.kdl` | backdrop 规则的种子（与上游 `initial('layer-rules')` 逐字一致），种到 `~/.config/niri/clavis/`；决定概览/切工作区时那层背景 |
+| `modules/home/desktop/clavis/niri/cursor.kdl` | 光标片段种子（`ready("cursor")` 的前提），Clavis 启动后会按 config.json 重新生成它 |
 | `modules/home/desktop/clavis/config.json` | 种子个性化配置（Clavis 启动后自己回写，HM 不再覆盖） |
-| `modules/home/desktop/appearance.nix` | 光标 Breeze / GTK adw-gtk3-dark / 图标 Papirus / fcitx 桥接 / fontconfig |
+| `modules/home/desktop/appearance.nix` | 光标 Bibata-Modern-Ice（声明式默认，唯一来源）/ GTK adw-gtk3-dark / 图标 Papirus / fcitx 桥接 / fontconfig |
+| `modules/home/desktop/clavis/bin/clavis-theme-sync` | 把 config.json 的深浅色 + **光标主题/尺寸**同步给 dconf/GTK/Kvantum/foot（Clavis 自己不管这些） |
 | `modules/home/apps/gui.nix` | foot/thunar/nautilus/imv/satty + Thunar 配置 |
 | `pkgs/clavis-shell/default.nix` | Clavis 本体（native QML 模块 + QML 源树 + matugen 模板 + systemd unit） |
 | `pkgs/key-cli/default.nix` | `key` 命令 + `key-sysmon` + `key-cpu-power`，以及 QML/plugin 运行时环境 |
@@ -59,9 +62,24 @@ Clavis 的 `scripts/system/niri_config.py` 会写这六个文件到
 口径见下方「已知取舍 → 窗口规则」。
 
 `home/niri/config.kdl` 必须**提前**用 `include optional=true` 写好这六行，否则
-Clavis 会把它们标成 `not-connected`；而它自己的 "Set up" 会去 append
-`config.kdl` —— 那是指向 /nix/store 的只读软链，append 要么失败要么把声明式
-文件变成普通文件。`optional=true` 同时保证 Clavis 还没跑起来时 niri 也能启动。
+Clavis 会把它们标成 `not-connected`（它「缺 include 就追加」的那条路写的是运行时
+那份副本，每次 switch 会被源文件覆盖，所以 include 只能写在源里）。`optional=true`
+同时保证 Clavis 还没跑起来时 niri 也能启动。
+
+片段由谁创建、什么时候创建，是这条链路最容易踩的地方：
+
+- Clavis **只创建它已有的**：`setup` 只在点「Set up」时发生，启动/打开设置页都不会
+  建文件；而 `update`（改设置、启动时自动同步光标）要求片段**已经存在**
+  （`ready(feature)`）。所以「文件不存在」时设置页只剩一个点得动的 Set up 按钮。
+- 本仓库因此把其中两个种成可写副本（`modules/home/desktop/clavis/niri/*.kdl`
+  → `~/.config/niri/clavis/`，`seedFile`：仅当文件不存在或是软链时写一次）：
+  `layer-rules`（backdrop）和 `cursor`（光标）。它们分别对应设置中心里
+  「壁纸 → Overview integration / Enable background」和「主题 → 光标主题/尺寸」。
+- backdrop 这条规则另外还有一份兜底：`home/niri/windowrule.kdl` 里的 `layer-rule`。
+  所以即使种子文件被删、backdrop 也不会空 —— 那种情况下 Clavis 的 `status()` 仍报
+  `overviewSatisfied=true`（它扫的是整条 include 链，不要求规则出自它自己的片段），
+  设置页显示 "Overview is already configured outside Clavis" 而不是一个点不动的
+  Set up。
 
 `clavis/binds.kdl` 故意 include 在本仓库 `binds.kdl` **之前**：两边在
 `Mod+Space`/`Mod+Slash`/`Mod+Shift+Space`/`Mod+N`/`Mod+A`/`Mod+Shift+T` 上绑的
@@ -95,11 +113,32 @@ Clavis 会把它们标成 `not-connected`；而它自己的 "Set up" 会去 appe
 
 - 改键位 → `home/niri/binds.kdl`（`Mod+Shift+Slash` 查当前生效键位）。
   改了之后 `nixos-rebuild switch` + `niri msg action quit` 重进会话；
-  niri 配置是 store 软链，不能直接改 `~/.config/niri` 下的文件。
+  `~/.config/niri` 下的 `.kdl` 都是 store 软链，不能直接改 —— **唯一例外**是
+  `config.kdl`：它是每次 switch 刷新的可写副本（Clavis 要求主配置可写，见「已知
+  取舍」），运行时改它会在下次 switch 被覆盖，所以改动请写回
+  `home/niri/config.kdl`。
+- 改光标主题/尺寸（**四处声明式默认**，或直接用 GUI）：
+  1. `modules/home/desktop/appearance.nix` 的 `cursorTheme`/`cursorSize`（→
+     `home.pointerCursor` + dconf，GTK3/GTK4/libadwaita + `~/.icons/default`）；
+  2. `home/niri/config.kdl` 的 `cursor {}`（→ niri 自己画的光标 + 它派生给子进程的
+     `XCURSOR_THEME`/`XCURSOR_SIZE`；那里刻意不写死 `XCURSOR_*`）；
+  3. `home/files/xsettingsd.conf` 的 `Gtk/CursorThemeName`（走 XSETTINGS 的老应用）；
+  4. `modules/home/desktop/clavis/niri/cursor.kdl`（种进 niri 的光标片段，
+     只在新机器上生效一次，Clavis 随后会按 dconf 重新生成它）。
+  `checks/niri-config.nix` 会校验 2/3/4 同名（1 是 Nix 属性，解析不了，靠人看）。
+  想临时换、不想 rebuild：Clavis 设置中心 → 主题 → 光标主题（写入
+  `~/.config/niri/clavis/cursor.kdl` + niri 重载配置），
+  `clavis-theme-sync` 会把同一个值同步给 dconf。
 - 改 Clavis 外观/壁纸 → Clavis 设置中心（控制中心 → 设置），GUI 写
   `~/.config/clavis/config.json`；声明式种子在
   `modules/home/desktop/clavis/config.json`（只在文件不存在时种一次，之后
   GUI 改动优先 —— 这是刻意的，见模块内 `seedFile` 注释）。
+- 概览（`Alt+Tab` / `Mod+O`）或切换工作区时背景不是壁纸 → 说明 backdrop 规则没生效：
+  确认 `~/.config/niri/clavis/layer-rules.kdl` 存在（`home-manager switch` 会种，
+  删了就重跑一次）**或** `home/niri/windowrule.kdl` 里那条
+  `place-within-backdrop` 还在；再看 `niri msg layers` 里有没有
+  `clavis-overview-wallpaper`（没有就是 Clavis 侧 `wallpaper.overview.enabled=false`，
+  设置中心 → 壁纸 → "Enable background" 打开）。
 - Clavis 重启 → `systemctl --user restart clavis-shell`。
 - 换壁纸目录 → 图放 `~/Pictures/Wallpapers/`。
 - 随机动漫壁纸 → `random-anime-wallpaper-clavis`（下载到
@@ -117,9 +156,14 @@ yazi。kitty 的 post_hook 还会把它 `cp` 成 `kitty/current-theme.conf` 再
 GTK 深/浅色不在 matugen 覆盖范围内，由
 `modules/home/desktop/clavis/bin/clavis-theme-sync` 写
 `org.gnome.desktop.interface color-scheme`（依赖 NixOS 侧的
-`gsettings-desktop-schemas`，否则 dconf 静默失败）。触发点有两个：
-`clavis-config.path` 盯 `config.json`，`clavis-kitty-theme.path` 盯 matugen
-产物落地。
+`gsettings-desktop-schemas`，否则 dconf 静默失败）。同一个脚本现在还负责**光标**：
+Clavis 只把 `theme.cursorTheme/cursorSize` 写进 niri（`clavis/cursor.kdl`），
+GTK/Qt/X11 那一半没人管，脚本把同一个值补进 dconf 的 `cursor-theme`/`cursor-size`
+（`cursorTheme` 为空 = 它界面上的 "System default" 时不动 dconf，那个值本来就是
+`appearance.nix` 的 `home.pointerCursor` 写进去的，反过来写会两边互相覆盖）。
+触发点：`clavis-config.path` 盯 `config.json`（`clavis-kitty-theme.path` 已随 kitty
+退役删除）。脚本自带签名幂等，光标值也进了签名（v5），否则「只改光标不改深浅色」
+会被幂等逻辑短路掉。
 
 Clavis 的 matugen 模板**不含** GTK、fuzzel、foot、niri —— 这几个仍是本仓库
 声明式管理的（`appearance.nix` / `home/files/fuzzel.ini` /
@@ -127,6 +171,38 @@ Clavis 的 matugen 模板**不含** GTK、fuzzel、foot、niri —— 这几个�
 
 ## 已知取舍
 
+- **Clavis 的 niri 集成要求主配置可写**，所以 `~/.config/niri/config.kdl` 是本仓库
+  唯一不是 store 软链的 niri 配置文件（由 `modules/home/desktop/niri.nix` 在
+  `linkGeneration` **之前**刷一份副本，内容仍是声明式的）。原因：
+  `niri_config.py` 的 `safe_target()` 在写**任何**片段之前都会拒绝软链——
+  `Symbolic links are read-only: /home/<user>/.config/niri/config.kdl`，
+  连「include 已写好、只缺片段文件」的路径也过不去。以前是软链，于是
+  **读全正常（设置页看起来是好的）、写全失败**：Overview integration 的 Set up、
+  光标主题/尺寸、透明与模糊全都点不动，backdrop 和光标因此一直是默认值。
+  代价：Clavis 追加到主配置里的 include 不会留存（每次 switch 覆盖），所以六个
+  `clavis/*.kdl` 的 include 必须写在 `home/niri/config.kdl` 源文件里 ——
+  `checks/niri-config.nix` 会守着这一条。
+- **概览 / 切换工作区时壁纸后面那层背景 = niri 的 backdrop**：只有被
+  `place-within-backdrop` 收进去的 background 层表面才会出现在那里。Clavis 侧的
+  表面是 `Modules/Wallpaper/OverviewWallpaper.qml`（namespace
+  `clavis-overview-wallpaper`，由设置里「壁纸 → Enable background」即
+  `wallpaper.overview.enabled` 控制可见性），规则本仓库写了两份：
+  `home/niri/windowrule.kdl` 的兜底 `layer-rule` + 种到
+  `~/.config/niri/clavis/layer-rules.kdl` 的种子（上游 `initial('layer-rules')`
+  逐字一致）。上游自己只写后面那份，且只在点 Set up 时生成 —— 所以「开箱就该有」
+  这件事必须由本仓库保证（见上一条：Set up 在软链主配置上必失败）。
+  没有它时概览里只剩 `overview.backdrop-color`（默认深灰），看起来就是
+  「背景层不见了」。
+- **光标**：参考实现不钉任何主题 —— Clavis 的 `theme.cursorTheme` 默认空字符串，
+  含义是「系统默认」，运行时取 `gsettings get org.gnome.desktop.interface
+  cursor-theme`；作者自己的 dotfiles 里也没有 `cursor{}`/`XCURSOR_THEME`。
+  本仓库把系统默认选成 **Bibata-Modern-Ice**（Clavis 明确借鉴的
+  end-4/dots-hyprland、caelestia-shell、DankMaterialShell 都用它，Material 风格和
+  这套配色一致），并保证 niri / dconf(GTK) / XSETTINGS / XWayland 指向同一个名字。
+  换主题 = `appearance.nix` 的 `cursorTheme` + `home/niri/config.kdl` 的 `cursor{}` +
+  `home/files/xsettingsd.conf` + `clavis/niri/cursor.kdl` 四处（`checks/niri-config.nix`
+  校验后三处），或直接在 Clavis 设置中心选
+  （走 `clavis/cursor.kdl` + `clavis-theme-sync`，不需要 rebuild）。
 - Clavis 与 key-cli 来自 `flake = false` 的源码输入（`StatIndet/quickshell`、
   `StatIndet/key-cli`），没有二进制缓存，首次构建较久；升级 =
   `nix flake update clavis-shell key-cli m3shapes`。
@@ -147,7 +223,8 @@ Clavis 的 matugen 模板**不含** GTK、fuzzel、foot、niri —— 这几个�
 - 窗口规则的口径（`home/niri/windowrule.kdl` + `config.kdl` 的 `layout {}`）：
   - **上游只写两处** `window-rule`/`layer-rule`：`clavis/effects.kdl` 的 xray 和
     `clavis/layer-rules.kdl` 的 overview backdrop + 透明背景。两处都已在
-    `config.kdl` 里 include，本文件不重复。
+    `config.kdl` 里 include；其中 backdrop 那条本仓库在 `windowrule.kdl` 里另有
+    一份兜底（重复是幂等的），因为上游那份只在点 Set up 时才存在。
   - 尺寸全部来自作者演示视频的逐像素实测（1920×1080 帧 = 作者 2560×1440 @scale 1
     整屏的 0.75 倍；帧内像素 = 本机 1920×1080 @scale 1 的同比例像素）：
     **间距 75**（帧内两列之间 75、到屏幕边缘 74~76）、**大窗口 proportion 1.0**

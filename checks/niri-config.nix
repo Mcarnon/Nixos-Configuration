@@ -33,6 +33,8 @@ pkgs.runCommand "niri-config-validate"
     # in the clavis-shell derivation) so the optional includes are really resolved
     # and parsed -- an include line pointing at a file Clavis never writes is
     # exactly the kind of breakage this check exists to catch.
+    # 例外是 cursor.kdl / layer-rules.kdl：本仓库会把它们种到
+    # ~/.config/niri/clavis/，所以这里直接 copy 真实种子来验（见下面的 cp）。
     #
     # niri 26 KDL quirks to keep in mind while editing these stubs:
     #   * every child node goes on its own line -- a `}` on the same line as the
@@ -56,22 +58,11 @@ pkgs.runCommand "niri-config-validate"
         }
     }
     EOF
-    cat > "$work/clavis/cursor.kdl" <<'EOF'
-    cursor {
-        xcursor-theme "breeze_cursors"
-        xcursor-size 24
-        hide-when-typing
-    }
-    EOF
-    cat > "$work/clavis/layer-rules.kdl" <<'EOF'
-    layer-rule {
-        match namespace="^clavis-overview-wallpaper$"
-        place-within-backdrop true
-    }
-    layout {
-        background-color "transparent"
-    }
-    EOF
+    # cursor.kdl / layer-rules.kdl 用**真实的种子文件**而不是手写 stub：这两份由
+    # modules/home/desktop/clavis 种到 ~/.config/niri/clavis/，会被 niri 真正解析，
+    # 所以它们的语法必须跟着一起验（改种子改坏 = 登录后 niri 配置解析失败）。
+    cp ${../modules/home/desktop/clavis/niri/cursor.kdl} "$work/clavis/cursor.kdl"
+    cp ${../modules/home/desktop/clavis/niri/layer-rules.kdl} "$work/clavis/layer-rules.kdl"
     cat > "$work/clavis/outputs.kdl" <<'EOF'
     // Host-specific; left empty upstream too when niri has no saved output state.
     EOF
@@ -96,9 +87,10 @@ pkgs.runCommand "niri-config-validate"
 
     niri validate -c "$work/config.kdl"
 
-    # Guard the invariant that keeps ~/.config/niri/config.kdl a read-only store
-    # symlink: Clavis greps for these exact include lines and appends to
-    # config.kdl when they are missing.
+    # 六个 clavis/*.kdl 的 include 必须一直在 config.kdl 里：Clavis 只在能 grep
+    # 到时才认这个片段（否则标成 "not-connected"），而它「缺 include 就追加」的
+    # 那条路写到的是运行时那份可写副本（modules/home/desktop/niri.nix），每次
+    # switch 都会被源文件覆盖 —— 所以 include 必须写在源里。
     for f in effects cursor layer-rules outputs minimize-animation binds; do
       grep -qF "include optional=true \"clavis/$f.kdl\"" "$work/config.kdl" \
         || { echo "config.kdl must contain: include optional=true \"clavis/$f.kdl\"" >&2; exit 1; }
@@ -109,6 +101,46 @@ pkgs.runCommand "niri-config-validate"
     # if someone re-adds it.
     if grep -qF 'clavis/colors.kdl' "$work/config.kdl"; then
       echo "config.kdl still includes clavis/colors.kdl, which upstream no longer generates" >&2
+      exit 1
+    fi
+
+    # 概览 / 切换工作区时的 backdrop 壁纸（上游设置页叫 "Overview integration"）
+    # 必须由本仓库自己写死，只留 include 是不够的：clavis/layer-rules.kdl 只在
+    # 用户点设置中心的 Set up 时才会生成，而过去那一步在「主配置是 store 软链」
+    # 的机器上必失败（niri_config.py 的 safe_target 拒绝软链），于是概览里只剩
+    # niri 的 backdrop-color 纯色 —— 就是「壁纸后面那层背景不见了」。
+    # 所以 windowrule.kdl 里必须留着这条 layer-rule（它同时让 Clavis 的
+    # status() 报 overviewSatisfied=true，设置页显示 already-configured 而不是
+    # 一个点不动的 Set up）。
+    grep -qF 'place-within-backdrop true' "$work/windowrule.kdl" \
+      || {
+        echo "windowrule.kdl lost the backdrop layer-rule (place-within-backdrop true)" >&2
+        exit 1
+      }
+    grep -qF 'namespace="^clavis-overview-wallpaper$"' "$work/windowrule.kdl" \
+      || {
+        echo "windowrule.kdl must place the ^clavis-overview-wallpaper\$ surface within the backdrop" >&2
+        exit 1
+      }
+    # 透明 workspace 背景是 backdrop 与窗口透明/模糊共存的必要条件。
+    grep -qF 'background-color "transparent"' "$work/config.kdl" \
+      || {
+        echo "config.kdl must keep layout background-color transparent (backdrop + blur)" >&2
+        exit 1
+      }
+
+    # 光标主题：三份声明式副本必须同名，否则「光标不统一」会以最隐蔽的方式复发
+    # （桌面一个主题、GTK/X11 应用另一个主题）：
+    #   home/niri/config.kdl 的 cursor{}、home/files/xsettingsd.conf、
+    #   modules/home/desktop/clavis/niri/cursor.kdl（种进 niri 的片段）。
+    # 第四份 modules/home/desktop/appearance.nix 的 cursorTheme 是 Nix 属性，没法在
+    # 这里可靠解析，改光标时请手工四处一起看（各文件注释里都写了）。
+    cursor_niri=$(${pkgs.gnused}/bin/sed -n 's/^[[:space:]]*xcursor-theme "\(.*\)"$/\1/p' "$work/config.kdl" | head -n1)
+    cursor_xsettings=$(${pkgs.gnused}/bin/sed -n 's/^Gtk\/CursorThemeName "\(.*\)"$/\1/p' ${../home/files/xsettingsd.conf} | head -n1)
+    cursor_fragment=$(${pkgs.gnused}/bin/sed -n 's/^[[:space:]]*xcursor-theme "\(.*\)";$/\1/p' ${../modules/home/desktop/clavis/niri/cursor.kdl} | head -n1)
+    if [ -z "$cursor_niri" ] || [ "$cursor_niri" != "$cursor_xsettings" ] ||
+      [ "$cursor_niri" != "$cursor_fragment" ]; then
+      echo "cursor theme mismatch: niri='$cursor_niri' xsettingsd='$cursor_xsettings' fragment='$cursor_fragment'" >&2
       exit 1
     fi
 
