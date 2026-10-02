@@ -11,7 +11,9 @@
 //                          → 作者 100 逻辑像素；本机取 75（config.kdl 的 layout gaps）
 //   竖直留白        75px   窗口帧内 y 113~1004；作者 1440 − 52(顶栏) − 2×100 = 1188
 //                          → 帧内 891 ✓（本机顶栏同为 52px，所以上下留白同样是 75）
-//   大窗口（图1）   1762px ≈ 1920 − 2×75 = 工作区扣掉两侧间距 → proportion 1.0
+//   大窗口（图1）   1762px  窗口矩形实测 x 75..1838 = 屏宽的 91.8%，左右留白
+//                          75 / 82px 就是 gaps → 占满的是**工作区**（1920），
+//                          两侧间距照扣，所以窗口不贴边 → proportion 1.0
 //   小窗口（图3/5） 1143px 图3 的设置浮窗、图5 的两列终端一样宽 → 屏宽的 0.6
 //
 // ⚠️ niri 的 proportion 不是「屏宽百分比」，而是**扣掉 gaps 之后**的比例：
@@ -63,8 +65,15 @@ window-rule {
     default-column-width { proportion 0.6667; }
 }
 
-// ---- 大窗口：占满工作区宽度（图1）----
-// proportion 1.0 得到 1920 − 2×75 = 1770px（实测 1762px）。
+// ---- 大窗口：工作区整宽（图1；左右仍各留一个 gaps，不是贴边）----
+// 实测窗口矩形 x 75..1838（宽 1762px = 屏宽 91.8%），左右 75 / 82px 的留白就是 gaps。
+// 也就是说 niri 的 proportion 1.0 指「工作区宽 1920」，两侧的 gaps 照样扣掉 →
+// 1920 − 2×75 = 1770px，窗口永远碰不到屏幕边缘，和截图一致。
+// ⚠️ 图1 里那条粉色侧栏（x 74..219）是 **Zen 自己的侧栏**（URL 胶囊 daybook.page、
+// 前进/后退/刷新、固定标签页、Zen 的 Space、+ 新建标签页），属于窗口内容 ——
+// 所以「网页区域」看着只有 84% 宽，窗口本身是 92%。
+// 想让大窗口比工作区更窄（比如留给下一列一个缝隙），把下面的 proportion 改成
+// p = (目标宽度 + gaps) / (工作区宽 − gaps)，例如让窗口 ≈1620px 就写 0.92。
 // 以后想加应用，把它追加进这个正则即可；app-id 用 `niri msg pick-window` 点一下窗口查。
 window-rule {
     match app-id=r#"^(zen|zen-beta|Zen|firefox|firefox-developer-edition|firefox-nightly|org\.mozilla\.firefox|chromium|chromium-browser|org\.chromium\.Chromium|google-chrome|google-chrome-stable|brave-browser|microsoft-edge|vivaldi-stable|qutebrowser|zed|Zed|dev\.zed\.Zed|obsidian|md\.obsidian\.Obsidian|com\.obsproject\.Studio|blender|code|code-oss|codium|jetbrains-[a-z-]+)$"#

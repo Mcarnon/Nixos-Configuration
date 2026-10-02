@@ -228,7 +228,9 @@ Clavis 的 matugen 模板**不含** GTK、fuzzel、foot、niri —— 这几个�
   - 尺寸全部来自作者演示视频的逐像素实测（1920×1080 帧 = 作者 2560×1440 @scale 1
     整屏的 0.75 倍；帧内像素 = 本机 1920×1080 @scale 1 的同比例像素）：
     **间距 75**（帧内两列之间 75、到屏幕边缘 74~76）、**大窗口 proportion 1.0**
-    （帧内 1762 ≈ 1920 − 2×75）、**小窗口 ≈1155px**（帧内 1143）。
+    （窗口矩形帧内 x 75..1838 = 1762px = 屏宽的 91.8%，左右 75/82px 的留白就是 gaps：
+    1.0 指工作区整宽，两侧 gaps 照扣，窗口不会贴到屏幕边缘）、
+    **小窗口 ≈1155px**（帧内 1143）。
   - ⚠️ niri 的 `proportion` 是**扣掉 gaps 之后**的比例：
     `实际宽度 = p × (工作区宽 − gaps) − gaps`（niri wiki → Layout 里「proportion 0.25
     的四个窗口不管 gaps 多少都刚好铺满」只有这个公式成立）。所以小窗口写的是
@@ -236,8 +238,8 @@ Clavis 的 matugen 模板**不含** GTK、fuzzel、foot、niri —— 这几个�
     写 0.6 只有 1032px。改 `gaps` 后小窗口实际宽度会跟着变，这正是这个比例要放在
     windowrule.kdl 里一起解释的原因。
   - 分工：全局兜底 = 小窗口 2/3（含 foot、yazi、Discord…）；`windowrule.kdl` 里
-    「大窗口」正则 = 浏览器 / zed / obsidian / obs-studio / blender 等占满工作区
-    （1.0）；浮动只有「设置」（Clavis 主控窗 0.6×0.85、nm-connection-editor /
+    「大窗口」正则 = 浏览器 / zed / obsidian / obs-studio / blender 等占工作区整宽
+    （1.0，两侧照留 gaps，不是贴边）；浮动只有「设置」（Clavis 主控窗 0.6×0.85、nm-connection-editor /
     nwg-look 这类设置小工具 620×640）和「文件管理器」（0.6×0.85），外加它们自己的
     对话框、文件选择器、图片/视频查看器、PiP、聊天记录弹窗这类临时窗口。
     Spotify / pavucontrol 这类主窗口按口径走平铺。加新的大窗口应用 = 往那条正则里
