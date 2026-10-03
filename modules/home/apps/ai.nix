@@ -10,6 +10,6 @@
   home.packages =
     with pkgs; [
       opencode
-      airi
+      # airi
     ];
 }

@@ -54,10 +54,10 @@
 
     # -- Daily Apps --
     zed-editor # IDE
-    obsidian # note-taking
+    # obsidian # note-taking
     obs-studio # screen recording
     blender # 3D modeling
-    splayer # 旧版 SPlayer（网易云音乐客户端，pkgs/splayer；上游已归档但仍要这版界面）
+    # splayer # 旧版 SPlayer（网易云音乐客户端，pkgs/splayer；上游已归档但仍要这版界面）
     hmcl # minecraft launcher
   ];
 
