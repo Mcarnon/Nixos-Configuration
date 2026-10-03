@@ -17,6 +17,11 @@
     smartmontools # smartctl
     nvme-cli # nvme list / smart-log
 
+    # boot / firmware
+    efibootmgr # read / edit UEFI boot entries (efibootmgr -v)
+    os-prober # detect other OSes; GRUB's useOSProber (boot.nix) calls it too
+    ntfs3g # mount NTFS partitions
+
     # partitioning (GUI). gparted escalates through polkit itself — the desktop
     # entry just runs it as you and polkit-gnome asks for the password.
     # withAllTools: nixpkgs only bundles dosfstools/e2fsprogs/util-linux by

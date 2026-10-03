@@ -1,5 +1,5 @@
 {
   imports = [
-    # ./miyu.nix  # temporarily disabled
+    ./miyu.nix  # temporarily disabled
   ];
 }
