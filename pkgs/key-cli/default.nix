@@ -30,9 +30,14 @@
   xdg-utils,
   qt6,
   # nixpkgs keeps the Qt6 add-on modules inside `qt6Packages` only; there is no
-  # top-level `qtlocation` / `qtlottie` / `maplibre-native-qt` alias, so asking
-  # callPackage for the unprefixed names fails with "attribute ... missing".
+  # top-level `qtlocation` / `qtlottie` alias, so asking callPackage for the
+  # unprefixed names fails with "attribute ... missing".
   qt6Packages,
+  # maplibre-native-qt is threaded in explicitly: pkgs/default.nix overrides it to
+  # work around a GCC 16 `-Werror` in the vendored maplibre-native (see the comment
+  # there), so the patched derivation must be used instead of the one straight out
+  # of qt6Packages.
+  maplibreNativeQt,
   clavisShell,
   m3shapes,
   quickshell,
@@ -79,7 +84,7 @@ let
   #   Quickshell.{Io,Wayland,Services.*,Widgets}  -> quickshell itself
   #   Clavis.*                                      -> clavisShell
   #   M3Shapes                                      -> m3shapes      (20 imports)
-  #   MapLibre                                      -> qt6Packages.maplibre-native-qt
+  #   MapLibre                                      -> maplibreNativeQt
   #   Qt.labs.lottie / Qt5Compat.GraphicalEffects / QtQuick.Shapes
   #   QtLocation / QtPositioning                    -> qt6Packages.*
   # A missing root is a fatal QML load error, which is exactly the "service is
@@ -91,7 +96,7 @@ let
   qtRuntime = [
     quickshell
     m3shapes
-    qt6Packages.maplibre-native-qt
+    maplibreNativeQt
     qt6.qtbase
     qt6.qtdeclarative
     qt6Packages.qt5compat
@@ -262,7 +267,7 @@ python3Packages.buildPythonApplication {
     # nixpkgs' maplibre-native-qt never sets INSTALL_QMLDIR, so whether the
     # MapLibre module lands under lib/qt-6/qml, lib/qml or lib/qt6/qml is a
     # build-time fact — and `import MapLibre` is used twice by Clavis.
-    for d in $(find ${qt6Packages.maplibre-native-qt} -maxdepth 4 -type d \( -name qml -o -name plugins \) 2>/dev/null); do
+    for d in $(find ${maplibreNativeQt} -maxdepth 4 -type d \( -name qml -o -name plugins \) 2>/dev/null); do
       case "$(basename "$d")" in
         qml) qml_paths="$qml_paths''${qml_paths:+:}$d" ;;
         plugins) plugin_paths="$plugin_paths''${plugin_paths:+:}$d" ;;

@@ -17,6 +17,17 @@
     efiSupport = true;
     useOSProber = true; # 自动检测其他系统（Windows 等），不需要可删
     theme = ./grub-themes/blackice;
+
+    extraEntries = ''
+      menuentry "Windows 11" {
+        insmod part_gpt
+        insmod fat
+        insmod search_fs_uuid
+        insmod chain
+        search --fs-uuid --set=root 211D-B67A
+        chainloader /EFI/Microsoft/Boot/bootmgfw.efi
+      }
+    '';
   };
   boot.loader.efi.canTouchEfiVariables = true;
   boot.supportedFilesystems = [ "btrfs" ];

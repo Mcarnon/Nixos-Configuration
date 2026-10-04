@@ -47,7 +47,21 @@ inputs: final: prev: {
     qtlocation = final.qt6.qtlocation; # QtLocation（天气地图 / 地理位置）
     qtpositioning = final.qt6.qtpositioning; # QtPositioning（GNSS）
     qtwayland = final.qt6.qtwayland; # Clavis.Gamma / wayland platform 插件
-    maplibreNativeQt = final.maplibre-native-qt; # QMapLibre + QtLocation 地图插件
+    # QMapLibre + QtLocation 地图插件。
+    #
+    # GCC 16 新增的 -Wsfinae-incomplete 会被这个包当成错误：它 vendor 的
+    # maplibre-native 在 style.hpp 里让 `class Style` 在未完成时进入 SFINAE，而该
+    # submodule 的 CMake 默认 MLN_WITH_WERROR=ON。nixpkgs 只带了 gcc15 的 source
+    # patch，上游还没有 gcc16 修复，所以在 gcc >= 16 上关掉该 submodule 的 -Werror。
+    # gcc15 下保持派生式不变，避免无谓的重建。
+    # 注意：不能用 `-Wno-error=sfinae-incomplete` —— gcc15 不认识该选项，配置阶段
+    # 直接报错；`MLN_WITH_WERROR=OFF` 是版本无关、幂等的。
+    maplibreNativeQt = final.qt6Packages.maplibre-native-qt.overrideAttrs (
+      old:
+      final.lib.optionalAttrs (final.lib.versionAtLeast final.stdenv.cc.version "16") {
+        cmakeFlags = (old.cmakeFlags or [ ]) ++ [ "-DMLN_WITH_WERROR=OFF" ];
+      }
+    );
     matugen = final.matugen;
     cliphist = final.cliphist;
     wl-clipboard = final.wl-clipboard;
