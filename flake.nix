@@ -76,12 +76,6 @@
     # 钉在 v1.1.0 tag：仓库只发 tag 不发 release，且该 tag 就等于 main HEAD。
     thyx.url = "github:rccyx/thyx/v1.1.0";
 
-    # AIRI — self-hosted Grok/Neuro-sama companion (Electron "tamagotchi" desktop)
-    airi = {
-      url = "github:moeru-ai/airi";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     # DeepSeek Harness (dsh) — 终端 AI CLI，上游自己维护 Nix 打包：
     # overlay（pkgs.dsh.*）、nixosModules/homeModules（programs.dsh + profile 物化）。
     # 上游是纯打包层（MIT），dsh 本体来自 DeepSeek 官方仓库。

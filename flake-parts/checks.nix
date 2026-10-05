@@ -14,7 +14,6 @@
       overlayPkgs = import inputs.nixpkgs {
         inherit system;
         overlays = [ (import ../pkgs/default.nix inputs) ];
-        config.permittedInsecurePackages = [ "electron-41.10.6" ];
       };
     in
     {

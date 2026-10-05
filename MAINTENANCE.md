@@ -8,7 +8,7 @@ How to keep this NixOS system up to date and how the repo is organised.
 |------|----------------|
 | `flake.nix` + `flake-parts/` | Standardized entry (flake-parts perSystem memoization, `nix flake check`); `hosts.nix`/`packages.nix`/`checks.nix` |
 | `lib/` | Helpers (`mkHost`, hardware helpers) — cross-host reuse |
-| `pkgs/` + `pkgs/default.nix` | Overlay (`overlays.default` = `{miyu, airi, splayer, libcava, m3shapes, clavisShell, keyCli, dsh}`；`dsh` 是转接上游 overlay 得到的 scope) — single audit surface for custom binaries |
+| `pkgs/` + `pkgs/default.nix` | Overlay (`overlays.default` = `{miyu, splayer, libcava, m3shapes, clavisShell, keyCli, dsh}`；`dsh` 是转接上游 overlay 得到的 scope) — single audit surface for custom binaries |
 | `roles/nixos/` + `roles/home/` | Host/user composition (base/desktop) |
 | `hosts/laptop/` | **Machine-specific** (hardware-configuration/disko-fs/niri-hardware + `default.nix` which picks `roles/nixos/desktop` + `hardware.intel.enable`) |
 | `modules/nixos/` | Reusable system modules: `core/` (boot/nix/shell/persist/kernel/cli/diagnostics), `desktop/` (niri/ly/audio), `hardware/` (intel/nvidia/power/disko), `network/` (manager/openssh/firewall), `security/` (secrets/hardening/sops), `i18n/` -> `locales/` |
