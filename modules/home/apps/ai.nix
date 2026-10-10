@@ -6,8 +6,7 @@
   ...
 }:
 {
-  home.packages =
-    with pkgs; [
-      opencode
-    ];
+  home.packages = with pkgs; [
+    opencode
+  ];
 }
