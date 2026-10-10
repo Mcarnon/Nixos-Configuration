@@ -39,13 +39,11 @@ let
   # sits at kernel/firmware/acpi/ and comes first in the initrd
   # (Documentation/admin-guide/acpi/initrd_table_override.rst). `boot.initrd.prepend`
   # places it exactly there, uncompressed, ahead of the compressed main image.
-  acpiOverrideCpio =
-    pkgs.runCommandLocal "acpi-override.cpio" { nativeBuildInputs = [ pkgs.cpio ]; }
-      ''
-        mkdir -p kernel/firmware/acpi
-        cp ${patchedDsdt} kernel/firmware/acpi/dsdt.aml
-        find kernel -print0 | sort -z | cpio --quiet -o -H newc -R +0:+0 --reproducible --null > "$out"
-      '';
+  acpiOverrideCpio = pkgs.runCommandLocal "acpi-override.cpio" { nativeBuildInputs = [ pkgs.cpio ]; } ''
+    mkdir -p kernel/firmware/acpi
+    cp ${patchedDsdt} kernel/firmware/acpi/dsdt.aml
+    find kernel -print0 | sort -z | cpio --quiet -o -H newc -R +0:+0 --reproducible --null > "$out"
+  '';
 in
 {
   # `boot.initrd.prepend` takes store path strings (types.listOf types.str).

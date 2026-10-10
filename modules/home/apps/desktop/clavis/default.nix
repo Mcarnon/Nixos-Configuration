@@ -86,18 +86,15 @@ let
   # 靠 derivation->outPath 的隐式转换才能跑通，不如直接把替换后的文本给它。
   clavisScriptsDir = "${pkgs.clavisShell}/etc/xdg/quickshell/clavis/scripts/theme";
   themeSunwait = pkgs.writeShellScriptBin "clavis-theme-sunwait" (
-    lib.strings.replaceStrings
-      [
-        "@SUNWAIT@"
-        "@MATUGEN_GEN@"
-        "@THEME_SYNC@"
-      ]
-      [
-        "${pkgs.sunwait}/bin/sunwait"
-        "${clavisScriptsDir}/generate_matugen_colors.sh"
-        "${themeSync}/bin/clavis-theme-sync"
-      ]
-      (builtins.readFile ./bin/clavis-theme-sunwait)
+    lib.strings.replaceStrings [
+      "@SUNWAIT@"
+      "@MATUGEN_GEN@"
+      "@THEME_SYNC@"
+    ] [
+      "${pkgs.sunwait}/bin/sunwait"
+      "${clavisScriptsDir}/generate_matugen_colors.sh"
+      "${themeSync}/bin/clavis-theme-sync"
+    ] (builtins.readFile ./bin/clavis-theme-sunwait)
   );
 
   # 「首次部署种子、之后永不覆盖」的可写文件。
@@ -257,8 +254,10 @@ in
   #                      重写这段 niri 配置（光标是 niri 画的，改完 niri 重载配置
   #                      即生效）；GTK/Qt/X11 那一半由 clavis-theme-sync 同步 dconf。
   # 两份都用 seedFile（非 force）：Clavis 之后要自己覆盖它们，软链会写不进去。
-  home.activation.clavisSeedNiriLayerRules = seedFile ".config/niri/clavis/layer-rules.kdl" ./niri/layer-rules.kdl;
-  home.activation.clavisSeedNiriCursor = seedFile ".config/niri/clavis/cursor.kdl" ./niri/cursor.kdl;
+  home.activation.clavisSeedNiriLayerRules =
+    seedFile ".config/niri/clavis/layer-rules.kdl" ./niri/layer-rules.kdl;
+  home.activation.clavisSeedNiriCursor =
+    seedFile ".config/niri/clavis/cursor.kdl" ./niri/cursor.kdl;
   # qt6ct 设置种子（其他 Qt 桌面应用读这个；用 activation 种成可写副本，
   # 因为 qt6ct 在 GUI 里保存设置时要写同一个文件）。
   home.activation.clavisSeedQt6ct = seedFile ".config/qt6ct/qt6ct.conf" ../../../../home/files/qt6ct/qt6ct.conf;
