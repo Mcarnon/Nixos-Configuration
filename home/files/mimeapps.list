@@ -11,8 +11,9 @@ video/x-matroska=mpv.desktop
 video/avi=mpv.desktop
 video/quicktime=mpv.desktop
 inode/directory=thunar.desktop
-text/plain=vim.desktop
-application/x-shellscript=vim.desktop
+text/plain=foot-nvim.desktop
+application/x-shellscript=foot-nvim.desktop
+application/pdf=com.github.xournalpp.xournalpp.desktop
 
 [Added Associations]
 image/png=imv.desktop;
@@ -20,4 +21,6 @@ image/jpeg=imv.desktop;
 image/gif=imv.desktop;
 video/mp4=mpv.desktop;
 video/webm=mpv.desktop;
-text/plain=vim.desktop;
+text/plain=foot-nvim.desktop;
+application/x-shellscript=foot-nvim.desktop;
+application/pdf=com.github.xournalpp.xournalpp.desktop;

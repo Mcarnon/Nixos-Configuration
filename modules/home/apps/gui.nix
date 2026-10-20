@@ -3,6 +3,7 @@
 # 通知/电源菜单由 Clavis 提供（不再需要 mako/wlogout）。
 {
   config,
+  lib,
   pkgs,
   inputs,
   ...
@@ -45,6 +46,11 @@
     # -- 桌面工具 --
     satty # 截图标注工具（Mod+Shift+S）
 
+    # -- PDF / 电子书 --
+    # 上课用课本：直接在 PDF 页面上手写/高亮，可插空白页记补充笔记，
+    # 配合 OpenTabletDriver 驱动的高漫 M6 有压感。默认程序见 mimeapps.list。
+    xournalpp
+
     # -- 浏览器 / 工具 --
     inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default # browser
     xdg-utils # xdg-open & friends
@@ -74,10 +80,29 @@
       ../../../home/files/thunar/thunar.xml;
     "xfce4/xfconf/xfce-perchannel-xml/thunar-volman.xml".source =
       ../../../home/files/thunar/thunar-volman.xml;
-    "mimeapps.list".source = ../../../home/files/mimeapps.list;
+
     "foot/foot.ini".source = ../../../home/files/foot.ini;
     # 兜底 fuzzel 本体，不挡板
     "fuzzel/fuzzel.ini".source = ../../../home/files/fuzzel.ini;
     "xsettingsd/xsettingsd.conf".source = ../../../home/files/xsettingsd.conf;
   };
+
+  # mimeapps.list 不能像其他配置那样直接软链到 store：Thunar / Nautilus 的
+  # “设为默认程序”和 `xdg-mime default` 都是先在同目录建临时文件再 rename
+  # 的原子写入，目标一旦是指向只读 store 的软链就报 “只读文件系统”
+  # （/nix/store/...-hm_mimeapps.list.XXXX）。
+  #
+  # 所以这里只在文件不存在、或仍是旧的 store 软链时，从仓库 seed 一份可写
+  # 副本；此后 GUI 里的改动会一直保留，不再被 switch 覆盖。
+  # 代价：仓库里的 home/files/mimeapps.list 改完后不会自动同步到已 seed 的
+  # 文件；想回到仓库里的版本，删掉 ~/.config/mimeapps.list 再 switch 一次。
+  home.activation.seedMimeapps = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+    mime="$HOME/.config/mimeapps.list"
+    if [ ! -e "$mime" ] || [ -L "$mime" ]; then
+      run mkdir -p "$HOME/.config"
+      run rm -f "$mime"
+      run cp ${../../../home/files/mimeapps.list} "$mime"
+      run chmod u+w "$mime"
+    fi
+  '';
 }

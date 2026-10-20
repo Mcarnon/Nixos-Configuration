@@ -41,4 +41,20 @@
   # Deploy real nvim dotfiles. Source dir is co-located with this module.
   xdg.configFile."nvim".source = ./nvim;
   xdg.configFile."nvim".recursive = true;
+
+  # 文件管理器里双击文本文件用的条目。上游 nvim.desktop 是 Terminal=true，
+  # 启动时由 GLib 自己去找终端（xdg-terminal-exec / gnome-terminal / …）。
+  # 在 niri 下不同启动方（Thunar、Clavis 文件选择器）的 PATH 环境不一致，
+  # 找不到时就报 “找不到应用程序需要的终端”。这里显式起 foot，
+  # Terminal=false，完全绕开 GLib 的终端查找。
+  xdg.desktopEntries.foot-nvim = {
+    name = "Neovim (foot)";
+    genericName = "Text Editor";
+    comment = "在 foot 中打开 Neovim";
+    exec = "${pkgs.foot}/bin/foot -e ${config.programs.neovim.finalPackage}/bin/nvim %F";
+    terminal = false;
+    icon = "nvim";
+    categories = [ "Utility" "TextEditor" ];
+    mimeType = [ "text/plain" "text/x-shellscript" ];
+  };
 }
