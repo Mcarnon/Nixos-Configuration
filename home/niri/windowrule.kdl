@@ -135,8 +135,10 @@ window-rule {
 // 以后想加应用，把它追加进这个正则即可；app-id 用 `niri msg windows`（看 App ID 行）
 // 或 `niri msg pick-window` 点一下窗口查（点一下就会打印 App ID + Title，最省事）。
 // ⚠️ 大小写要自己覆盖：niri 的 app-id 正则**区分大小写**，所以每项写成 [Xx] 形式。
+// com.github.xournalpp.xournalpp 是 Xournal++（`niri msg windows` 实测的 App ID），
+// 上课看 PDF 课本要整幅宽度，所以放进这组。
 window-rule {
-    match app-id=r#"^([Oo]bsidian[0-9.-]*|md\.[Oo]bsidian\.[Oo]bsidian|com\.obsproject\.Studio|[Cc]ode|[Cc]ode-oss|[Cc]odium|jetbrains-[a-z-]+)$"#
+    match app-id=r#"^([Oo]bsidian[0-9.-]*|md\.[Oo]bsidian\.[Oo]bsidian|com\.obsproject\.Studio|[Cc]ode|[Cc]ode-oss|[Cc]odium|jetbrains-[a-z-]+|com\.github\.xournalpp\.xournalpp)$"#
     default-column-width { proportion 1.0; }
 }
 
