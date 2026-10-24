@@ -165,9 +165,12 @@ GTK/Qt/X11 那一半没人管，脚本把同一个值补进 dconf 的 `cursor-th
 退役删除）。脚本自带签名幂等，光标值也进了签名（v5），否则「只改光标不改深浅色」
 会被幂等逻辑短路掉。
 
-Clavis 的 matugen 模板**不含** GTK、fuzzel、foot、niri —— 这几个仍是本仓库
+Clavis 的 matugen 模板**不含** GTK、fuzzel、foot、niri、neovim —— 这几个仍是本仓库
 声明式管理的（`appearance.nix` / `home/files/fuzzel.ini` /
-`home/files/foot.ini` / `home/niri/clavis-static.kdl`）。
+`home/files/foot.ini` / `home/niri/clavis-static.kdl`）。neovim 的 cyberdream
+配色不经过任何同步脚本：`modules/home/apps/nvim/lua/core/theme.lua` 直接读同一个
+`clavis/config.json`，并在 `FocusGained` 时重读 —— foot 的 SIGUSR1/SIGUSR2 不会
+通知客户端，只能在重新聚焦时补上（foot 那边由 `clavis-theme-sync` 负责发信号）。
 
 ## 已知取舍
 

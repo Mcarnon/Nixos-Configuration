@@ -13,6 +13,34 @@ autocmd("BufEnter", {
     desc = "Disable New Line Comment",
 })
 
+-- 跟随 Clavis 的深浅色模式。启动时的 variant 由 plugins/colourscheme.lua 决定；
+-- 这里处理「nvim 已经开着，主题被切了」—— foot 的深浅色切换靠信号，不会通知
+-- 客户端，所以只能在重新聚焦时重读 config.json（原因见 core/theme.lua）。
+autocmd({ "FocusGained", "VimResume" }, {
+    group = general,
+    callback = function()
+        local opts = vim.g.cyberdream_opts
+        if not opts then
+            return
+        end
+        local theme = require("core.theme")
+        local want = theme.variant()
+        if opts.variant == want then
+            return
+        end
+        local util = require("cyberdream.util")
+        util.set_options({ variant = want })
+        util.apply_options(vim.g.cyberdream_opts)
+        -- 最后同步 background（内置高亮跟它走）。放在 apply_options 之后，
+        -- 这样它触发的 colorscheme 重载读到的已经是新 variant。
+        local mode = theme.mode()
+        if mode then
+            vim.o.background = mode
+        end
+    end,
+    desc = "Follow Clavis light/dark mode on focus",
+})
+
 -- NOTE: This is a hacky fix for bicep param files. The current behaviour causes the bicep lsp to detect
 -- bicepparam files as bicep files when switching buffers. This isn't an issue when initialising the lsp
 -- with a bicepparam file initially.
