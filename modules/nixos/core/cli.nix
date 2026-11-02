@@ -10,5 +10,8 @@
     btrfs-progs
     file
     htop
+    # legacy `arp`/`ifconfig`/`netstat`/`route`; `ip`/`arping` come from
+    # iproute2/iputils. Prefer `ip neigh` over `arp`. `sudo arping` for raw ARP.
+    net-tools
   ];
 }

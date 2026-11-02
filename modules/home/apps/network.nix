@@ -1,9 +1,6 @@
 # Network / proxy tools.
-{ config, pkgs, ... }:
-{
-  home.packages = with pkgs; [
-    # proxy GUI (bundles its own core; add your subscription inside the app).
-    # TUI usage: fish `proxy_on` / `proxy_off` (see home/shell.nix)
-    clash-verge-rev
-  ];
-}
+#
+# Clash Verge Rev is installed by modules/nixos/desktop/clash-verge.nix: TUN
+# mode needs the privileged `clash-verge-service`, which home-manager cannot
+# supervise. TUI usage: fish `proxy_on` / `proxy_off` (see home/shell/fish.nix).
+{ }
