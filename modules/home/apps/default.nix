@@ -7,5 +7,6 @@
     ./ai.nix
     ./dsh.nix
     ./neovim.nix
+    ./android.nix
   ];
 }

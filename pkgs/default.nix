@@ -6,6 +6,10 @@
 inputs: final: prev: {
   miyu = prev.callPackage ./miyu { };
 
+  # Android SDK 组合（SDK Manager 受管的 SDK 在 Nix store 中只读）。
+  # 消费方：modules/home/apps/android.nix 与 modules/nixos/desktop/android.nix。
+  androidSdk = final.callPackage ./android-sdk { };
+
   # 旧版 SPlayer：解包官方 AppImage（上游 SPlayer-Dev/SPlayer 已归档）。
   # 有意不用 nixpkgs 的 splayer-next —— 后者是上游指定的后继项目，
   # 理由见 pkgs/splayer/default.nix 头部注释。

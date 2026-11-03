@@ -5,5 +5,6 @@
     ./audio.nix
     ./udisks.nix
     ./clash-verge.nix
+    ./android.nix
   ];
 }

@@ -46,6 +46,7 @@ in
       "input"
       "render"
       "dialout"
+      "kvm" # Android Emulator 需要 /dev/kvm
     ];
     shell = pkgs.fish; # enabled in modules/shell.nix, configured in home/shell.nix
     # First-login password placeholder (plaintext lands in the Nix store —

@@ -8,7 +8,13 @@
   ...
 }:
 {
-  nixpkgs.config.allowUnfree = true;
+  nixpkgs.config = {
+    allowUnfree = true;
+
+    # Android SDK 的许可证必须明确接受，否则 androidsdk 求值时会直接抛错。
+    # 这里接受 Google 的 Android SDK 许可；预览版组件另由 android-sdk 包声明。
+    android_sdk.accept_license = true;
+  };
 
   nix = {
     settings = {
