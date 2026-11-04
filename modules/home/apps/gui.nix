@@ -46,23 +46,19 @@
     # -- 桌面工具 --
     satty # 截图标注工具（Mod+Shift+S）
 
-    # -- PDF / 电子书 --
-    # 上课用课本：直接在 PDF 页面上手写/高亮，可插空白页记补充笔记，
-    # 配合 OpenTabletDriver 驱动的高漫 M6 有压感。默认程序见 mimeapps.list。
-    xournalpp
-
     # -- 浏览器 / 工具 --
     inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default # browser
     xdg-utils # xdg-open & friends
     xwayland-satellite # X11 support (started by spawn-at-startup)
     networkmanagerapplet # nm-applet tray icon
     nwg-look # GTK 主题/图标设置 GUI（Clavis 配色同步辅助）
+    xournalpp # PDF/EPUB 手写笔记（可压感）
 
     # -- Daily Apps --
     zed-editor # IDE
+    thunderbird # email client
     obsidian # note-taking
-    obs-studio # screen recording
-    blender # 3D modeling
+    obs-studio # screen recording / streaming
     splayer # 旧版 SPlayer（网易云音乐客户端，pkgs/splayer；上游已归档但仍要这版界面）
     hmcl # minecraft launcher
   ];
