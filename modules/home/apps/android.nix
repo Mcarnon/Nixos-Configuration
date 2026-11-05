@@ -8,6 +8,7 @@
 }:
 {
   home.packages = with pkgs; [
+    android-studio # IDE（自带 JBR；SDK 复用下方 ANDROID_HOME，不再是 android-studio-full）
     androidSdk # sdkmanager / adb / emulator / platform / build-tools / NDK
     jdk21 # Gradle / sdkmanager 的 JDK
     gradle # 全局 Gradle；项目通常用 wrapper

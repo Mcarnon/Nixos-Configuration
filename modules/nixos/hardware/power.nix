@@ -9,6 +9,9 @@
   # Bluetooth
   hardware.bluetooth.enable = true;
   hardware.bluetooth.powerOnBoot = true;
+  # Blueman：GTK 图形管理器 + org.blueman.Mechanism D-Bus/polkit 后端。
+  # 托盘图标在 home/niri/startup.kdl 里 spawn（与 nm-applet 同一套模式）。
+  services.blueman.enable = true;
 
   # Power & hardware abstraction（Clavis 电池/电源面板依赖这些）
   services.upower.enable = true;

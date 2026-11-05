@@ -30,3 +30,6 @@ spawn-at-startup "xwayland-satellite"
 
 // Network manager tray applet.
 spawn-at-startup "nm-applet" "--indicator"
+
+// Bluetooth manager tray applet (Blueman; system side in modules/nixos/hardware/power.nix).
+spawn-at-startup "blueman-applet"
