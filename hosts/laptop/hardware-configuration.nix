@@ -6,7 +6,11 @@
 #
 # Before first install:
 #   1. Partition and format as ESP (vfat) + btrfs (use disko, see disko-fs.nix).
-#   2. Find the ROOT / ESP UUIDs with `blkid` and replace <ROOT-UUID> / <ESP-UUID>.
+#   2. Find the ROOT / ESP UUIDs with `blkid` and replace the placeholders below.
+#
+# 本机已填好（gen 28 实测值）：
+#   ROOT = 1315e457-c7f3-4149-a032-30765adf2434 (btrfs)
+#   ESP  = F484-5723                              (vfat)
 #   3. If you want hibernation, measure the swapfile resume offset (see bottom).
 {
   config,
@@ -63,7 +67,7 @@
 
   # All btrfs subvolumes live on the same root partition.
   fileSystems."/nix" = {
-    device = "/dev/disk/by-uuid/<ROOT-UUID>";
+    device = "/dev/disk/by-uuid/1315e457-c7f3-4149-a032-30765adf2434";
     fsType = "btrfs";
     options = [
       "subvol=@nix"
@@ -73,7 +77,7 @@
   };
 
   fileSystems."/var" = {
-    device = "/dev/disk/by-uuid/<ROOT-UUID>";
+    device = "/dev/disk/by-uuid/1315e457-c7f3-4149-a032-30765adf2434";
     fsType = "btrfs";
     options = [
       "subvol=@var"
@@ -83,7 +87,7 @@
   };
 
   fileSystems."/etc" = {
-    device = "/dev/disk/by-uuid/<ROOT-UUID>";
+    device = "/dev/disk/by-uuid/1315e457-c7f3-4149-a032-30765adf2434";
     fsType = "btrfs";
     options = [
       "subvol=@etc"
@@ -93,7 +97,7 @@
   };
 
   fileSystems."/home" = {
-    device = "/dev/disk/by-uuid/<ROOT-UUID>";
+    device = "/dev/disk/by-uuid/1315e457-c7f3-4149-a032-30765adf2434";
     fsType = "btrfs";
     options = [
       "subvol=@home"
@@ -103,7 +107,7 @@
   };
 
   fileSystems."/swap" = {
-    device = "/dev/disk/by-uuid/<ROOT-UUID>";
+    device = "/dev/disk/by-uuid/1315e457-c7f3-4149-a032-30765adf2434";
     fsType = "btrfs";
     options = [
       "subvol=@swap"
@@ -113,7 +117,7 @@
 
   # ESP (EFI system partition; UEFI/GRUB loads the kernel from here)
   fileSystems."/boot" = {
-    device = "/dev/disk/by-uuid/<ESP-UUID>";
+    device = "/dev/disk/by-uuid/F484-5723";
     fsType = "vfat";
     options = [
       "fmask=0022"
@@ -128,6 +132,6 @@
   # Resume from the root partition. After the first install, measure the
   # swapfile's resume offset and fill it in, then uncomment both lines:
   #   sudo btrfs inspect-internal map-swapfile -r /swap/swapfile
-  # boot.resumeDevice = "/dev/disk/by-uuid/<ROOT-UUID>";
+  # boot.resumeDevice = "/dev/disk/by-uuid/1315e457-c7f3-4149-a032-30765adf2434";
   # boot.kernelParams = [ "resume_offset=<OFFSET>" ];
 }

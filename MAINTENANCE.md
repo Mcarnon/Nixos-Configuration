@@ -158,7 +158,7 @@ laptop and re-apply it after a push — or commit the real UUIDs into the repo.
 
 ## Performance & security baselines
 
-- **Performance**: `flake-parts` perSystem caching, `nix.settings` (`max-jobs auto`, `cores 0`, `auto-optimise-store`, `keep-derivations false`), `nix.gc` weekly, `zramSwap` zstd 25%, `boot.kernel.sysctl` BBR/fq + `vm.swappiness 10`, `services.resolved` cache, CN mirror substituters.
+- **Performance**: `flake-parts` perSystem caching, `nix.settings` (`max-jobs auto`, `cores 0`, `auto-optimise-store`, `keep-derivations true` — 防止 GC 删掉仍被现有 `.drv` 引用的输入派生), `nix.gc` weekly, `zramSwap` zstd 25%, `boot.kernel.sysctl` BBR/fq + `vm.swappiness 10`, `services.resolved` cache, CN mirror substituters.
 - **Security**: `networking.firewall` closed (only 22), `services.openssh` `PermitRootLogin no` (flip `PasswordAuthentication` to `false` after agenix), `age` via `agenix` (tmpfs `/run/agenix.d`), `security.sudo.execWheelOnly`, `boot.kernel.sysctl` (`kptr_restrict`, `ptrace_scope`), `nix.settings.trusted-users = [ root @wheel ]`, `nix.channel.enable = false`.
 - **CI**: `nix flake check` runs `checks/miyu.nix` VM smoke + `nix fmt --check`; add more VM tests under `checks/` and wire in `flake-parts/checks.nix`.
 

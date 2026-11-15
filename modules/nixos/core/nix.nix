@@ -1,6 +1,6 @@
 # Nix / store settings: flakes, store optimise, GC, and CN mirror caches.
 # Performance: fewer evals (flake-parts), binary caches, auto-optimise; Security:
-# trusted-users, keep-derivations minimal, GC.
+# trusted-users, GC.
 {
   config,
   pkgs,
@@ -24,7 +24,12 @@
       ];
       # Performance: dedup store, keep build logs minimal
       auto-optimise-store = true;
-      keep-derivations = false;
+      # keep-derivations = true：自动 GC 不要把「仍被现有 .drv 引用」的输入派生
+      # 删掉。之前是 false，周清理后会出现
+      #   error: opening file '/nix/store/…-foo.drv': No such file or directory
+      # 顶层 .drv 还在、输入 .drv 已没，Nix 复用旧 .drv 时直接失败（rebuild 也救不回）。
+      # keep-outputs 仍为 false：输出由 GC root 保活，不必额外保留所有构建产物。
+      keep-derivations = true;
       keep-outputs = false;
       # Security: only wheel + root may manage the store / add substituters
       trusted-users = [

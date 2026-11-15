@@ -209,16 +209,18 @@ in
       # systemd 的 ExecStart 不经过 shell，所以 `|| true` 必须显式借一个 shell。
       # lib.escapeShellArgs 只接受一个参数（list 或 string），写成两个参数会
       # 直接求值失败，所以整个 argv 必须放进同一个 list。
+      #
+      # 命令必须保持**单行**：多行 Nix 字符串会在结尾留一个换行，
+      # escapeShellArgs 把它包成 '…' 后，systemd 解析时引号跨行，直接报
+      #   clavis-key-cpu-power-access.service: Unbalanced quoting, ignoring …
+      #   Unit configuration has fatal error, unit will not be started.
       ExecStart = lib.escapeShellArgs [
         # pkgs.runtimeShell is the bin *directory* (/nix/store/...-bash/bin),
         # not the interpreter -- appending /bin/bash to it yields the
         # nonsensical `.../bin/bash/bin/bash` ExecStart that systemd rejects.
         "${pkgs.bash}/bin/bash"
         "-c"
-        ''
-          ${pkgs.libcap}/bin/setcap cap_dac_read_search=ep \
-            ${pkgs.keyCli}/libexec/key-cli/key-cpu-power || true
-        ''
+        "${pkgs.libcap}/bin/setcap cap_dac_read_search=ep ${pkgs.keyCli}/libexec/key-cli/key-cpu-power || true"
       ];
     };
   };
