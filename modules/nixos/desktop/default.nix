@@ -4,7 +4,7 @@
     ./sddm.nix
     ./audio.nix
     ./udisks.nix
-    ./clash-verge.nix
+    ./flclash.nix
     ./android.nix
   ];
 }

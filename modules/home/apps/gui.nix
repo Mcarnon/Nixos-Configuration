@@ -60,7 +60,8 @@
     obsidian # note-taking
     obs-studio # screen recording / streaming
     splayer # 旧版 SPlayer（网易云音乐客户端，pkgs/splayer；上游已归档但仍要这版界面）
-    hmcl # minecraft launcher
+    hmcl # minecraft launcher（保留；Horizon 是另一套 Rust 客户端）
+    inputs.horizon.packages.${pkgs.stdenv.hostPlatform.system}.default # Horizon launcher
   ];
 
   # 应用配置文件（raw 部署，Shorin 原版或裁剪版）。

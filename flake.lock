@@ -162,6 +162,26 @@
         "type": "github"
       }
     },
+    "horizon": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1795063879,
+        "narHash": "sha256-+PQoV3IVMo0oHM1al6iBs27nCcUMHMd7LNQOxP2q56E=",
+        "owner": "forge-sa",
+        "repo": "horizon-nix",
+        "rev": "65d16e38e2ffa2e54b81e84c75068bc7b77efe73",
+        "type": "github"
+      },
+      "original": {
+        "owner": "forge-sa",
+        "repo": "horizon-nix",
+        "type": "github"
+      }
+    },
     "key-cli": {
       "flake": false,
       "locked": {
@@ -264,6 +284,7 @@
         "deepseek-harness": "deepseek-harness",
         "flake-parts": "flake-parts_2",
         "home-manager": "home-manager_2",
+        "horizon": "horizon",
         "key-cli": "key-cli",
         "m3shapes": "m3shapes",
         "nixpkgs": "nixpkgs_2",

@@ -154,7 +154,22 @@ laptop and re-apply it after a push — or commit the real UUIDs into the repo.
 - Bundle 在 `profiles.tui.bundles` 里声明（插件式，按列表顺序覆盖）：`tui` 已在用；`subscriptions`（ChatGPT/Claude/Copilot 订阅 OAuth）、`memento`（跨会话记忆）、`modsearch`（内置搜索）、`subagent-codex`/`subagent-claude-code`（后者 unfree，需 `nixpkgs.config.allowUnfreePredicate`）都没启用。
 - API key 不要进 Nix：官方 DeepSeek 平台申请后在 dsh 设置里填（或 `export DEEPSEEK_API_KEY`）。想用订阅免 key 就换 `subscriptions` bundle。
 - 上游 Cachix（`deepseek-harness-nix.cachix.org`）已写进 `flake.nix` 的 `nixConfig`，但 **bundle 组合后的 dsh 大概率不在缓存里**：第一次 rebuild 要本地 build 一千多个 node 派生，提前 `nix build .#dsh` 预热。
-- 想试上游其它组合而不动本仓库：`nix run github:moraxyc/deepseek-harness.nix#presets.tui --accept-flake-config`。
+najiu- 想试上游其它组合而不动本仓库：`nix run github:moraxyc/deepseek-harness.nix#presets.tui --accept-flake-config`。
+
+## FlClash
+
+- 包是 `pkgs/flclash/default.nix`：解包官方 `FlClash-<ver>-linux-amd64.deb`（nixpkgs 的 flclash 已因用户少被移除，从源码重建要整套 Flutter + Go core + Rust API，不值得）。升级只改 `version` + `hash`：
+  ```bash
+  nix store prefetch-file --json --hash-type sha256 \
+    https://github.com/chen08209/FlClash/releases/download/v<ver>/FlClash-<ver>-linux-amd64.deb
+  ```
+  两个打包坑：`librust_api.so` 由 `RustLib.init()` **dlopen**（不读 RUNPATH），wrapper 必须 `--prefix LD_LIBRARY_PATH`；`libdartjni.so` 的 `NEEDED libjvm.so` 在 Linux 上根本不会被加载，用 `autoPatchelfIgnoreMissingDeps` 忽略，别拖 JDK 进来。
+- FlClash 是**唯一**的代理 GUI（HM 包 + `modules/nixos/desktop/flclash.nix` 的 `flclash-helper`）。Clash Verge Rev 已从配置移除（`programs.clash-verge` 与 `modules/nixos/desktop/clash-verge.nix` 都已删），但 `~/.config/clash-verge` 里的旧配置/订阅不会被 Nix 删，想彻底清就自己 `rm -rf`，并确认 `systemctl status clash-verge-service` 已不存在。
+- 终端代理：fish `proxy_on` / `proxy_off` 默认端口改成 **7890**（FlClash 的 mixed 端口；旧的 7897 是 Clash Verge 的默认值）。
+- TUN 模式的约定（改这里前先读 `modules/nixos/desktop/flclash.nix` 顶部注释）：FlClash 的 GUI 只跑用户态，root Core 由 `flclash-helper.service` 拉起；helper 在 `/run/flclash/helper.sock` 上服务，只认 peer uid == `FLCLASH_HELPER_OWNER_UID` 的连接。GUI 先 ping 这个 socket，拿到 ok 就**不会**去跑 `pkexec FlClashHelperService install` —— 所以 NixOS 侧声明式提供同名 unit 就绕过了整个提权安装流程。
+- 三条硬约束：unit 名必须叫 `flclash-helper`；`ExecStart` 必须是同一个 store 路径的 `opt/FlClash/FlClashHelperService`（GUI 会把自己 `dirname` 和 ping 返回的路径逐字比对，helper 还会校验同目录 `FlClashCore` 的 SHA256 和 `manifest.json` 的 `coreSha256`）；`FLCLASH_HELPER_OWNER_UID/GID` 必须非 0。任何一条对不上，GUI 会静默回落到用户态 Core（TUN 开关用不了），`journalctl -u flclash-helper` 里只有 helper 自己的日志。
+- 不要给这个 unit 加 `PrivateTmp` / `ProtectSystem` / `ProtectHome`：Core 要在宿主 `/tmp` 建 `/tmp/FlClashSocket_<id>.sock`（属主得能连），还要动 nftables/iptables 和路由表。
+- 排查：`systemctl status flclash-helper`、`journalctl -u flclash-helper`、以属主身份 `curl --unix-socket /run/flclash/helper.sock 'http://localhost/ping?coreSha256=<manifest.json 里的值>'`（Host 只接受 127.0.0.1 / localhost / FlClashHelperService，带 `origin` 头会被 403；返回 200 的 body 是 helper 路径、头里的 `x-flclash-helper-protocol` 是协议版本 6）。GUI 侧日志在 FlClash 的 `logs/`，关键字 `helper ping failed` / `helper protocol mismatch` / `helper executable path mismatch` / `Helper Core SHA256 mismatch`。
 
 ## Performance & security baselines
 

@@ -12,7 +12,7 @@
     in
     {
       packages = {
-        inherit (pkgs) miyu;
+        inherit (pkgs) miyu flclash;
         # Clavis desktop shell stack. `keyCli` is the interesting one: its wrapper
         # is what wires the QML import roots together, so building it catches
         # missing/renamed QML modules and a Clavis install prefix that moved.

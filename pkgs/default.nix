@@ -15,6 +15,12 @@ inputs: final: prev: {
   # 理由见 pkgs/splayer/default.nix 头部注释。
   splayer = prev.callPackage ./splayer { };
 
+  # FlClash：nixpkgs 已移除（2026-08），改为解包官方 Linux .deb。
+  # 消费方：modules/home/apps/network.nix（GUI）与
+  # modules/nixos/desktop/flclash.nix（TUN 需要的 flclash-helper 系统服务，
+  # 要求系统单元和用户态 GUI 用同一个 derivation）。
+  flclash = prev.callPackage ./flclash { };
+
   # cava 的分析核心（cavacore）单独打包成库：Clavis 通过 pkg-config 链接它，
   # 而 nixpkgs 的 `cava` 只构建 autotools 的可执行文件。
   libcava = prev.callPackage ./libcava { };

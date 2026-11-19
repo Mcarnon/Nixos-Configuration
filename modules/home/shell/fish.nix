@@ -33,10 +33,12 @@
 
     functions = {
       # ---- proxy toggles ----
+      # FlClash 的 mixed 端口默认 7890（http 和 socks 都吃同一个端口）；旧的
+      # 7897 是 Clash Verge Rev 的默认值，已经换掉那个 GUI 了。
       proxy_on = {
-        description = "启用终端代理（默认端口 7897，可传参覆盖）";
+        description = "启用终端代理（默认端口 7890，可传参覆盖）";
         body = ''
-          set -l port 7897
+          set -l port 7890
           if set -q argv[1]
               set port $argv[1]
           end

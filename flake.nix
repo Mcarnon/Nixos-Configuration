@@ -41,6 +41,15 @@
       inputs.home-manager.follows = "home-manager";
     };
 
+    # Horizon launcher：Rust 从零重写的 Minecraft 客户端 + 启动器。
+    # 上游只发 x86_64-linux 二进制；forge-sa/horizon-nix 用 buildFHSEnv
+    # 打包（不需要 nix-ld，自带 desktop entry）。启动器自更新已关闭，
+    # 升级靠 `nix flake update horizon`。
+    horizon = {
+      url = "github:forge-sa/horizon-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Clavis Shell（niri 的 Quickshell 桌面壳）及其伴生后端 key-cli。
     # 这两个仓库是纯源码树（无 flake.nix），flake = false 取为 source 路径，
     # 由 pkgs/{clavis-shell,key-cli,libcava} 消费。
