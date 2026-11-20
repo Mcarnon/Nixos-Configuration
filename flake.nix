@@ -45,6 +45,8 @@
     # 上游只发 x86_64-linux 二进制；forge-sa/horizon-nix 用 buildFHSEnv
     # 打包（不需要 nix-ld，自带 desktop entry）。启动器自更新已关闭，
     # 升级靠 `nix flake update horizon`。
+    # 实际安装的是 pkgs/horizon-launcher 的转包（沙箱私有 /tmp，见文件头）；
+    # 这个 input 用来取它的 package.nix 与版本信息。
     horizon = {
       url = "github:forge-sa/horizon-nix";
       inputs.nixpkgs.follows = "nixpkgs";

@@ -15,8 +15,11 @@
 }:
 {
   home.packages = with pkgs; [
-    nodejs_24 # node + npm（LTS）；npm 自带的 corepack 也在这里
-    corepack # 再装一份独立包：Node 25 起不再随发行版附带 corepack
+    # nodejs 24 的 bin 里已经带 corepack，所以**不要**再单独加 `corepack`：两份
+    # 同时进 home.packages 会被 buildEnv 判成冲突
+    # （two given paths contain a conflicting subpath: …/bin/corepack）。
+    # 只有将来 nodejs 不再附带 corepack 时再加回来。
+    nodejs_24 # node + npm + corepack（LTS）
     pnpm
     yarn-berry # 仍有 yarn 项目，corepack 之外留个直接能跑的命令
 
@@ -25,10 +28,11 @@
     eslint # 既有项目最常见的 lint
     prettier # 既有项目最常见的格式化
 
-    # 原生模块（better-sqlite3 / sharp / node-gyp）需要一套构建链
+    # 原生模块（better-sqlite3 / sharp / node-gyp）需要一套构建链。
+    # 不要再加 `python3`：HOME 里已经有 Clavis 的 `python3.withPackages(…)`
+    # 环境（bin/python3），单独的 python3 会和它抢 bin/idle 被 buildEnv 判冲突。
     gcc # 提供 cc / c++
     gnumake
     pkg-config
-    python3 # node-gyp 要求 python3
   ];
 }

@@ -80,6 +80,14 @@ inputs: final: prev: {
     awww = final.awww; # 可选壁纸后端
   };
 
+  # Horizon Launcher（Minecraft 启动器）。上游 forge-sa/horizon-nix 的
+  # buildFHSEnv 包装在 bwrap 里跑，holder 控制 socket 的目录检查会因
+  # root → overflow uid 65534 而失败；这里转包一层，给沙箱挂私有 /tmp。
+  # 原因、代价与回退条件见 pkgs/horizon-launcher/default.nix。
+  horizonLauncher = prev.callPackage ./horizon-launcher {
+    source = inputs.horizon;
+  };
+
   # DeepSeek Harness 上游的 overlay（inputs."deepseek-harness".overlays.default）。
   # 两点必须做对，否则下游全是玄学报错：
   #   1. 上游 overlay 返回的是 `{ dsh = <scope>; }`，所以要取 `.dsh`，否则
