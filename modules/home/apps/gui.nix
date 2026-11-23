@@ -58,6 +58,7 @@
     zed-editor # IDE
     thunderbird # email client
     obsidian # note-taking
+    discord # chat app
     obs-studio # screen recording / streaming
     splayer # 旧版 SPlayer（网易云音乐客户端，pkgs/splayer；上游已归档但仍要这版界面）
     hmcl # minecraft launcher（保留；Horizon 是另一套 Rust 客户端）
