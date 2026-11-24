@@ -52,11 +52,13 @@
     xwayland-satellite # X11 support (started by spawn-at-startup)
     networkmanagerapplet # nm-applet tray icon
     nwg-look # GTK 主题/图标设置 GUI（Clavis 配色同步辅助）
-    xournalpp # PDF/EPUB 手写笔记（可压感）
+
+    # -- Ely Office（上游 flake 的 AppImage 封装，全套 7 个应用）--
+    # Doc/Table/Show/PDF/Mail/Tree/Mark；上游 release.json 目前是 v0.1.16。
+    inputs.ely-office.packages.${pkgs.stdenv.hostPlatform.system}.ely-office
 
     # -- Daily Apps --
     zed-editor # IDE
-    thunderbird # email client
     obsidian # note-taking
     discord # chat app
     obs-studio # screen recording / streaming

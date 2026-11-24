@@ -24,6 +24,8 @@
         # modules/home/apps/dsh.nix 里按 profile 组合出来的那个；暴露这个是为了
         # `nix build .#dsh` 能单独验证上游打包没坏。
         dsh = pkgs.dsh.dsh;
+        # Ely Office 全套（上游 flake 的 symlinkJoin，7 个子应用）。
+        ely-office = inputs.ely-office.packages.${system}.ely-office;
       };
       formatter = pkgs.nixfmt;
     };
